@@ -47,7 +47,7 @@ public enum ChatMessageModificationKinds : byte
     /// <summary>
     /// The message is banned by system.
     /// </summary>
-    Ban = 6,
+    Ban = 9,
 
     /// <summary>
     /// Others.
