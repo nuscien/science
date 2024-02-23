@@ -254,7 +254,7 @@ public class BaseRouteJsonOperation : BaseJsonOperation
     /// <param name="item">The mapping item.</param>
     public void Register(RouteJsonOperationMappingItem item)
     {
-        if (string.IsNullOrWhiteSpace(item.PropertyName)) return;
+        if (string.IsNullOrWhiteSpace(item?.PropertyName)) return;
         dict[item.PropertyName] = item;
     }
 
@@ -264,7 +264,7 @@ public class BaseRouteJsonOperation : BaseJsonOperation
     /// <param name="propertyName">The property name.</param>
     /// <returns>true if the element is successfully found and removed; otherwise, false. This method returns false if key is not found in the mapping.</returns>
     public bool Remove(string propertyName)
-        => dict.Remove(propertyName);
+        => propertyName != null && dict.Remove(propertyName);
 
     /// <summary>
     /// Gets the specific mapping item.
@@ -272,7 +272,7 @@ public class BaseRouteJsonOperation : BaseJsonOperation
     /// <param name="propertyName">The property name.</param>
     /// <returns>The mapping item; or null, if non-exist.</returns>
     public RouteJsonOperationMappingItem Get(string propertyName)
-        => dict.TryGetValue(propertyName, out var item) ? item : null;
+        => propertyName != null && dict.TryGetValue(propertyName, out var item) ? item : null;
 
     /// <summary>
     /// Tests if has the specific mapping item.
@@ -280,7 +280,7 @@ public class BaseRouteJsonOperation : BaseJsonOperation
     /// <param name="propertyName">The property name.</param>
     /// <returns>true if contains; otherwise, false.</returns>
     public bool Contains(string propertyName)
-        => dict.TryGetValue(propertyName, out _);
+        => propertyName != null && dict.TryGetValue(propertyName, out _);
 
     /// <summary>
     /// Tests if has the specific mapping item.

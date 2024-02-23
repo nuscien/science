@@ -23,6 +23,9 @@ namespace Trivial.Tasks;
 /// </summary>
 public static class JsonOperations
 {
+    internal const string PathProperty = "path";
+    internal const string HttpMethodProperty = "httpMethod";
+
     internal static BaseJsonOperationSchemaHandler SchemaHandler { get; } = new();
 
     /// <summary>
@@ -38,65 +41,6 @@ public static class JsonOperations
         if (obj is IJsonOperationDescriptive desc) return YieldReturn(desc.CreateDescription());
         if (obj is IEnumerable<IJsonOperationDescriptive> col2) return CreateDescription(col2);
         return CreateDescriptionByProperties(obj);
-    }
-
-    private static IEnumerable<JsonOperationDescription> CreateDescriptionByProperties(object obj)
-    {
-        var type = obj.GetType();
-        var props = type.GetProperties();
-        foreach (var prop in props)
-        {
-            var d = CreateDescriptionByAttribute(prop);
-            if (d == null && TryGetProperty<BaseJsonOperation>(obj, prop, out var op)) d = op.CreateDescription();
-            if (!UpdateOperation(d, prop, string.Concat(type.Name, '-', prop.Name))) continue;
-            yield return d;
-        }
-
-        var more = CreateDescription(type);
-        if (more == null) yield break;
-        foreach (var item in more)
-        {
-            yield return item;
-        }
-    }
-
-    private static bool TryGetProperty<T>(object obj, PropertyInfo prop, out T result)
-    {
-        try
-        {
-            if (prop != null && prop.CanRead && !prop.PropertyType.IsSubclassOf(typeof(T)) && prop.GetValue(obj, null) is T r)
-            {
-                result = r;
-                return true;
-            }
-        }
-        catch (ArgumentException)
-        {
-        }
-        catch (AmbiguousMatchException)
-        {
-        }
-        catch (TargetException)
-        {
-        }
-        catch (TargetInvocationException)
-        {
-        }
-        catch (TargetParameterCountException)
-        {
-        }
-        catch (MemberAccessException)
-        {
-        }
-        catch (InvalidOperationException)
-        {
-        }
-        catch (NullReferenceException)
-        {
-        }
-
-        result = default;
-        return false;
     }
 
     /// <summary>
@@ -140,10 +84,10 @@ public static class JsonOperations
             if (item.ErrorSchema != null) schemas.SetValue(string.Concat(op, "-err"), item.ErrorSchema.ToJson());
 
             // Path and contract
-            var path = item.Data.TryGetStringValue("path");
+            var path = item.Data.TryGetStringValue(PathProperty);
             if (string.IsNullOrWhiteSpace(path)) continue;
             paths.SetValue(path, out JsonObjectNode server);
-            var m = item.Data.TryGetStringTrimmedValue("httpMethod", true)?.ToLowerInvariant() ?? "post";
+            var m = item.Data.TryGetStringTrimmedValue(HttpMethodProperty, true)?.ToLowerInvariant() ?? "post";
             server.SetValue(m, out server);
             server.SetValue("operationId", op);
             server.SetValue("description", item.Description);
@@ -222,9 +166,12 @@ public static class JsonOperations
     public static void SetValue(this JsonOperationDescription desc, JsonOperationPathAttribute attr)
     {
         if (desc?.Data == null || attr == null) return;
-        desc.Data.SetValue("path", attr.Path);
-        if (attr.HttpMethod != null) desc.Data.SetValue("httpMethod", attr.HttpMethod.Method);
+        desc.Data.SetValue(PathProperty, attr.Path);
+        if (attr.HttpMethod != null) desc.Data.SetValue(HttpMethodProperty, attr.HttpMethod.Method);
     }
+
+    internal static string FormatPath(string s)
+        => s?.Trim()?.Trim('/', '\\')?.ToLowerInvariant();
 
     internal static JsonOperationDescription CreateDescriptionByAttribute(MemberInfo member)
     {
@@ -262,11 +209,70 @@ public static class JsonOperations
         return null;
     }
 
+    private static IEnumerable<JsonOperationDescription> CreateDescriptionByProperties(object obj)
+    {
+        var type = obj.GetType();
+        var props = type.GetProperties();
+        foreach (var prop in props)
+        {
+            var d = CreateDescriptionByAttribute(prop);
+            if (d == null && TryGetProperty<BaseJsonOperation>(obj, prop, out var op)) d = op.CreateDescription();
+            if (!UpdateOperation(d, prop, string.Concat(type.Name, '-', prop.Name))) continue;
+            yield return d;
+        }
+
+        var more = CreateDescription(type);
+        if (more == null) yield break;
+        foreach (var item in more)
+        {
+            yield return item;
+        }
+    }
+
+    private static bool TryGetProperty<T>(object obj, PropertyInfo prop, out T result)
+    {
+        try
+        {
+            if (prop != null && prop.CanRead && !prop.PropertyType.IsSubclassOf(typeof(T)) && prop.GetValue(obj, null) is T r)
+            {
+                result = r;
+                return true;
+            }
+        }
+        catch (ArgumentException)
+        {
+        }
+        catch (AmbiguousMatchException)
+        {
+        }
+        catch (TargetException)
+        {
+        }
+        catch (TargetInvocationException)
+        {
+        }
+        catch (TargetParameterCountException)
+        {
+        }
+        catch (MemberAccessException)
+        {
+        }
+        catch (InvalidOperationException)
+        {
+        }
+        catch (NullReferenceException)
+        {
+        }
+
+        result = default;
+        return false;
+    }
+
     private static bool TryCreateInstance<T>(Type type, out T result)
     {
         try
         {
-            if (typeof(T).IsAssignableFrom(type) && Activator.CreateInstance(type) is T r)
+            if (type != null && typeof(T).IsAssignableFrom(type) && Activator.CreateInstance(type) is T r)
             {
                 result = r;
                 return true;
@@ -351,7 +357,7 @@ public static class JsonOperations
         if (!string.IsNullOrWhiteSpace(description)) d.Description = description;
         if (d.Description == null) return false;
         var path = GetJsonDescriptionPath(member);
-        if (path == null && !d.Data.ContainsKey("path")) d.Data.SetValue("path", fallbackPath);
+        if (path == null && !d.Data.ContainsKey(PathProperty)) d.Data.SetValue(PathProperty, fallbackPath);
         else SetValue(d, path);
         return true;
     }
