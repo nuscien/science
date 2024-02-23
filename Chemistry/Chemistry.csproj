@@ -10,8 +10,6 @@
     <Description>A library with basic chemical models.</Description>
     <PackageProjectUrl>https://github.com/nuscien/trivial/wiki/chemistry</PackageProjectUrl>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-    <IncludeSymbols>true</IncludeSymbols>
-    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
     <PackageIcon>chemistry.png</PackageIcon>
     <PackageIconUrl>https://github.com/nuscien/trivial/raw/master/Materials/logo.png</PackageIconUrl>
     <PackageTags>chemistry chemical-element periodic-table molecular</PackageTags>
