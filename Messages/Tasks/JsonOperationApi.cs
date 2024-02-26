@@ -7,6 +7,7 @@ using System.Text;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
+using Trivial.Data;
 using Trivial.Text;
 
 namespace Trivial.Tasks;
@@ -17,6 +18,11 @@ namespace Trivial.Tasks;
 public class JsonOperationApi : IJsonObjectHost
 {
     private readonly Dictionary<string, JsonOperationInfo> ops = new();
+
+    /// <summary>
+    /// Adds or removes the event handler occurred on processing.
+    /// </summary>
+    public event DataEventHandler<JsonOperationProcessingArgs> Processing;
 
     /// <summary>
     /// Gets the additional operations.
@@ -40,6 +46,7 @@ public class JsonOperationApi : IJsonObjectHost
     public Task<JsonObjectNode> ProcessAsync(string path, HttpMethod httpMethod, JsonObjectNode args, object contextValue, CancellationToken cancellationToken = default)
     {
         var info = GetInfo(path, httpMethod);
+        Processing?.Invoke(this, new(new(info?.Operation, path, false, httpMethod, contextValue)));
         return info.ProcessAsync(args, contextValue, cancellationToken);
     }
 
@@ -56,6 +63,7 @@ public class JsonOperationApi : IJsonObjectHost
     public Task<JsonObjectNode> ProcessAsync(string path, bool ignorePathCase, HttpMethod httpMethod, JsonObjectNode args, object contextValue, CancellationToken cancellationToken = default)
     {
         var info = GetInfo(path, httpMethod, ignorePathCase);
+        Processing?.Invoke(this, new(new(info?.Operation, path, false, httpMethod, contextValue)));
         return info.ProcessAsync(args, contextValue, cancellationToken);
     }
 
@@ -71,6 +79,7 @@ public class JsonOperationApi : IJsonObjectHost
     public Task<string> ProcessAsync(string path, HttpMethod httpMethod, string args, object contextValue, CancellationToken cancellationToken = default)
     {
         var info = GetInfo(path, httpMethod);
+        Processing?.Invoke(this, new(new(info?.Operation, path, false, httpMethod, contextValue)));
         return info.ProcessAsync(args, contextValue, cancellationToken);
     }
 
@@ -87,6 +96,7 @@ public class JsonOperationApi : IJsonObjectHost
     public Task<string> ProcessAsync(string path, bool ignorePathCase, HttpMethod httpMethod, string args, object contextValue, CancellationToken cancellationToken = default)
     {
         var info = GetInfo(path, httpMethod, ignorePathCase);
+        Processing?.Invoke(this, new(new(info?.Operation, path, false, httpMethod, contextValue)));
         return info.ProcessAsync(args, contextValue, cancellationToken);
     }
 
@@ -185,6 +195,59 @@ public class JsonOperationApi : IJsonObjectHost
     /// <returns>The JSON object about the JSON operations registered.</returns>
     public JsonObjectNode ToJson()
         => JsonOperations.ToJson(Operations.Select(ele => ele.OperationDescription));
+}
+
+/// <summary>
+/// The arugments for JSON operation API.
+/// </summary>
+public class JsonOperationProcessingArgs : EventArgs
+{
+    /// <summary>
+    /// Initializes a new instance of the JsonOperationProcessingArgs class.
+    /// </summary>
+    /// <param name="operation">The operation.</param>
+    /// <param name="path">The relative path.</param>
+    /// <param name="ignoreCase">true if ignore case for the relative path; otherwise, false.</param>
+    /// <param name="httpMethod">The HTTP method.</param>
+    /// <param name="contextValue">The context value.</param>
+    public JsonOperationProcessingArgs(BaseJsonOperation operation, string path, bool ignoreCase, HttpMethod httpMethod, object contextValue)
+    {
+        Operation = operation;
+        Path = path;
+        IgnorePathCase = ignoreCase;
+        HttpMethod = httpMethod;
+        ContextValue = contextValue;
+    }
+
+    /// <summary>
+    /// Gets the processing data time.
+    /// </summary>
+    public DateTime ProcessTime { get; }
+
+    /// <summary>
+    /// Gets the operation.
+    /// </summary>
+    public BaseJsonOperation Operation { get; }
+
+    /// <summary>
+    /// Gets the path.
+    /// </summary>
+    public string Path { get; }
+
+    /// <summary>
+    /// Gets a value indicating whether ignore case for the relative path.
+    /// </summary>
+    public bool IgnorePathCase { get; }
+
+    /// <summary>
+    /// Gets the HTTP method.
+    /// </summary>
+    public HttpMethod HttpMethod { get; }
+
+    /// <summary>
+    /// Gets the context value.
+    /// </summary>
+    public object ContextValue { get; }
 }
 
 /// <summary>

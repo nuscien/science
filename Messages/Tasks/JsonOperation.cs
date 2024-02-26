@@ -134,12 +134,12 @@ public abstract class BaseJsonOperation<TIn, TOut> : BaseJsonOperation
         var path = JsonOperations.GetJsonDescriptionPath(method);
         if (path != null)
         {
-            d.Data.SetValue("path", path.Path);
-            if (path.HttpMethod != null) d.Data.SetValue("httpMethod", path.HttpMethod.Method);
+            d.Data.SetValue(JsonOperations.PathProperty, path.Path);
+            if (path.HttpMethod != null) d.Data.SetValue(JsonOperations.HttpMethodProperty, path.HttpMethod.Method);
         }
         else
         {
-            d.Data.SetValue("pah", type.Name);
+            d.Data.SetValue(JsonOperations.PathProperty, type.Name);
         }
 
         handler.OnCreate(method, d);
