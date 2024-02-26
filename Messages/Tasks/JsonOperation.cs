@@ -72,6 +72,14 @@ public abstract class BaseJsonOperation : IJsonOperationDescriptive
     /// </summary>
     /// <returns>The operation description.</returns>
     public abstract JsonOperationDescription CreateDescription();
+
+    /// <summary>
+    /// Runs asynchronized.
+    /// </summary>
+    /// <param name="action">The action to run.</param>
+    /// <returns>The task result.</returns>
+    protected static Task RunAsync(Action action = null)
+        => Task.Run(action ?? JsonOperations.Empty);
 }
 
 /// <summary>
@@ -148,7 +156,7 @@ public abstract class BaseJsonOperation<TIn, TOut> : BaseJsonOperation
 }
 
 /// <summary>
-/// The JSON schema creation handler for JSON operation.
+/// The schema creation handler for JSON operation.
 /// </summary>
 public class BaseJsonOperationSchemaHandler : IJsonNodeSchemaCreationHandler<Type>
 {

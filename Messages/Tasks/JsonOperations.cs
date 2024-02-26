@@ -38,6 +38,7 @@ public static class JsonOperations
     {
         if (obj is null) return YieldReturn<JsonOperationDescription>();
         if (obj is Type t) return CreateDescription(t, handler);
+        if (obj is JsonOperationApi api) return api.CreateDescription();
         if (obj is IJsonOperationDescriptive desc) return YieldReturn(desc.CreateDescription());
         if (obj is IEnumerable<IJsonOperationDescriptive> col2) return CreateDescription(col2);
         return CreateDescriptionByProperties(obj);
@@ -57,6 +58,62 @@ public static class JsonOperations
             if (desc != null) yield return desc;
         }
     }
+
+    /// <summary>
+    /// Creates a JSON operation.
+    /// </summary>
+    /// <typeparam name="TIn">The type of input data.</typeparam>
+    /// <typeparam name="TOut">The type of output data.</typeparam>
+    /// <param name="handler">The processing handler.</param>
+    /// <param name="schemaHandler">The optional schema handler.</param>
+    /// <returns>The JSON operation.</returns>
+    public static BaseJsonOperation Create<TIn, TOut>(Func<TIn, object, CancellationToken, Task<TOut>> handler, BaseJsonOperationSchemaHandler schemaHandler = null)
+        => handler == null ? null : new InternalJsonOperation<TIn, TOut>(handler)
+        {
+            SchemaHandler = schemaHandler
+        };
+
+    /// <summary>
+    /// Creates a JSON operation.
+    /// </summary>
+    /// <typeparam name="TIn">The type of input data.</typeparam>
+    /// <typeparam name="TOut">The type of output data.</typeparam>
+    /// <param name="handler">The processing handler.</param>
+    /// <param name="schemaHandler">The optional schema handler.</param>
+    /// <returns>The JSON operation.</returns>
+    public static BaseJsonOperation Create<TIn, TOut>(Func<TIn, CancellationToken, Task<TOut>> handler, BaseJsonOperationSchemaHandler schemaHandler = null)
+        => handler == null ? null : new InternalSimpleJsonOperation<TIn, TOut>(handler)
+        {
+            SchemaHandler = schemaHandler
+        };
+
+    /// <summary>
+    /// Creates a JSON operation.
+    /// </summary>
+    /// <typeparam name="TIn">The type of input data.</typeparam>
+    /// <typeparam name="TOut">The type of output data.</typeparam>
+    /// <param name="handler">The processing handler.</param>
+    /// <param name="schemaHandler">The optional schema handler.</param>
+    /// <returns>The JSON operation.</returns>
+    public static BaseJsonOperation Create<TIn, TOut>(Func<TIn, object, TOut> handler, BaseJsonOperationSchemaHandler schemaHandler = null)
+        => handler == null ? null : new InternalSyncJsonOperation<TIn, TOut>(handler)
+        {
+            SchemaHandler = schemaHandler
+        };
+
+    /// <summary>
+    /// Creates a JSON operation.
+    /// </summary>
+    /// <typeparam name="TIn">The type of input data.</typeparam>
+    /// <typeparam name="TOut">The type of output data.</typeparam>
+    /// <param name="handler">The processing handler.</param>
+    /// <param name="schemaHandler">The optional schema handler.</param>
+    /// <returns>The JSON operation.</returns>
+    public static BaseJsonOperation Create<TIn, TOut>(Func<TIn, TOut> handler, BaseJsonOperationSchemaHandler schemaHandler = null)
+        => handler == null ? null : new InternalSimpleSyncJsonOperation<TIn, TOut>(handler)
+        {
+            SchemaHandler = schemaHandler
+        };
 
     /// <summary>
     /// Converts to JSON.
@@ -207,6 +264,10 @@ public static class JsonOperations
         }
 
         return null;
+    }
+
+    internal static void Empty()
+    {
     }
 
     private static IEnumerable<JsonOperationDescription> CreateDescriptionByProperties(object obj)

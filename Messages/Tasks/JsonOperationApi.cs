@@ -25,6 +25,16 @@ public class JsonOperationApi : IJsonObjectHost
     public event DataEventHandler<JsonOperationProcessingArgs> Processing;
 
     /// <summary>
+    /// Adds or removes the event handler occurred on processing.
+    /// </summary>
+    public event DataEventHandler<JsonOperationProcessingArgs> Processed;
+
+    /// <summary>
+    /// Adds or removes the event handler occurred on processing.
+    /// </summary>
+    public event DataEventHandler<JsonOperationProcessingErrorArgs> ProcessFailed;
+
+    /// <summary>
     /// Gets the additional operations.
     /// </summary>
     public IEnumerable<JsonOperationInfo> Operations => ops.Values;
@@ -37,18 +47,57 @@ public class JsonOperationApi : IJsonObjectHost
     /// <summary>
     /// Processes.
     /// </summary>
+    /// <param name="input">The input info.</param>
+    /// <param name="cancellationToken">The optional cancellation token.</param>
+    /// <returns>The result.</returns>
+    /// <exception cref="ArgumentNullException">input should not be null.</exception>
+    /// <exception cref="ArgumentOutOfRangeException">The relative path is not found.</exception>
+    /// <exception cref="InvalidOperationException">Operation is not valid.</exception>
+    /// <exception cref="OperationCanceledException">Operation is cancelled.</exception>
+    public async Task<JsonObjectNode> ProcessAsync(JsonOperationInput<JsonObjectNode> input, CancellationToken cancellationToken = default)
+    {
+        if (input == null) throw new ArgumentNullException(nameof(input), "input was null.");
+        var path = input.Path;
+        var httpMethod = input.HttpMethod;
+        var argument = input.Argument;
+        var contextValue = input.ContextValue;
+        var info = GetInfo(path, httpMethod, input.IgnorePathCase);
+        var operation = (info?.Operation) ?? throw new ArgumentOutOfRangeException(nameof(input), "The relative path is not found.");
+        input.OnRoute(operation);
+        var args = new JsonOperationProcessingArgs(operation, input);
+        OnRoute(input);
+        Processing?.Invoke(this, new(args));
+        JsonObjectNode resp;
+        try
+        {
+            resp = await info.ProcessAsync(argument, contextValue, cancellationToken);
+            input.OnProcess(resp, operation);
+        }
+        catch (Exception ex)
+        {
+            var error = new JsonOperationProcessingErrorArgs(ex, args);
+            input.OnFailure(ex, operation);
+            OnFailure(input, ex);
+            ProcessFailed?.Invoke(this, new(error));
+            throw;
+        }
+
+        OnProcess(input, resp);
+        Processed?.Invoke(this, new(args));
+        return resp;
+    }
+
+    /// <summary>
+    /// Processes.
+    /// </summary>
     /// <param name="path">The relative path.</param>
     /// <param name="httpMethod">The HTTP method.</param>
-    /// <param name="args">The arguments.</param>
+    /// <param name="argument">The argument.</param>
     /// <param name="contextValue">The context value.</param>
     /// <param name="cancellationToken">The optional cancellation token.</param>
     /// <returns>The result.</returns>
-    public Task<JsonObjectNode> ProcessAsync(string path, HttpMethod httpMethod, JsonObjectNode args, object contextValue, CancellationToken cancellationToken = default)
-    {
-        var info = GetInfo(path, httpMethod);
-        Processing?.Invoke(this, new(new(info?.Operation, path, false, httpMethod, contextValue)));
-        return info.ProcessAsync(args, contextValue, cancellationToken);
-    }
+    public Task<JsonObjectNode> ProcessAsync(string path, HttpMethod httpMethod, JsonObjectNode argument, object contextValue, CancellationToken cancellationToken = default)
+        => ProcessAsync(new JsonOperationInput<JsonObjectNode>(path, httpMethod, argument, contextValue), cancellationToken);
 
     /// <summary>
     /// Processes.
@@ -56,15 +105,54 @@ public class JsonOperationApi : IJsonObjectHost
     /// <param name="path">The relative path.</param>
     /// <param name="ignorePathCase">true if ignore case of path; otherwise, false.</param>
     /// <param name="httpMethod">The HTTP method.</param>
-    /// <param name="args">The arguments.</param>
+    /// <param name="argument">The argument.</param>
     /// <param name="contextValue">The context value.</param>
     /// <param name="cancellationToken">The optional cancellation token.</param>
     /// <returns>The result.</returns>
-    public Task<JsonObjectNode> ProcessAsync(string path, bool ignorePathCase, HttpMethod httpMethod, JsonObjectNode args, object contextValue, CancellationToken cancellationToken = default)
+    public Task<JsonObjectNode> ProcessAsync(string path, bool ignorePathCase, HttpMethod httpMethod, JsonObjectNode argument, object contextValue, CancellationToken cancellationToken = default)
+        => ProcessAsync(new JsonOperationInput<JsonObjectNode>(path, ignorePathCase, httpMethod, argument, contextValue), cancellationToken);
+
+    /// <summary>
+    /// Processes.
+    /// </summary>
+    /// <param name="input">The input info.</param>
+    /// <param name="cancellationToken">The optional cancellation token.</param>
+    /// <returns>The result.</returns>
+    /// <exception cref="ArgumentNullException">input should not be null.</exception>
+    /// <exception cref="ArgumentOutOfRangeException">The relative path is not found.</exception>
+    /// <exception cref="InvalidOperationException">Operation is not valid.</exception>
+    /// <exception cref="OperationCanceledException">Operation is cancelled.</exception>
+    public async Task<string> ProcessAsync(JsonOperationInput<string> input, CancellationToken cancellationToken = default)
     {
-        var info = GetInfo(path, httpMethod, ignorePathCase);
-        Processing?.Invoke(this, new(new(info?.Operation, path, false, httpMethod, contextValue)));
-        return info.ProcessAsync(args, contextValue, cancellationToken);
+        if (input == null) throw new ArgumentNullException(nameof(input), "input was null.");
+        var path = input.Path;
+        var httpMethod = input.HttpMethod;
+        var argument = input.Argument;
+        var contextValue = input.ContextValue;
+        var info = GetInfo(path, httpMethod, input.IgnorePathCase);
+        var operation = (info?.Operation) ?? throw new ArgumentOutOfRangeException(nameof(input), "The relative path is not found.");
+        input.OnRoute(operation);
+        var args = new JsonOperationProcessingArgs(operation, input);
+        OnRoute(input);
+        Processing?.Invoke(this, new(args));
+        string resp;
+        try
+        {
+            resp = await info.ProcessAsync(argument, contextValue, cancellationToken);
+            input.OnProcess(resp, operation);
+        }
+        catch (Exception ex)
+        {
+            var error = new JsonOperationProcessingErrorArgs(ex, args);
+            input.OnFailure(ex, operation);
+            OnFailure(input, ex);
+            ProcessFailed?.Invoke(this, new(error));
+            throw;
+        }
+
+        OnProcess(input, resp);
+        Processed?.Invoke(this, new(args));
+        return resp;
     }
 
     /// <summary>
@@ -72,16 +160,12 @@ public class JsonOperationApi : IJsonObjectHost
     /// </summary>
     /// <param name="path">The relative path.</param>
     /// <param name="httpMethod">The HTTP method.</param>
-    /// <param name="args">The arguments.</param>
+    /// <param name="argument">The argument.</param>
     /// <param name="contextValue">The context value.</param>
     /// <param name="cancellationToken">The optional cancellation token.</param>
     /// <returns>The result.</returns>
-    public Task<string> ProcessAsync(string path, HttpMethod httpMethod, string args, object contextValue, CancellationToken cancellationToken = default)
-    {
-        var info = GetInfo(path, httpMethod);
-        Processing?.Invoke(this, new(new(info?.Operation, path, false, httpMethod, contextValue)));
-        return info.ProcessAsync(args, contextValue, cancellationToken);
-    }
+    public Task<string> ProcessAsync(string path, HttpMethod httpMethod, string argument, object contextValue, CancellationToken cancellationToken = default)
+        => ProcessAsync(new JsonOperationInput<string>(path, httpMethod, argument, contextValue), cancellationToken);
 
     /// <summary>
     /// Processes.
@@ -89,16 +173,12 @@ public class JsonOperationApi : IJsonObjectHost
     /// <param name="path">The relative path.</param>
     /// <param name="ignorePathCase">true if ignore case of path; otherwise, false.</param>
     /// <param name="httpMethod">The HTTP method.</param>
-    /// <param name="args">The arguments.</param>
+    /// <param name="argument">The argument.</param>
     /// <param name="contextValue">The context value.</param>
     /// <param name="cancellationToken">The optional cancellation token.</param>
     /// <returns>The result.</returns>
-    public Task<string> ProcessAsync(string path, bool ignorePathCase, HttpMethod httpMethod, string args, object contextValue, CancellationToken cancellationToken = default)
-    {
-        var info = GetInfo(path, httpMethod, ignorePathCase);
-        Processing?.Invoke(this, new(new(info?.Operation, path, false, httpMethod, contextValue)));
-        return info.ProcessAsync(args, contextValue, cancellationToken);
-    }
+    public Task<string> ProcessAsync(string path, bool ignorePathCase, HttpMethod httpMethod, string argument, object contextValue, CancellationToken cancellationToken = default)
+        => ProcessAsync(new JsonOperationInput<string>(path, ignorePathCase, httpMethod, argument, contextValue), cancellationToken);
 
     /// <summary>
     /// Registers.
@@ -111,6 +191,62 @@ public class JsonOperationApi : IJsonObjectHost
         if (string.IsNullOrWhiteSpace(op.Id)) return null;
         ops[op.Id] = op;
         return op.Id;
+    }
+
+    /// <summary>
+    /// Registers.
+    /// </summary>
+    /// <param name="handler">The processing handler.</param>
+    /// <param name="schemaHandler">The optional schema handler.</param>
+    /// <returns>The operation identifier.</returns>
+    public BaseJsonOperation Register<TIn, TOut>(Func<TIn, object, CancellationToken, Task<TOut>> handler, BaseJsonOperationSchemaHandler schemaHandler = null)
+    {
+        var op = new JsonOperationInfo(JsonOperations.Create(handler, schemaHandler));
+        if (string.IsNullOrWhiteSpace(op.Id)) return null;
+        ops[op.Id] = op;
+        return op.Operation;
+    }
+
+    /// <summary>
+    /// Registers.
+    /// </summary>
+    /// <param name="handler">The processing handler.</param>
+    /// <param name="schemaHandler">The optional schema handler.</param>
+    /// <returns>The operation identifier.</returns>
+    public BaseJsonOperation Register<TIn, TOut>(Func<TIn, CancellationToken, Task<TOut>> handler, BaseJsonOperationSchemaHandler schemaHandler = null)
+    {
+        var op = new JsonOperationInfo(JsonOperations.Create(handler, schemaHandler));
+        if (string.IsNullOrWhiteSpace(op.Id)) return null;
+        ops[op.Id] = op;
+        return op.Operation;
+    }
+
+    /// <summary>
+    /// Registers.
+    /// </summary>
+    /// <param name="handler">The processing handler.</param>
+    /// <param name="schemaHandler">The optional schema handler.</param>
+    /// <returns>The operation identifier.</returns>
+    public BaseJsonOperation Register<TIn, TOut>(Func<TIn, object, TOut> handler, BaseJsonOperationSchemaHandler schemaHandler = null)
+    {
+        var op = new JsonOperationInfo(JsonOperations.Create(handler, schemaHandler));
+        if (string.IsNullOrWhiteSpace(op.Id)) return null;
+        ops[op.Id] = op;
+        return op.Operation;
+    }
+
+    /// <summary>
+    /// Registers.
+    /// </summary>
+    /// <param name="handler">The processing handler.</param>
+    /// <param name="schemaHandler">The optional schema handler.</param>
+    /// <returns>The operation identifier.</returns>
+    public BaseJsonOperation Register<TIn, TOut>(Func<TIn, TOut> handler, BaseJsonOperationSchemaHandler schemaHandler = null)
+    {
+        var op = new JsonOperationInfo(JsonOperations.Create(handler, schemaHandler));
+        if (string.IsNullOrWhiteSpace(op.Id)) return null;
+        ops[op.Id] = op;
+        return op.Operation;
     }
 
     /// <summary>
@@ -154,7 +290,7 @@ public class JsonOperationApi : IJsonObjectHost
     /// <param name="httpMethod">The HTTP method.</param>
     /// <param name="ignoreCase">true if ignore case; otherwise, false.</param>
     /// <returns>The operation info; or null, if non-exist.</returns>
-    public JsonOperationInfo GetInfo(string path, HttpMethod httpMethod, bool ignoreCase = false)
+    public virtual JsonOperationInfo GetInfo(string path, HttpMethod httpMethod, bool ignoreCase = false)
     {
         var hm = JsonOperations.FormatPath(httpMethod?.Method);
         if (string.IsNullOrEmpty(hm)) hm = null;
@@ -195,39 +331,85 @@ public class JsonOperationApi : IJsonObjectHost
     /// <returns>The JSON object about the JSON operations registered.</returns>
     public JsonObjectNode ToJson()
         => JsonOperations.ToJson(Operations.Select(ele => ele.OperationDescription));
+
+    /// <summary>
+    /// Processes on operation routed.
+    /// </summary>
+    /// <param name="input">The input info.</param>
+    protected virtual void OnRoute(JsonOperationInput input)
+    {
+    }
+
+    /// <summary>
+    /// Processes on operation routed.
+    /// </summary>
+    /// <param name="input">The input info.</param>
+    /// <param name="result">The result data.</param>
+    protected virtual void OnProcess(JsonOperationInput<string> input, string result)
+    {
+    }
+
+    /// <summary>
+    /// Processes on operation routed.
+    /// </summary>
+    /// <param name="input">The input info.</param>
+    /// <param name="result">The result data.</param>
+    protected virtual void OnProcess(JsonOperationInput<JsonObjectNode> input, JsonObjectNode result)
+    {
+    }
+
+    /// <summary>
+    /// Processes on operation routed.
+    /// </summary>
+    /// <param name="input">The input info.</param>
+    /// <param name="exception">The exception instance.</param>
+    protected virtual void OnFailure(JsonOperationInput input, Exception exception)
+    {
+    }
+
+    /// <summary>
+    /// Creates JSON operation description collection by a given type.
+    /// </summary>
+    /// <returns>A collection of the JSON operation description.</returns>
+    internal IEnumerable<JsonOperationDescription> CreateDescription()
+    {
+        foreach (var item in ops.Values)
+        {
+            var d = item?.CreateDescription();
+            if (d != null) yield return d;
+        }
+    }
 }
 
 /// <summary>
-/// The arugments for JSON operation API.
+/// The input for JSON operation API.
 /// </summary>
-public class JsonOperationProcessingArgs : EventArgs
+public class JsonOperationInput
 {
     /// <summary>
-    /// Initializes a new instance of the JsonOperationProcessingArgs class.
+    /// Initializes a new instance of the BaseJsonOperationProcessingContext class.
     /// </summary>
-    /// <param name="operation">The operation.</param>
+    /// <param name="path">The relative path.</param>
+    /// <param name="httpMethod">The HTTP method.</param>
+    /// <param name="contextValue">The context value.</param>
+    public JsonOperationInput(string path, HttpMethod httpMethod, object contextValue) : this(path, false, httpMethod, contextValue)
+    {
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the BaseJsonOperationProcessingContext class.
+    /// </summary>
     /// <param name="path">The relative path.</param>
     /// <param name="ignoreCase">true if ignore case for the relative path; otherwise, false.</param>
     /// <param name="httpMethod">The HTTP method.</param>
     /// <param name="contextValue">The context value.</param>
-    public JsonOperationProcessingArgs(BaseJsonOperation operation, string path, bool ignoreCase, HttpMethod httpMethod, object contextValue)
+    public JsonOperationInput(string path, bool ignoreCase, HttpMethod httpMethod, object contextValue)
     {
-        Operation = operation;
         Path = path;
         IgnorePathCase = ignoreCase;
         HttpMethod = httpMethod;
         ContextValue = contextValue;
     }
-
-    /// <summary>
-    /// Gets the processing data time.
-    /// </summary>
-    public DateTime ProcessTime { get; }
-
-    /// <summary>
-    /// Gets the operation.
-    /// </summary>
-    public BaseJsonOperation Operation { get; }
 
     /// <summary>
     /// Gets the path.
@@ -251,9 +433,165 @@ public class JsonOperationProcessingArgs : EventArgs
 }
 
 /// <summary>
+/// The input for JSON operation API.
+/// </summary>
+public class JsonOperationInput<T> : JsonOperationInput
+{
+    /// <summary>
+    /// Initializes a new instance of the JsonOperationInput class.
+    /// </summary>
+    /// <param name="path">The relative path.</param>
+    /// <param name="httpMethod">The HTTP method.</param>
+    /// <param name="argument">The input data.</param>
+    /// <param name="contextValue">The context value.</param>
+    public JsonOperationInput(string path, HttpMethod httpMethod, T argument, object contextValue)
+        : base(path, httpMethod, contextValue)
+    {
+        Argument = argument;
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the JsonOperationInput class.
+    /// </summary>
+    /// <param name="path">The relative path.</param>
+    /// <param name="ignoreCase">true if ignore case for the relative path; otherwise, false.</param>
+    /// <param name="httpMethod">The HTTP method.</param>
+    /// <param name="argument">The input data.</param>
+    /// <param name="contextValue">The context value.</param>
+    public JsonOperationInput(string path, bool ignoreCase, HttpMethod httpMethod, T argument, object contextValue)
+        : base(path, ignoreCase, httpMethod, contextValue)
+    {
+        Argument = argument;
+    }
+
+    /// <summary>
+    /// Gets the input data.
+    /// </summary>
+    public T Argument { get; }
+
+    /// <summary>
+    /// Occurs on operation has processed.
+    /// </summary>
+    /// <param name="operation">The operation.</param>
+    public virtual void OnRoute(BaseJsonOperation operation)
+    {
+    }
+
+    /// <summary>
+    /// Occurs on operation has processed.
+    /// </summary>
+    /// <param name="result">The output data.</param>
+    /// <param name="operation">The operation.</param>
+    public virtual void OnProcess(T result, BaseJsonOperation operation)
+    {
+    }
+
+    /// <summary>
+    /// Occurs on operation is failed.
+    /// </summary>
+    /// <param name="exception">The exception instance.</param>
+    /// <param name="operation">The operation.</param>
+    public virtual void OnFailure(Exception exception, BaseJsonOperation operation)
+    {
+    }
+}
+
+/// <summary>
+/// The arguments for JSON operation API.
+/// </summary>
+public class JsonOperationProcessingArgs : EventArgs
+{
+    /// <summary>
+    /// Initializes a new instance of the JsonOperationProcessingArgs class.
+    /// </summary>
+    /// <param name="operation">The operation.</param>
+    /// <param name="input">The input info.</param>
+    public JsonOperationProcessingArgs(BaseJsonOperation operation, JsonOperationInput input)
+    {
+        Operation = operation;
+        Input = input;
+    }
+
+    /// <summary>
+    /// Gets the processing data time.
+    /// </summary>
+    public DateTime ProcessTime { get; }
+
+    /// <summary>
+    /// Gets the operation.
+    /// </summary>
+    public BaseJsonOperation Operation { get; }
+
+    /// <summary>
+    /// Gets the input info.
+    /// </summary>
+    public JsonOperationInput Input { get; }
+
+    /// <summary>
+    /// Gets the path.
+    /// </summary>
+    public string Path => Input?.Path;
+
+    /// <summary>
+    /// Gets a value indicating whether ignore case for the relative path.
+    /// </summary>
+    public bool IgnorePathCase => Input?.IgnorePathCase ?? false;
+
+    /// <summary>
+    /// Gets the HTTP method.
+    /// </summary>
+    public HttpMethod HttpMethod => Input?.HttpMethod;
+
+    /// <summary>
+    /// Gets the context value.
+    /// </summary>
+    public object ContextValue => Input?.ContextValue;
+}
+
+/// <summary>
+/// The error arguments for JSON operation API.
+/// </summary>
+public class JsonOperationProcessingErrorArgs : JsonOperationProcessingArgs
+{
+    /// <summary>
+    /// Initializes a new instance of the JsonOperationProcessingArgs class.
+    /// </summary>
+    /// <param name="exception">The exception.</param>
+    /// <param name="operation">The operation.</param>
+    /// <param name="input">The input info.</param>
+    public JsonOperationProcessingErrorArgs(Exception exception, BaseJsonOperation operation, JsonOperationInput input)
+        : base(operation, input)
+    {
+        Exception = exception;
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the JsonOperationProcessingArgs class.
+    /// </summary>
+    /// <param name="exception">The exception.</param>
+    /// <param name="copy">The arguments to copy.</param>
+    public JsonOperationProcessingErrorArgs(Exception exception, JsonOperationProcessingArgs copy)
+        : this(exception, copy?.Operation, copy?.Input)
+    {
+    }
+
+    /// <summary>
+    /// Gets the exception.
+    /// </summary>
+    public Exception Exception { get; }
+
+    /// <summary>
+    /// Gets the exception type.
+    /// </summary>
+    /// <returns>The type of the exception.</returns>
+    public Type GetExceptionType()
+        => Exception?.GetType();
+}
+
+/// <summary>
 /// The JSON operation information.
 /// </summary>
-public class JsonOperationInfo
+public class JsonOperationInfo : IJsonOperationDescriptive
 {
     /// <summary>
     /// Initializes a new instance of the JsonOperationInfo class.
@@ -313,4 +651,11 @@ public class JsonOperationInfo
     /// <returns>The result.</returns>
     public Task<string> ProcessAsync(string args, object contextValue, CancellationToken cancellationToken = default)
         => Operation?.ProcessAsync(args, contextValue, cancellationToken);
+
+    /// <summary>
+    /// Creates operation description.
+    /// </summary>
+    /// <returns>The operation description.</returns>
+    public JsonOperationDescription CreateDescription()
+        => Operation?.CreateDescription();
 }
