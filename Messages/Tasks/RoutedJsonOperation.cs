@@ -79,7 +79,7 @@ public class RoutedJsonOperationMappingItem
     /// <param name="argumentName">The argument name for routed API.</param>
     /// <param name="description">The description.</param>
     public RoutedJsonOperationMappingItem(string propertyName, string argumentName = null, string description = null)
-        : this(propertyName, false, argumentName, description)
+        : this(propertyName, false, argumentName ?? propertyName, description)
     {
     }
 
@@ -300,6 +300,68 @@ public class BaseRoutedJsonOperation : BaseJsonOperation
     {
         if (string.IsNullOrWhiteSpace(item?.PropertyName)) return;
         dict[item.PropertyName] = item;
+    }
+
+    /// <summary>
+    /// Registers.
+    /// </summary>
+    /// <param name="propertyName">The JSON property name.</param>
+    /// <param name="isPropertyPath">true if the property name is a path; otherwise, false.</param>
+    /// <param name="argumentName">The argument name for routed API.</param>
+    /// <param name="schema">The schema.</param>
+    /// <returns>The mapping item.</returns>
+    public RoutedJsonOperationMappingItem Register(string propertyName, bool isPropertyPath, string argumentName, JsonNodeSchemaDescription schema = null)
+    {
+        if (string.IsNullOrWhiteSpace(propertyName)) return null;
+        var item = new RoutedJsonOperationMappingItem(propertyName, isPropertyPath, argumentName, schema);
+        Register(item);
+        return item;
+    }
+
+    /// <summary>
+    /// Registers.
+    /// </summary>
+    /// <param name="propertyName">The JSON property name.</param>
+    /// <param name="argumentName">The argument name for routed API.</param>
+    /// <param name="schema">The schema.</param>
+    /// <returns>The mapping item.</returns>
+    public RoutedJsonOperationMappingItem Register(string propertyName, string argumentName = null, JsonNodeSchemaDescription schema = null)
+    {
+        if (string.IsNullOrWhiteSpace(propertyName)) return null;
+        var item = new RoutedJsonOperationMappingItem(propertyName, argumentName, schema);
+        Register(item);
+        return item;
+    }
+
+    /// <summary>
+    /// Registers.
+    /// </summary>
+    /// <param name="propertyName">The JSON property name.</param>
+    /// <param name="isPropertyPath">true if the property name is a path; otherwise, false.</param>
+    /// <param name="argumentName">The argument name for routed API.</param>
+    /// <param name="description">The description.</param>
+    /// <returns>The mapping item.</returns>
+    public RoutedJsonOperationMappingItem Register(string propertyName, bool isPropertyPath, string argumentName, string description = null)
+    {
+        if (string.IsNullOrWhiteSpace(propertyName)) return null;
+        var item = new RoutedJsonOperationMappingItem(propertyName, isPropertyPath, argumentName, description);
+        Register(item);
+        return item;
+    }
+
+    /// <summary>
+    /// Registers.
+    /// </summary>
+    /// <param name="propertyName">The JSON property name.</param>
+    /// <param name="argumentName">The argument name for routed API.</param>
+    /// <param name="description">The description.</param>
+    /// <returns>The mapping item.</returns>
+    public RoutedJsonOperationMappingItem Register(string propertyName, string argumentName = null, string description = null)
+    {
+        if (string.IsNullOrWhiteSpace(propertyName)) return null;
+        var item = new RoutedJsonOperationMappingItem(propertyName, argumentName, description);
+        Register(item);
+        return item;
     }
 
     /// <summary>
