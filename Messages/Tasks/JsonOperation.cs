@@ -112,7 +112,9 @@ public abstract class BaseJsonOperation<TIn, TOut> : BaseJsonOperation
         var method = type.GetMethod("ProcessAsync", [typeof(TIn), typeof(object), typeof(CancellationToken)]);
         var handler = SchemaHandler ?? JsonOperations.SchemaHandler;
         var d = JsonOperationDescription.Create(method, null, handler);
-        var path = JsonOperations.GetJsonDescriptionPath(method);
+        if (d == null) return null;
+        if (string.IsNullOrEmpty(d.Description)) d.Description = StringExtensions.GetDescription(type);
+        var path = GetPathInfo() ?? JsonOperations.GetJsonDescriptionPath(method);
         if (path != null)
         {
             d.Data.SetValue(JsonOperations.PathProperty, path.Path);
@@ -126,6 +128,13 @@ public abstract class BaseJsonOperation<TIn, TOut> : BaseJsonOperation
         handler.OnCreate(method, d);
         return d;
     }
+
+    /// <summary>
+    /// Gets path information.
+    /// </summary>
+    /// <returns>THe path info.</returns>
+    protected virtual JsonOperationPathAttribute GetPathInfo()
+        => null;
 }
 
 /// <summary>

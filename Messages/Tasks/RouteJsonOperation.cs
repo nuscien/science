@@ -27,13 +27,49 @@ public class RoutedJsonOperationMappingItem
     /// <param name="propertyName">The JSON property name.</param>
     /// <param name="isPropertyPath">true if the property name is a path; otherwise, false.</param>
     /// <param name="argumentName">The argument name for routed API.</param>
-    /// <param name="description">The description.</param>
-    public RoutedJsonOperationMappingItem(string propertyName, bool isPropertyPath, string argumentName, string description = null)
+    /// <param name="schema">The schema.</param>
+    public RoutedJsonOperationMappingItem(string propertyName, bool isPropertyPath, string argumentName, JsonNodeSchemaDescription schema)
     {
         PropertyName = propertyName;
         IsPropertyPath = isPropertyPath;
         ArgumentName = argumentName;
-        Description = description;
+        Schema = schema;
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the RoutedJsonOperationMappingItem class.
+    /// </summary>
+    /// <param name="propertyName">The JSON property name.</param>
+    /// <param name="argumentName">The argument name for routed API.</param>
+    /// <param name="schema">The schema.</param>
+    public RoutedJsonOperationMappingItem(string propertyName, string argumentName, JsonNodeSchemaDescription schema)
+        : this(propertyName, false, argumentName ?? propertyName, schema)
+    {
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the RoutedJsonOperationMappingItem class.
+    /// </summary>
+    /// <param name="propertyName">The JSON property name.</param>
+    /// <param name="schema">The schema.</param>
+    public RoutedJsonOperationMappingItem(string propertyName, JsonNodeSchemaDescription schema)
+        : this(propertyName, false, propertyName, schema)
+    {
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the RoutedJsonOperationMappingItem class.
+    /// </summary>
+    /// <param name="propertyName">The JSON property name.</param>
+    /// <param name="isPropertyPath">true if the property name is a path; otherwise, false.</param>
+    /// <param name="argumentName">The argument name for routed API.</param>
+    /// <param name="description">The description.</param>
+    public RoutedJsonOperationMappingItem(string propertyName, bool isPropertyPath, string argumentName, string description = null)
+        : this(propertyName, isPropertyPath, argumentName, string.IsNullOrEmpty(description) ? null : new JsonStringSchemaDescription
+        {
+            Description = description
+        })
+    {
     }
 
     /// <summary>
@@ -43,10 +79,8 @@ public class RoutedJsonOperationMappingItem
     /// <param name="argumentName">The argument name for routed API.</param>
     /// <param name="description">The description.</param>
     public RoutedJsonOperationMappingItem(string propertyName, string argumentName = null, string description = null)
+        : this(propertyName, false, argumentName, description)
     {
-        PropertyName = propertyName;
-        ArgumentName = argumentName ?? propertyName;
-        Description = description;
     }
 
     /// <summary>
@@ -81,6 +115,7 @@ public class RoutedJsonOperationMappingItem
 
         set
         {
+            if (value == null || Schema == null) return;
             try
             {
                 Schema ??= new JsonStringSchemaDescription();
@@ -91,6 +126,11 @@ public class RoutedJsonOperationMappingItem
             }
         }
     }
+
+    /// <summary>
+    /// Gets or sets the tag.
+    /// </summary>
+    public object Tag { get; set; }
 
     /// <summary>
     /// Converts the JSON property token data to the argument value.
