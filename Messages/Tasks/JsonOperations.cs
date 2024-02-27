@@ -404,7 +404,7 @@ public static class JsonOperations
         handler ??= SchemaHandler;
         foreach (var method in methods)
         {
-            var d = CreateDescriptionByAttribute(method) ?? JsonOperationDescription.Create(method, null, handler);
+            var d = JsonOperationDescription.Create(method, null, handler);
             if (!UpdateOperation(d, method, string.Concat(type.Name, '-', method.Name))) continue;
             handler.OnCreate(method, d);
             yield return d;

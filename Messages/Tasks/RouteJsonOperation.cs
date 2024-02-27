@@ -17,32 +17,36 @@ using Trivial.Text;
 namespace Trivial.Tasks;
 
 /// <summary>
-/// The mapping item for route JSON API operation.
+/// The mapping item for routed JSON API operation.
 /// </summary>
-public class RouteJsonOperationMappingItem
+public class RoutedJsonOperationMappingItem
 {
     /// <summary>
-    /// Initializes a new instance of the RouteJsonOperationMappingItem class.
+    /// Initializes a new instance of the RoutedJsonOperationMappingItem class.
     /// </summary>
     /// <param name="propertyName">The JSON property name.</param>
     /// <param name="isPropertyPath">true if the property name is a path; otherwise, false.</param>
     /// <param name="argumentName">The argument name for routed API.</param>
-    public RouteJsonOperationMappingItem(string propertyName, bool isPropertyPath, string argumentName)
+    /// <param name="description">The description.</param>
+    public RoutedJsonOperationMappingItem(string propertyName, bool isPropertyPath, string argumentName, string description = null)
     {
         PropertyName = propertyName;
         IsPropertyPath = isPropertyPath;
         ArgumentName = argumentName;
+        Description = description;
     }
 
     /// <summary>
-    /// Initializes a new instance of the RouteJsonOperationMappingItem class.
+    /// Initializes a new instance of the RoutedJsonOperationMappingItem class.
     /// </summary>
     /// <param name="propertyName">The JSON property name.</param>
     /// <param name="argumentName">The argument name for routed API.</param>
-    public RouteJsonOperationMappingItem(string propertyName, string argumentName = null)
+    /// <param name="description">The description.</param>
+    public RoutedJsonOperationMappingItem(string propertyName, string argumentName = null, string description = null)
     {
         PropertyName = propertyName;
         ArgumentName = argumentName ?? propertyName;
+        Description = description;
     }
 
     /// <summary>
@@ -118,27 +122,27 @@ public class RouteJsonOperationMappingItem
 }
 
 /// <summary>
-/// The context of route JSON API operation.
+/// The context of routed JSON API operation.
 /// </summary>
-public class RouteJsonOperationContext
+public class RoutedJsonOperationContext
 {
     /// <summary>
-    /// Initializes a new instance of the RouteJsonOperationContext class.
+    /// Initializes a new instance of the RoutedJsonOperationContext class.
     /// </summary>
     /// <param name="args">The arguments.</param>
-    public RouteJsonOperationContext(JsonObjectNode args)
+    public RoutedJsonOperationContext(JsonObjectNode args)
     {
         Arguments = args;
         Query = new();
     }
 
     /// <summary>
-    /// Initializes a new instance of the RouteJsonOperationContext class.
+    /// Initializes a new instance of the RoutedJsonOperationContext class.
     /// </summary>
     /// <param name="args">The arguments.</param>
     /// <param name="value">The context value.</param>
     /// <param name="q">The query data.</param>
-    public RouteJsonOperationContext(JsonObjectNode args, object value, QueryData q)
+    public RoutedJsonOperationContext(JsonObjectNode args, object value, QueryData q)
     {
         Arguments = args;
         Value = value;
@@ -184,30 +188,30 @@ public class RouteJsonOperationContext
 }
 
 /// <summary>
-/// The base JSON API operation of route web API.
+/// The base JSON API operation of routed web API.
 /// </summary>
-public class BaseRouteJsonOperation : BaseJsonOperation
+public class BaseRoutedJsonOperation : BaseJsonOperation
 {
-    private readonly Dictionary<string, RouteJsonOperationMappingItem> dict = new();
+    private readonly Dictionary<string, RoutedJsonOperationMappingItem> dict = new();
 
     /// <summary>
-    /// Initializes a new instance of the BaseRouteJsonOperation class.
+    /// Initializes a new instance of the BaseRoutedJsonOperation class.
     /// </summary>
     /// <param name="id">The operation identifier.</param>
     /// <param name="description">The operation description.</param>
-    public BaseRouteJsonOperation(string id, string description = null)
+    public BaseRoutedJsonOperation(string id, string description = null)
     {
         Id = id;
         Description = description;
     }
 
     /// <summary>
-    /// Initializes a new instance of the BaseRouteJsonOperation class.
+    /// Initializes a new instance of the BaseRoutedJsonOperation class.
     /// </summary>
     /// <param name="uri">The URI of the web API.</param>
     /// <param name="id">The operation identifier.</param>
     /// <param name="description">The operation description.</param>
-    public BaseRouteJsonOperation(Uri uri, string id, string description = null) : this(id, description)
+    public BaseRoutedJsonOperation(Uri uri, string id, string description = null) : this(id, description)
     {
         WebApiUri = uri;
     }
@@ -252,7 +256,7 @@ public class BaseRouteJsonOperation : BaseJsonOperation
     /// Registers.
     /// </summary>
     /// <param name="item">The mapping item.</param>
-    public void Register(RouteJsonOperationMappingItem item)
+    public void Register(RoutedJsonOperationMappingItem item)
     {
         if (string.IsNullOrWhiteSpace(item?.PropertyName)) return;
         dict[item.PropertyName] = item;
@@ -271,7 +275,7 @@ public class BaseRouteJsonOperation : BaseJsonOperation
     /// </summary>
     /// <param name="propertyName">The property name.</param>
     /// <returns>The mapping item; or null, if non-exist.</returns>
-    public RouteJsonOperationMappingItem Get(string propertyName)
+    public RoutedJsonOperationMappingItem Get(string propertyName)
         => propertyName != null && dict.TryGetValue(propertyName, out var item) ? item : null;
 
     /// <summary>
@@ -287,7 +291,7 @@ public class BaseRouteJsonOperation : BaseJsonOperation
     /// </summary>
     /// <param name="item">The property to test.</param>
     /// <returns>true if contains; otherwise, false.</returns>
-    public bool Contains(RouteJsonOperationMappingItem item)
+    public bool Contains(RoutedJsonOperationMappingItem item)
         => !string.IsNullOrEmpty(item?.PropertyName) && Get(item.PropertyName) == item;
 
     /// <summary>
@@ -306,7 +310,7 @@ public class BaseRouteJsonOperation : BaseJsonOperation
         if (json == null) throw new ArgumentNullException(nameof(json), "json was null.");
         var uri = WebApiUri ?? throw new InvalidOperationException("The URI of the Web API does not configured.", new ArgumentNullException(nameof(WebApiUri), "The URI of the Web API was null."));
         var q = new QueryData();
-        var context = new RouteJsonOperationContext(json, contextValue, q);
+        var context = new RoutedJsonOperationContext(json, contextValue, q);
         foreach (var kvp in dict)
         {
             var converter = kvp.Value;
@@ -353,7 +357,7 @@ public class BaseRouteJsonOperation : BaseJsonOperation
         var type = GetType();
         var desc = new JsonOperationDescription()
         {
-            Id = Id ?? (type == typeof(BaseRouteJsonOperation) ? null : GetType().Name),
+            Id = Id ?? (type == typeof(BaseRoutedJsonOperation) ? null : GetType().Name),
             Description = Description,
             ArgumentSchema = CreateArgumentSchema(),
             ResultSchema = ResultSchema,
@@ -393,7 +397,7 @@ public class BaseRouteJsonOperation : BaseJsonOperation
     /// <param name="context">The context object.</param>
     /// <returns>A new URL.</returns>
     /// <exception cref="InvalidOperationException">The data is invalid.</exception>
-    protected virtual string FormatUrl(string url, RouteJsonOperationContext context)
+    protected virtual string FormatUrl(string url, RoutedJsonOperationContext context)
         => url;
 
     /// <summary>
@@ -403,7 +407,7 @@ public class BaseRouteJsonOperation : BaseJsonOperation
     /// <param name="context">The context object.</param>
     /// <param name="cancellationToken">The optional cancellation token.</param>
     /// <returns>The result.</returns>
-    protected virtual Task<JsonObjectNode> ProcessResponseAsync(JsonObjectNode json, RouteJsonOperationContext context, CancellationToken cancellationToken = default)
+    protected virtual Task<JsonObjectNode> ProcessResponseAsync(JsonObjectNode json, RoutedJsonOperationContext context, CancellationToken cancellationToken = default)
         => Task.FromResult(json);
 
     /// <summary>
@@ -418,7 +422,7 @@ public class BaseRouteJsonOperation : BaseJsonOperation
     /// </summary>
     /// <param name="context">The context object.</param>
     /// <returns>A JSON HTTP client.</returns>
-    protected virtual JsonHttpClient<JsonObjectNode> CreateHttpClient(RouteJsonOperationContext context)
+    protected virtual JsonHttpClient<JsonObjectNode> CreateHttpClient(RoutedJsonOperationContext context)
         => new();
 
     /// <summary>
@@ -431,7 +435,7 @@ public class BaseRouteJsonOperation : BaseJsonOperation
     /// <returns>The result.</returns>
     /// <exception cref="FailedHttpException">HTTP failure.</exception>
     /// <exception cref="JsonException">The response content is not JSON.</exception>
-    protected virtual Task<JsonObjectNode> SendAsync(JsonHttpClient<JsonObjectNode> http, string url, RouteJsonOperationContext context, CancellationToken cancellationToken = default)
+    protected virtual Task<JsonObjectNode> SendAsync(JsonHttpClient<JsonObjectNode> http, string url, RoutedJsonOperationContext context, CancellationToken cancellationToken = default)
         => http.SendAsync(HttpMethod, url, cancellationToken);
 
     /// <summary>
@@ -439,7 +443,7 @@ public class BaseRouteJsonOperation : BaseJsonOperation
     /// </summary>
     /// <param name="ex">The exception</param>
     /// <param name="context">The context object.</param>
-    protected virtual JsonObjectNode OnHttpFailure(FailedHttpException ex, RouteJsonOperationContext context)
+    protected virtual JsonObjectNode OnHttpFailure(FailedHttpException ex, RoutedJsonOperationContext context)
         => null;
 
     /// <summary>
@@ -447,7 +451,7 @@ public class BaseRouteJsonOperation : BaseJsonOperation
     /// </summary>
     /// <param name="ex">The exception</param>
     /// <param name="context">The context object.</param>
-    protected virtual void OnJsonParsingFailure(JsonException ex, RouteJsonOperationContext context)
+    protected virtual void OnJsonParsingFailure(JsonException ex, RoutedJsonOperationContext context)
     {
     }
 }
