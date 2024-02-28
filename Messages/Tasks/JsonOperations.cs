@@ -64,11 +64,32 @@ public static class JsonOperations
     /// </summary>
     /// <typeparam name="TIn">The type of input data.</typeparam>
     /// <typeparam name="TOut">The type of output data.</typeparam>
+    /// <param name="target">The target object.</param>
+    /// <param name="method">The method info.</param>
+    /// <param name="schemaHandler">The optional schema handler.</param>
+    /// <param name="id">The operation identifier.</param>
+    /// <returns>The JSON operation.</returns>
+    public static BaseJsonOperation Create<TIn, TOut>(object target, MethodInfo method, BaseJsonOperationSchemaHandler schemaHandler = null, string id = null)
+    {
+        if (method == null) return null;
+        var op = new InternalMethodJsonOperation<TIn, TOut>(target, method, id)
+        {
+            SchemaHandler = schemaHandler
+        };
+        return op.IsValid ? op : null;
+    }
+
+    /// <summary>
+    /// Creates a JSON operation.
+    /// </summary>
+    /// <typeparam name="TIn">The type of input data.</typeparam>
+    /// <typeparam name="TOut">The type of output data.</typeparam>
     /// <param name="handler">The processing handler.</param>
+    /// <param name="id">The operation identifier.</param>
     /// <param name="schemaHandler">The optional schema handler.</param>
     /// <returns>The JSON operation.</returns>
-    public static BaseJsonOperation Create<TIn, TOut>(Func<TIn, object, CancellationToken, Task<TOut>> handler, BaseJsonOperationSchemaHandler schemaHandler = null)
-        => handler == null ? null : new InternalJsonOperation<TIn, TOut>(handler)
+    public static BaseJsonOperation Create<TIn, TOut>(Func<TIn, object, CancellationToken, Task<TOut>> handler, string id = null, BaseJsonOperationSchemaHandler schemaHandler = null)
+        => handler == null ? null : new InternalJsonOperation<TIn, TOut>(handler, id)
         {
             SchemaHandler = schemaHandler
         };
@@ -79,10 +100,11 @@ public static class JsonOperations
     /// <typeparam name="TIn">The type of input data.</typeparam>
     /// <typeparam name="TOut">The type of output data.</typeparam>
     /// <param name="handler">The processing handler.</param>
+    /// <param name="id">The operation identifier.</param>
     /// <param name="schemaHandler">The optional schema handler.</param>
     /// <returns>The JSON operation.</returns>
-    public static BaseJsonOperation Create<TIn, TOut>(Func<TIn, CancellationToken, Task<TOut>> handler, BaseJsonOperationSchemaHandler schemaHandler = null)
-        => handler == null ? null : new InternalSimpleJsonOperation<TIn, TOut>(handler)
+    public static BaseJsonOperation Create<TIn, TOut>(Func<TIn, CancellationToken, Task<TOut>> handler, string id = null, BaseJsonOperationSchemaHandler schemaHandler = null)
+        => handler == null ? null : new InternalSimpleJsonOperation<TIn, TOut>(handler, id)
         {
             SchemaHandler = schemaHandler
         };
@@ -93,10 +115,11 @@ public static class JsonOperations
     /// <typeparam name="TIn">The type of input data.</typeparam>
     /// <typeparam name="TOut">The type of output data.</typeparam>
     /// <param name="handler">The processing handler.</param>
+    /// <param name="id">The operation identifier.</param>
     /// <param name="schemaHandler">The optional schema handler.</param>
     /// <returns>The JSON operation.</returns>
-    public static BaseJsonOperation Create<TIn, TOut>(Func<TIn, object, TOut> handler, BaseJsonOperationSchemaHandler schemaHandler = null)
-        => handler == null ? null : new InternalSyncJsonOperation<TIn, TOut>(handler)
+    public static BaseJsonOperation Create<TIn, TOut>(Func<TIn, object, TOut> handler, string id = null, BaseJsonOperationSchemaHandler schemaHandler = null)
+        => handler == null ? null : new InternalSyncJsonOperation<TIn, TOut>(handler, id)
         {
             SchemaHandler = schemaHandler
         };
@@ -107,10 +130,11 @@ public static class JsonOperations
     /// <typeparam name="TIn">The type of input data.</typeparam>
     /// <typeparam name="TOut">The type of output data.</typeparam>
     /// <param name="handler">The processing handler.</param>
+    /// <param name="id">The operation identifier.</param>
     /// <param name="schemaHandler">The optional schema handler.</param>
     /// <returns>The JSON operation.</returns>
-    public static BaseJsonOperation Create<TIn, TOut>(Func<TIn, TOut> handler, BaseJsonOperationSchemaHandler schemaHandler = null)
-        => handler == null ? null : new InternalSimpleSyncJsonOperation<TIn, TOut>(handler)
+    public static BaseJsonOperation Create<TIn, TOut>(Func<TIn, TOut> handler, string id = null, BaseJsonOperationSchemaHandler schemaHandler = null)
+        => handler == null ? null : new InternalSimpleSyncJsonOperation<TIn, TOut>(handler, id)
         {
             SchemaHandler = schemaHandler
         };
@@ -230,31 +254,12 @@ public static class JsonOperations
     internal static string FormatPath(string s)
         => s?.Trim()?.Trim('/', '\\')?.ToLowerInvariant();
 
-    internal static JsonOperationDescription CreateDescriptionByAttribute(MemberInfo member)
-    {
-        var attr = member?.GetCustomAttributes<JsonOperationDescriptiveAttribute>()?.FirstOrDefault();
-        if (attr?.DescriptiveType == null || !attr.DescriptiveType.IsClass) return null;
-        if (member is PropertyInfo prop)
-        {
-            if (TryCreateInstance<IJsonOperationDescriptive<PropertyInfo>>(attr.DescriptiveType, out var d))
-                return d.CreateDescription(attr.Id, prop);
-        }
-
-        if (member is MethodInfo method)
-        {
-            if (TryCreateInstance<IJsonOperationDescriptive<MethodInfo>>(attr.DescriptiveType, out var d))
-                return d.CreateDescription(attr.Id, method);
-        }
-
-        return TryCreateInstance<IJsonOperationDescriptive>(attr.DescriptiveType, out var desc) ? desc.CreateDescription() : null;
-    }
-
     internal static JsonOperationPathAttribute GetJsonDescriptionPath(MemberInfo method)
     {
         try
         {
             var attr = method.GetCustomAttributes<JsonOperationPathAttribute>()?.FirstOrDefault();
-            if (!string.IsNullOrWhiteSpace(attr.Path)) return attr;
+            if (!string.IsNullOrWhiteSpace(attr?.Path)) return attr;
         }
         catch (NotSupportedException)
         {
@@ -264,6 +269,19 @@ public static class JsonOperations
         }
 
         return null;
+    }
+
+    internal static void UpdatePath(JsonOperationDescription d, JsonOperationPathAttribute path, Type type)
+    {
+        if (path != null)
+        {
+            d.Data.SetValue(PathProperty, path.Path);
+            if (path.HttpMethod != null) d.Data.SetValue(HttpMethodProperty, path.HttpMethod.Method);
+        }
+        else if (type != null)
+        {
+            d.Data.SetValue(PathProperty, type.Name);
+        }
     }
 
     internal static void Empty()
@@ -276,9 +294,8 @@ public static class JsonOperations
         var props = type.GetProperties();
         foreach (var prop in props)
         {
-            var d = CreateDescriptionByAttribute(prop);
-            if (d == null && TryGetProperty<BaseJsonOperation>(obj, prop, out var op)) d = op.CreateDescription();
-            if (!UpdateOperation(d, prop, string.Concat(type.Name, '-', prop.Name))) continue;
+            var d = JsonOperationDescription.CreateFromProperty(obj, prop.Name);
+            if (d == null || !UpdateOperation(d, prop, string.Concat(type.Name, '-', prop.Name))) continue;
             yield return d;
         }
 
@@ -288,45 +305,6 @@ public static class JsonOperations
         {
             yield return item;
         }
-    }
-
-    private static bool TryGetProperty<T>(object obj, PropertyInfo prop, out T result)
-    {
-        try
-        {
-            if (prop != null && prop.CanRead && !prop.PropertyType.IsSubclassOf(typeof(T)) && prop.GetValue(obj, null) is T r)
-            {
-                result = r;
-                return true;
-            }
-        }
-        catch (ArgumentException)
-        {
-        }
-        catch (AmbiguousMatchException)
-        {
-        }
-        catch (TargetException)
-        {
-        }
-        catch (TargetInvocationException)
-        {
-        }
-        catch (TargetParameterCountException)
-        {
-        }
-        catch (MemberAccessException)
-        {
-        }
-        catch (InvalidOperationException)
-        {
-        }
-        catch (NullReferenceException)
-        {
-        }
-
-        result = default;
-        return false;
     }
 
     private static bool TryCreateInstance<T>(Type type, out T result)

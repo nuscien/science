@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
@@ -111,22 +112,21 @@ public abstract class BaseJsonOperation<TIn, TOut> : BaseJsonOperation
         var type = GetType();
         var method = type.GetMethod("ProcessAsync", [typeof(TIn), typeof(object), typeof(CancellationToken)]);
         var handler = SchemaHandler ?? JsonOperations.SchemaHandler;
-        var d = JsonOperationDescription.Create(method, null, handler);
-        if (d == null) return null;
-        if (string.IsNullOrEmpty(d.Description)) d.Description = StringExtensions.GetDescription(type);
-        var path = GetPathInfo() ?? JsonOperations.GetJsonDescriptionPath(method);
-        if (path != null)
-        {
-            d.Data.SetValue(JsonOperations.PathProperty, path.Path);
-            if (path.HttpMethod != null) d.Data.SetValue(JsonOperations.HttpMethodProperty, path.HttpMethod.Method);
-        }
-        else
-        {
-            d.Data.SetValue(JsonOperations.PathProperty, type.Name);
-        }
+        var desc = JsonOperationDescription.Create(method, null, handler);
+        if (desc == null) return null;
+        if (string.IsNullOrEmpty(desc.Description)) desc.Description = StringExtensions.GetDescription(type);
+        JsonOperations.UpdatePath(desc, GetPathInfo() ?? JsonOperations.GetJsonDescriptionPath(method), type);
+        OnOperationDescriptionDataFill(desc.Data);
+        handler.OnCreate(method, desc);
+        return desc;
+    }
 
-        handler.OnCreate(method, d);
-        return d;
+    /// <summary>
+    /// Occurs on fill the JSON operation description data.
+    /// </summary>
+    /// <param name="data"></param>
+    protected virtual void OnOperationDescriptionDataFill(JsonObjectNode data)
+    {
     }
 
     /// <summary>

@@ -3,11 +3,13 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
+using System.Reflection;
 using System.Text;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using Trivial.Data;
+using Trivial.Reflection;
 using Trivial.Text;
 
 namespace Trivial.Tasks;
@@ -197,11 +199,12 @@ public class JsonOperationApi : IJsonObjectHost
     /// Registers.
     /// </summary>
     /// <param name="handler">The processing handler.</param>
+    /// <param name="id">The operation identifier.</param>
     /// <param name="schemaHandler">The optional schema handler.</param>
     /// <returns>The operation identifier.</returns>
-    public BaseJsonOperation Register<TIn, TOut>(Func<TIn, object, CancellationToken, Task<TOut>> handler, BaseJsonOperationSchemaHandler schemaHandler = null)
+    public BaseJsonOperation RegisterFunc<TIn, TOut>(Func<TIn, object, CancellationToken, Task<TOut>> handler, string id = null, BaseJsonOperationSchemaHandler schemaHandler = null)
     {
-        var op = new JsonOperationInfo(JsonOperations.Create(handler, schemaHandler));
+        var op = new JsonOperationInfo(JsonOperations.Create(handler, id, schemaHandler));
         if (string.IsNullOrWhiteSpace(op.Id)) return null;
         ops[op.Id] = op;
         return op.Operation;
@@ -211,11 +214,12 @@ public class JsonOperationApi : IJsonObjectHost
     /// Registers.
     /// </summary>
     /// <param name="handler">The processing handler.</param>
+    /// <param name="id">The operation identifier.</param>
     /// <param name="schemaHandler">The optional schema handler.</param>
     /// <returns>The operation identifier.</returns>
-    public BaseJsonOperation Register<TIn, TOut>(Func<TIn, CancellationToken, Task<TOut>> handler, BaseJsonOperationSchemaHandler schemaHandler = null)
+    public BaseJsonOperation RegisterFunc<TIn, TOut>(Func<TIn, CancellationToken, Task<TOut>> handler, string id = null, BaseJsonOperationSchemaHandler schemaHandler = null)
     {
-        var op = new JsonOperationInfo(JsonOperations.Create(handler, schemaHandler));
+        var op = new JsonOperationInfo(JsonOperations.Create(handler, id, schemaHandler));
         if (string.IsNullOrWhiteSpace(op.Id)) return null;
         ops[op.Id] = op;
         return op.Operation;
@@ -225,11 +229,12 @@ public class JsonOperationApi : IJsonObjectHost
     /// Registers.
     /// </summary>
     /// <param name="handler">The processing handler.</param>
+    /// <param name="id">The operation identifier.</param>
     /// <param name="schemaHandler">The optional schema handler.</param>
     /// <returns>The operation identifier.</returns>
-    public BaseJsonOperation Register<TIn, TOut>(Func<TIn, object, TOut> handler, BaseJsonOperationSchemaHandler schemaHandler = null)
+    public BaseJsonOperation RegisterFunc<TIn, TOut>(Func<TIn, object, TOut> handler, string id = null, BaseJsonOperationSchemaHandler schemaHandler = null)
     {
-        var op = new JsonOperationInfo(JsonOperations.Create(handler, schemaHandler));
+        var op = new JsonOperationInfo(JsonOperations.Create(handler, id, schemaHandler));
         if (string.IsNullOrWhiteSpace(op.Id)) return null;
         ops[op.Id] = op;
         return op.Operation;
@@ -239,12 +244,79 @@ public class JsonOperationApi : IJsonObjectHost
     /// Registers.
     /// </summary>
     /// <param name="handler">The processing handler.</param>
+    /// <param name="id">The operation identifier.</param>
     /// <param name="schemaHandler">The optional schema handler.</param>
     /// <returns>The operation identifier.</returns>
-    public BaseJsonOperation Register<TIn, TOut>(Func<TIn, TOut> handler, BaseJsonOperationSchemaHandler schemaHandler = null)
+    public BaseJsonOperation RegisterFunc<TIn, TOut>(Func<TIn, TOut> handler, string id = null, BaseJsonOperationSchemaHandler schemaHandler = null)
     {
-        var op = new JsonOperationInfo(JsonOperations.Create(handler, schemaHandler));
+        var op = new JsonOperationInfo(JsonOperations.Create(handler, id, schemaHandler));
         if (string.IsNullOrWhiteSpace(op.Id)) return null;
+        ops[op.Id] = op;
+        return op.Operation;
+    }
+
+    /// <summary>
+    /// Registers.
+    /// </summary>
+    /// <param name="target">The target object.</param>
+    /// <param name="method">The method info.</param>
+    /// <param name="schemaHandler">The optional schema handler.</param>
+    /// <param name="id">The operation identifier.</param>
+    /// <returns>The operation identifier.</returns>
+    public BaseJsonOperation RegisterFromMethod<TIn, TOut>(object target, MethodInfo method, BaseJsonOperationSchemaHandler schemaHandler = null, string id = null)
+    {
+        var op = new JsonOperationInfo(JsonOperations.Create<TIn, TOut>(target, method, schemaHandler));
+        if (string.IsNullOrWhiteSpace(op.Id)) return null;
+        ops[op.Id] = op;
+        return op.Operation;
+    }
+
+    /// <summary>
+    /// Registers.
+    /// </summary>
+    /// <param name="target">The target object.</param>
+    /// <param name="methodName">The method name.</param>
+    /// <param name="schemaHandler">The optional schema handler.</param>
+    /// <param name="id">The operation identifier.</param>
+    /// <returns>The operation identifier.</returns>
+    public BaseJsonOperation RegisterFromMethod<TIn, TOut>(object target, string methodName, BaseJsonOperationSchemaHandler schemaHandler = null, string id = null)
+    {
+        var op = new JsonOperationInfo(JsonOperations.Create<TIn, TOut>(target, target.GetType().GetMethod(methodName), schemaHandler));
+        if (string.IsNullOrWhiteSpace(op.Id)) return null;
+        ops[op.Id] = op;
+        return op.Operation;
+    }
+
+    /// <summary>
+    /// Creates a JSON operation.
+    /// </summary>
+    /// <param name="target">The target object.</param>
+    /// <param name="property">The property info.</param>
+    /// <param name="id">The operation identifier.</param>
+    /// <returns>The JSON operation.</returns>
+    public BaseJsonOperation RegisterFromProperty(object target, PropertyInfo property, string id = null)
+    {
+        if (property == null || !ObjectConvert.TryGetProperty(target, property, out BaseJsonOperation operation)) return null;
+        var desc = JsonOperationDescription.CreateFromProperty(target, property, id);
+        if (string.IsNullOrWhiteSpace(desc.Id)) return null;
+        var op = new JsonOperationInfo(operation, desc);
+        ops[op.Id] = op;
+        return op.Operation;
+    }
+
+    /// <summary>
+    /// Creates a JSON operation.
+    /// </summary>
+    /// <param name="target">The target object.</param>
+    /// <param name="propertyName">The property name.</param>
+    /// <param name="id">The operation identifier.</param>
+    /// <returns>The JSON operation.</returns>
+    public BaseJsonOperation RegisterFromProperty(object target, string propertyName, string id = null)
+    {
+        if (string.IsNullOrWhiteSpace(propertyName) || !ObjectConvert.TryGetProperty(target, propertyName, out BaseJsonOperation operation)) return null;
+        var desc = JsonOperationDescription.CreateFromProperty(target, propertyName, id);
+        if (string.IsNullOrWhiteSpace(desc.Id)) return null;
+        var op = new JsonOperationInfo(operation, desc);
         ops[op.Id] = op;
         return op.Operation;
     }
@@ -296,14 +368,14 @@ public class JsonOperationApi : IJsonObjectHost
         if (string.IsNullOrEmpty(hm)) hm = null;
         var defaultHttpMethod = JsonOperations.FormatPath(DefaultHttpMethod?.Method);
         if (string.IsNullOrEmpty(defaultHttpMethod)) defaultHttpMethod = "post";
-        if (ignoreCase) path = JsonOperations.FormatPath(path); ;
+        if (ignoreCase) path = JsonOperations.FormatPath(path);
         foreach (var item in ops.Values)
         {
             var itemPath = ignoreCase ? JsonOperations.FormatPath(item.Path) : item.Path;
             if (itemPath != path) continue;
             var httpMethodString = JsonOperations.FormatPath(item.HttpMethodString);
             if (hm == httpMethodString) return item;
-            if (hm == null && httpMethodString == defaultHttpMethod) return item;
+            if ((hm == null && httpMethodString == defaultHttpMethod) || (hm == defaultHttpMethod && httpMethodString == null)) return item;
         }
 
         return null;
@@ -597,10 +669,11 @@ public class JsonOperationInfo : IJsonOperationDescriptive
     /// Initializes a new instance of the JsonOperationInfo class.
     /// </summary>
     /// <param name="operation">The JSON operation.</param>
-    internal JsonOperationInfo(BaseJsonOperation operation)
+    /// <param name="description">The optional JSON operation description.</param>
+    internal JsonOperationInfo(BaseJsonOperation operation, JsonOperationDescription description = null)
     {
         Operation = operation;
-        OperationDescription = operation?.CreateDescription() ?? new();
+        OperationDescription = description ?? operation?.CreateDescription() ?? new();
     }
 
     internal JsonOperationDescription OperationDescription { get; }

@@ -459,8 +459,8 @@ public class BaseRoutedJsonOperation : BaseJsonOperation
         var type = GetType();
         var desc = new JsonOperationDescription()
         {
-            Id = Id ?? (type == typeof(BaseRoutedJsonOperation) ? null : GetType().Name),
-            Description = Description,
+            Id = Id ?? (type == typeof(BaseRoutedJsonOperation) ? null : type.Name),
+            Description = Description ?? StringExtensions.GetDescription(type),
             ArgumentSchema = CreateArgumentSchema(),
             ResultSchema = ResultSchema,
             ErrorSchema = ErrorSchema,
@@ -471,6 +471,8 @@ public class BaseRoutedJsonOperation : BaseJsonOperation
             errors.SetValueIfNotEmpty(error.Key.ToString("g"), error.Value);
         }
 
+        JsonOperations.UpdatePath(desc, GetPathInfo(), type);
+        OnOperationDescriptionDataFill(desc.Data);
         return desc;
     }
 
@@ -556,4 +558,19 @@ public class BaseRoutedJsonOperation : BaseJsonOperation
     protected virtual void OnJsonParsingFailure(JsonException ex, RoutedJsonOperationContext context)
     {
     }
+
+    /// <summary>
+    /// Occurs on fill the JSON operation description data.
+    /// </summary>
+    /// <param name="data"></param>
+    protected virtual void OnOperationDescriptionDataFill(JsonObjectNode data)
+    {
+    }
+
+    /// <summary>
+    /// Gets path information.
+    /// </summary>
+    /// <returns>THe path info.</returns>
+    protected virtual JsonOperationPathAttribute GetPathInfo()
+        => null;
 }
