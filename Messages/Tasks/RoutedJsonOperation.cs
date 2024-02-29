@@ -480,7 +480,7 @@ public class BaseRoutedJsonOperation : BaseJsonOperation
     /// Creates the JSON schema.
     /// </summary>
     /// <returns>The JSON schema description instance.</returns>
-    public JsonObjectSchemaDescription CreateArgumentSchema()
+    public virtual JsonObjectSchemaDescription CreateArgumentSchema()
     {
         var schema = new JsonObjectSchemaDescription();
         foreach (var kvp in dict)

@@ -62,17 +62,16 @@ public static class JsonOperations
     /// <summary>
     /// Creates a JSON operation.
     /// </summary>
-    /// <typeparam name="TIn">The type of input data.</typeparam>
     /// <typeparam name="TOut">The type of output data.</typeparam>
     /// <param name="target">The target object.</param>
     /// <param name="method">The method info.</param>
     /// <param name="schemaHandler">The optional schema handler.</param>
     /// <param name="id">The operation identifier.</param>
     /// <returns>The JSON operation.</returns>
-    public static BaseJsonOperation Create<TIn, TOut>(object target, MethodInfo method, BaseJsonOperationSchemaHandler schemaHandler = null, string id = null)
+    public static BaseJsonOperation Create(object target, MethodInfo method, BaseJsonOperationSchemaHandler schemaHandler = null, string id = null)
     {
         if (method == null) return null;
-        var op = new InternalMethodJsonOperation<TIn, TOut>(target, method, id)
+        var op = new InternalMethodJsonOperation(target, method, id)
         {
             SchemaHandler = schemaHandler
         };
@@ -150,19 +149,20 @@ public static class JsonOperations
     {
         if (col == null) return null;
         var json = new JsonObjectNode();
-        json.SetValue("info", info);
+        json.SetValueIfNotNull("info", info);
         if (uris != null) json.SetValue("servers", uris.Select(ele => ele.OriginalString).Where(ele => !string.IsNullOrWhiteSpace(ele)));
         json.SetValue("paths", out JsonObjectNode paths);
         json.SetValue("components", "schemas", out JsonObjectNode schemas);
         var i = 0;
+        var schemaCol = new JsonNodeSchemaDescriptionCollection();
         foreach (var item in col)
         {
             // Schema
             var op = item.Id ?? string.Concat("op-", i);
             if (item.ArgumentSchema == null || item.ResultSchema == null) continue;
-            schemas.SetValue(string.Concat(op, "-req"), item.ArgumentSchema.ToJson());
-            schemas.SetValue(string.Concat(op, "-resp"), item.ResultSchema.ToJson());
-            if (item.ErrorSchema != null) schemas.SetValue(string.Concat(op, "-err"), item.ErrorSchema.ToJson());
+            var opReqKey = schemaCol.GetId(item.ArgumentSchema, string.Concat(op, "-req"), schemas);
+            var opRespKey = schemaCol.GetId(item.ResultSchema, string.Concat(op, "-resp"), schemas);
+            var opErrKey = item.ErrorSchema != null ? schemaCol.GetId(item.ResultSchema, string.Concat(op, "-err"), schemas) : null;
 
             // Path and contract
             var path = item.Data.TryGetStringValue(PathProperty);
@@ -177,17 +177,17 @@ public static class JsonOperations
 
             // Request
             requestBody.SetValue("required", !(item.Data.TryGetBooleanValue("argsOptional") ?? false));
-            requestBody = SetContentSchema(requestBody, string.Concat("#/components/schemas/", op, "-req"));
+            requestBody = SetContentSchema(requestBody, string.Concat("#/components/schemas/", opReqKey));
             
             // Response
-            SetResponseContentSchema(responseBody, 200, string.Concat("#/components/schemas/", op, "-resp"), item.Data.TryGetStringTrimmedValue("httpRespDesc", true) ?? "Successful resposne.");
+            SetResponseContentSchema(responseBody, 200, string.Concat("#/components/schemas/", opRespKey), item.Data.TryGetStringTrimmedValue("httpRespDesc", true) ?? "Successful resposne.");
             var errorResponse = item.Data.TryGetObjectValue("httpError");
             if (errorResponse == null || item.ErrorSchema == null) continue;
             foreach (var errorItem in errorResponse)
             {
                 if (!int.TryParse(errorItem.Key, out var code) || errorItem.Value == null || errorItem.Value.ValueKind != JsonValueKind.String) continue;
                 var errorDesc = errorResponse.TryGetStringValue(errorItem.Key);
-                SetResponseContentSchema(responseBody, code, string.Concat("#/components/schemas/", op, "-err"), errorDesc);
+                SetResponseContentSchema(responseBody, code, string.Concat("#/components/schemas/", opErrKey), errorDesc);
             }
         }
 
@@ -284,6 +284,45 @@ public static class JsonOperations
         }
     }
 
+    internal static async Task<object> TryGetTaskResult(Task task)
+    {
+        await task;
+        try
+        {
+            PropertyInfo propertyInfo = task.GetType().GetProperty("Result");
+            if (propertyInfo != null && propertyInfo.CanRead) return propertyInfo.GetValue(task, null);
+        }
+        catch (ArgumentException)
+        {
+        }
+        catch (AmbiguousMatchException)
+        {
+        }
+        catch (TargetException)
+        {
+        }
+        catch (TargetInvocationException)
+        {
+        }
+        catch (TargetParameterCountException)
+        {
+        }
+        catch (MemberAccessException)
+        {
+        }
+        catch (InvalidOperationException)
+        {
+        }
+        catch (NullReferenceException)
+        {
+        }
+        catch (ExternalException)
+        {
+        }
+
+        return default;
+    }
+
     internal static void Empty()
     {
     }
@@ -305,42 +344,6 @@ public static class JsonOperations
         {
             yield return item;
         }
-    }
-
-    private static bool TryCreateInstance<T>(Type type, out T result)
-    {
-        try
-        {
-            if (type != null && typeof(T).IsAssignableFrom(type) && Activator.CreateInstance(type) is T r)
-            {
-                result = r;
-                return true;
-            }
-        }
-        catch (ArgumentException)
-        {
-        }
-        catch (NotSupportedException)
-        {
-        }
-        catch (TargetInvocationException)
-        {
-        }
-        catch (MemberAccessException)
-        {
-        }
-        catch (TypeLoadException)
-        {
-        }
-        catch (InvalidComObjectException)
-        {
-        }
-        catch (ExternalException)
-        {
-        }
-
-        result = default;
-        return false;
     }
 
     private static JsonObjectNode SetContentSchema(JsonObjectNode source, string reference)

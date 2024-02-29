@@ -263,9 +263,9 @@ public class JsonOperationApi : IJsonObjectHost
     /// <param name="schemaHandler">The optional schema handler.</param>
     /// <param name="id">The operation identifier.</param>
     /// <returns>The operation identifier.</returns>
-    public BaseJsonOperation RegisterFromMethod<TIn, TOut>(object target, MethodInfo method, BaseJsonOperationSchemaHandler schemaHandler = null, string id = null)
+    public BaseJsonOperation RegisterFromMethod(object target, MethodInfo method, BaseJsonOperationSchemaHandler schemaHandler = null, string id = null)
     {
-        var op = new JsonOperationInfo(JsonOperations.Create<TIn, TOut>(target, method, schemaHandler));
+        var op = new JsonOperationInfo(JsonOperations.Create(target, method, schemaHandler));
         if (string.IsNullOrWhiteSpace(op.Id)) return null;
         ops[op.Id] = op;
         return op.Operation;
@@ -279,9 +279,9 @@ public class JsonOperationApi : IJsonObjectHost
     /// <param name="schemaHandler">The optional schema handler.</param>
     /// <param name="id">The operation identifier.</param>
     /// <returns>The operation identifier.</returns>
-    public BaseJsonOperation RegisterFromMethod<TIn, TOut>(object target, string methodName, BaseJsonOperationSchemaHandler schemaHandler = null, string id = null)
+    public BaseJsonOperation RegisterFromMethod(object target, string methodName, BaseJsonOperationSchemaHandler schemaHandler = null, string id = null)
     {
-        var op = new JsonOperationInfo(JsonOperations.Create<TIn, TOut>(target, target.GetType().GetMethod(methodName), schemaHandler));
+        var op = new JsonOperationInfo(JsonOperations.Create(target, target.GetType().GetMethod(methodName), schemaHandler));
         if (string.IsNullOrWhiteSpace(op.Id)) return null;
         ops[op.Id] = op;
         return op.Operation;

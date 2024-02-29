@@ -21,7 +21,7 @@ public class JsonOperationTest
     public async Task TestOperationAsync()
     {
         var api = new JsonOperationApi();
-        api.RegisterFromMethod<TestDataModel, TestDataModel>(null, typeof(JsonOperationRegistry).GetMethod(nameof(JsonOperationRegistry.DoSomething)));
+        api.RegisterFromMethod(null, typeof(JsonOperationRegistry).GetMethod(nameof(JsonOperationRegistry.DoSomething)));
         api.RegisterFromProperty(null, typeof(JsonOperationRegistry).GetProperty(nameof(JsonOperationRegistry.AnOperation)));
         var desc = JsonOperations.CreateDescription(api);
         Assert.IsNotNull(desc);
