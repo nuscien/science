@@ -283,6 +283,55 @@ internal class InternalMethodJsonOperation : BaseJsonOperation
     }
 }
 
+internal class InternalPropertyJsonOperation : BaseJsonOperation
+{
+    private readonly PropertyInfo propertyInfo;
+    private readonly object target;
+    private BaseJsonOperation operation;
+
+    /// <summary>
+    /// Gets a value indicating whether the operation is valid.
+    /// </summary>
+    internal bool IsValid => operation != null;
+
+    /// <summary>
+    /// Gets or sets the operation identifier.
+    /// </summary>
+    public string Id { get; set; }
+
+    /// <summary>
+    /// Initializes a new instance of the InternalMethodJsonOperation class.
+    /// </summary>
+    /// <param name="target">The target object.</param>
+    /// <param name="property">The property info.</param>
+    /// <param name="id">The operation identifier.</param>
+    public InternalPropertyJsonOperation(object target, PropertyInfo property, string id)
+    {
+        Id = id;
+        if (property == null || !ObjectConvert.TryGetProperty(target, property, out BaseJsonOperation operation)) return;
+        this.operation = operation;
+        this.target = target;
+        propertyInfo = property;
+    }
+
+    /// <inheritdoc />
+    public override Task<JsonObjectNode> ProcessAsync(JsonObjectNode args, object contextValue, CancellationToken cancellationToken = default)
+        => operation.ProcessAsync(args, contextValue, cancellationToken);
+
+    /// <inheritdoc />
+    public override Task<string> ProcessAsync(string args, object contextValue, CancellationToken cancellationToken = default)
+        => operation.ProcessAsync(args, contextValue, cancellationToken);
+
+    /// <inheritdoc />
+    public override JsonOperationDescription CreateDescription()
+    {
+        var desc = JsonOperationDescription.CreateFromProperty(target, propertyInfo, Id);
+        if (string.IsNullOrWhiteSpace(desc?.Id)) return null;
+        JsonOperations.UpdatePath(desc, JsonOperations.GetJsonDescriptionPath(propertyInfo), propertyInfo.ReflectedType);
+        return desc;
+    }
+}
+
 internal class JsonNodeSchemaDescriptionCollection : List<(JsonNodeSchemaDescription, string)>
 {
     public string GetId(JsonNodeSchemaDescription value, string id, JsonObjectNode schemas)

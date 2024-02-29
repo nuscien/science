@@ -334,10 +334,8 @@ public class JsonOperationApi : IJsonObjectHost
     /// <returns>The JSON operation.</returns>
     public BaseJsonOperation RegisterFromProperty(object target, PropertyInfo property, string id = null)
     {
-        if (property == null || !ObjectConvert.TryGetProperty(target, property, out BaseJsonOperation operation)) return null;
-        var desc = JsonOperationDescription.CreateFromProperty(target, property, id);
-        if (string.IsNullOrWhiteSpace(desc?.Id)) return null;
-        var op = new JsonOperationInfo(operation, desc);
+        var op = new JsonOperationInfo(JsonOperations.Create(target, property, id));
+        if (string.IsNullOrWhiteSpace(op.Id)) return null;
         ops[op.Id] = op;
         return op.Operation;
     }
@@ -351,13 +349,10 @@ public class JsonOperationApi : IJsonObjectHost
     /// <returns>The JSON operation.</returns>
     public BaseJsonOperation RegisterFromProperty(object target, string propertyName, string id = null)
     {
+        target ??= this;
         if (target is Type type) return RegisterFromProperty(null, type.GetProperty(propertyName), id);
-        if (string.IsNullOrWhiteSpace(propertyName) || !ObjectConvert.TryGetProperty(target, propertyName, out BaseJsonOperation operation)) return null;
-        var desc = JsonOperationDescription.CreateFromProperty(target, propertyName, id);
-        if (string.IsNullOrWhiteSpace(desc?.Id)) return null;
-        var op = new JsonOperationInfo(operation, desc);
-        ops[op.Id] = op;
-        return op.Operation;
+        type = target.GetType();
+        return RegisterFromProperty(target, type.GetProperty(propertyName));
     }
 
     /// <summary>
@@ -385,8 +380,7 @@ public class JsonOperationApi : IJsonObjectHost
         var properties = type.GetProperties();
         foreach (var property in properties)
         {
-            var path = JsonOperations.GetJsonDescriptionPath(property);
-            if (path == null) continue;
+            if (!typeof(BaseJsonOperation).IsAssignableFrom(property.PropertyType)) continue;
             var operation = RegisterFromProperty(target, property);
             if (operation == null) continue;
             list.Add(operation);
@@ -761,11 +755,10 @@ public class JsonOperationInfo : IJsonOperationDescriptive
     /// Initializes a new instance of the JsonOperationInfo class.
     /// </summary>
     /// <param name="operation">The JSON operation.</param>
-    /// <param name="description">The optional JSON operation description.</param>
-    internal JsonOperationInfo(BaseJsonOperation operation, JsonOperationDescription description = null)
+    internal JsonOperationInfo(BaseJsonOperation operation)
     {
         Operation = operation;
-        OperationDescription = description ?? operation?.CreateDescription() ?? new();
+        OperationDescription = operation?.CreateDescription() ?? new();
     }
 
     internal JsonOperationDescription OperationDescription { get; }

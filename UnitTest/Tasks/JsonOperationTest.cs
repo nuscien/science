@@ -7,6 +7,7 @@ using System.Text;
 using System.Text.Json.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
+using Trivial.Net;
 using Trivial.Text;
 
 namespace Trivial.Tasks;
@@ -34,6 +35,11 @@ public class JsonOperationTest
         Assert.IsNotNull(resp);
         Assert.AreEqual("Unit test", resp.TryGetStringValue("name"));
         Assert.AreEqual(1000, resp.TryGetInt32Value("num"));
+        resp = await api.ProcessAsync("/test/a", HttpMethod.Post, new JsonObjectNode()
+        {
+            { "value", "test" }
+        }, null);
+        Assert.IsTrue(resp.TryGetStringValue("url").Contains("v=test"));
     }
 }
 
@@ -64,7 +70,7 @@ public class TestDataModel
 
 public class TestRoutedJsonOperation : BaseRoutedJsonOperation
 {
-    public TestRoutedJsonOperation() : base("test", "This is a test routed JSON operation.")
+    public TestRoutedJsonOperation() : base(new Uri("https://www.kingcean.net"), "test", "This is a test routed JSON operation.")
     {
         Register("key", "k", "This is a key.");
         Register("value", "v", "This is a value.");
@@ -72,5 +78,14 @@ public class TestRoutedJsonOperation : BaseRoutedJsonOperation
     }
 
     protected override JsonOperationPathAttribute GetPathInfo()
-        => new("/test/a");
+        => new("/test/an");
+
+    protected override Task<JsonObjectNode> SendAsync(JsonHttpClient<JsonObjectNode> http, string url, RoutedJsonOperationContext context, CancellationToken cancellationToken = default)
+    {
+        return Task.FromResult(new JsonObjectNode
+        {
+            { "state", true },
+            { "url", url }
+        });
+    }
 }

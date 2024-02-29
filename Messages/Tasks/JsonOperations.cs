@@ -80,6 +80,19 @@ public static class JsonOperations
     /// <summary>
     /// Creates a JSON operation.
     /// </summary>
+    /// <param name="target">The target object.</param>
+    /// <param name="property">The property info.</param>
+    /// <param name="id">The operation identifier.</param>
+    /// <returns>The JSON operation.</returns>
+    public static BaseJsonOperation Create(object target, PropertyInfo property, string id = null)
+    {
+        var op = new InternalPropertyJsonOperation(target, property, id);
+        return op.IsValid ? op : null;
+    }
+
+    /// <summary>
+    /// Creates a JSON operation.
+    /// </summary>
     /// <typeparam name="TIn">The type of input data.</typeparam>
     /// <typeparam name="TOut">The type of output data.</typeparam>
     /// <param name="handler">The processing handler.</param>
@@ -145,9 +158,20 @@ public static class JsonOperations
     /// <param name="uris">The server URIs.</param>
     /// <returns>A JSON object.</returns>
     public static JsonObjectNode ToJson(this IEnumerable<JsonOperationDescription> col, JsonObjectNode info = null, IEnumerable<Uri> uris = null)
+        => ToJson(null, col, info, uris);
+
+    /// <summary>
+    /// Converts to JSON.
+    /// </summary>
+    /// <param name="baseJson">The base JSON object to fill properties.</param>
+    /// <param name="col">The JSON operation description list.</param>
+    /// <param name="info">The operations information.</param>
+    /// <param name="uris">The server URIs.</param>
+    /// <returns>A JSON object.</returns>
+    public static JsonObjectNode ToJson(JsonObjectNode baseJson, IEnumerable<JsonOperationDescription> col, JsonObjectNode info = null, IEnumerable<Uri> uris = null)
     {
         if (col == null) return null;
-        var json = new JsonObjectNode();
+        var json = baseJson ?? new();
         json.SetValueIfNotNull("info", info);
         if (uris != null) json.SetValue("servers", uris.Select(ele => ele.OriginalString).Where(ele => !string.IsNullOrWhiteSpace(ele)));
         json.SetValue("paths", out JsonObjectNode paths);
@@ -274,7 +298,7 @@ public static class JsonOperations
     {
         if (path != null)
         {
-            d.Data.SetValue(PathProperty, path.Path);
+            d.Data.SetValueIfNotNull(PathProperty, path.Path);
             if (path.HttpMethod != null) d.Data.SetValue(HttpMethodProperty, path.HttpMethod.Method);
         }
         else if (type != null)

@@ -417,7 +417,7 @@ public class BaseRoutedJsonOperation : BaseJsonOperation
         {
             var converter = kvp.Value;
             if (string.IsNullOrWhiteSpace(converter?.ArgumentName)) continue;
-            q[converter.ArgumentName] = converter.Convert(json);
+            q[converter.ArgumentName] = converter.GetArgumentValue(json);
         }
 
         var url = q.ToString(uri);
@@ -549,6 +549,375 @@ public class BaseRoutedJsonOperation : BaseJsonOperation
     /// <param name="context">The context object.</param>
     protected virtual JsonObjectNode OnHttpFailure(FailedHttpException ex, RoutedJsonOperationContext context)
         => null;
+
+    /// <summary>
+    /// Occurs on response JSON parsing failure.
+    /// </summary>
+    /// <param name="ex">The exception</param>
+    /// <param name="context">The context object.</param>
+    protected virtual void OnJsonParsingFailure(JsonException ex, RoutedJsonOperationContext context)
+    {
+    }
+
+    /// <summary>
+    /// Occurs on fill the JSON operation description data.
+    /// </summary>
+    /// <param name="data"></param>
+    protected virtual void OnOperationDescriptionDataFill(JsonObjectNode data)
+    {
+    }
+
+    /// <summary>
+    /// Gets path information.
+    /// </summary>
+    /// <returns>THe path info.</returns>
+    protected virtual JsonOperationPathAttribute GetPathInfo()
+        => null;
+}
+
+/// <summary>
+/// The base JSON API operation of routed web API.
+/// </summary>
+/// <typeparam name="T">The type of result.</typeparam>
+public class BaseRoutedJsonOperation<T> : BaseJsonOperation
+{
+    private readonly Dictionary<string, RoutedJsonOperationMappingItem> dict = new();
+
+    /// <summary>
+    /// Initializes a new instance of the BaseRoutedJsonOperation class.
+    /// </summary>
+    /// <param name="id">The operation identifier.</param>
+    /// <param name="description">The operation description.</param>
+    public BaseRoutedJsonOperation(string id, string description = null)
+    {
+        Id = id;
+        Description = description;
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the BaseRoutedJsonOperation class.
+    /// </summary>
+    /// <param name="uri">The URI of the web API.</param>
+    /// <param name="id">The operation identifier.</param>
+    /// <param name="description">The operation description.</param>
+    public BaseRoutedJsonOperation(Uri uri, string id, string description = null) : this(id, description)
+    {
+        WebApiUri = uri;
+    }
+
+    /// <summary>
+    /// Gets or sets the operation identifier.
+    /// </summary>
+    public string Id { get; }
+
+    /// <summary>
+    /// Gets or sets the URI of the web API.
+    /// </summary>
+    public Uri WebApiUri { get; set; }
+
+    /// <summary>
+    /// Gets or sets the HTTP method.
+    /// </summary>
+    public HttpMethod HttpMethod { get; set; }
+
+    /// <summary>
+    /// Gets or sets the optional operation description.
+    /// </summary>
+    public string Description { get; set; }
+
+    /// <summary>
+    /// Gets or sets the result schema description.
+    /// </summary>
+    public JsonNodeSchemaDescription ResultSchema { get; set; }
+
+    /// <summary>
+    /// Gets or sets the error schema description.
+    /// </summary>
+    public JsonNodeSchemaDescription ErrorSchema { get; set; }
+
+    /// <summary>
+    /// Gets the error codes supported and their description.
+    /// These are following error schema.
+    /// </summary>
+    public Dictionary<int, string> ErrorCodes { get; } = new();
+
+    /// <summary>
+    /// Registers.
+    /// </summary>
+    /// <param name="item">The mapping item.</param>
+    public void Register(RoutedJsonOperationMappingItem item)
+    {
+        if (string.IsNullOrWhiteSpace(item?.PropertyName)) return;
+        dict[item.PropertyName] = item;
+    }
+
+    /// <summary>
+    /// Registers.
+    /// </summary>
+    /// <param name="propertyName">The JSON property name.</param>
+    /// <param name="isPropertyPath">true if the property name is a path; otherwise, false.</param>
+    /// <param name="argumentName">The argument name for routed API.</param>
+    /// <param name="schema">The schema.</param>
+    /// <returns>The mapping item.</returns>
+    public RoutedJsonOperationMappingItem Register(string propertyName, bool isPropertyPath, string argumentName, JsonNodeSchemaDescription schema = null)
+    {
+        if (string.IsNullOrWhiteSpace(propertyName)) return null;
+        var item = new RoutedJsonOperationMappingItem(propertyName, isPropertyPath, argumentName, schema);
+        Register(item);
+        return item;
+    }
+
+    /// <summary>
+    /// Registers.
+    /// </summary>
+    /// <param name="propertyName">The JSON property name.</param>
+    /// <param name="argumentName">The argument name for routed API.</param>
+    /// <param name="schema">The schema.</param>
+    /// <returns>The mapping item.</returns>
+    public RoutedJsonOperationMappingItem Register(string propertyName, string argumentName = null, JsonNodeSchemaDescription schema = null)
+    {
+        if (string.IsNullOrWhiteSpace(propertyName)) return null;
+        var item = new RoutedJsonOperationMappingItem(propertyName, argumentName, schema);
+        Register(item);
+        return item;
+    }
+
+    /// <summary>
+    /// Registers.
+    /// </summary>
+    /// <param name="propertyName">The JSON property name.</param>
+    /// <param name="isPropertyPath">true if the property name is a path; otherwise, false.</param>
+    /// <param name="argumentName">The argument name for routed API.</param>
+    /// <param name="description">The description.</param>
+    /// <returns>The mapping item.</returns>
+    public RoutedJsonOperationMappingItem Register(string propertyName, bool isPropertyPath, string argumentName, string description = null)
+    {
+        if (string.IsNullOrWhiteSpace(propertyName)) return null;
+        var item = new RoutedJsonOperationMappingItem(propertyName, isPropertyPath, argumentName, description);
+        Register(item);
+        return item;
+    }
+
+    /// <summary>
+    /// Registers.
+    /// </summary>
+    /// <param name="propertyName">The JSON property name.</param>
+    /// <param name="argumentName">The argument name for routed API.</param>
+    /// <param name="description">The description.</param>
+    /// <returns>The mapping item.</returns>
+    public RoutedJsonOperationMappingItem Register(string propertyName, string argumentName = null, string description = null)
+    {
+        if (string.IsNullOrWhiteSpace(propertyName)) return null;
+        var item = new RoutedJsonOperationMappingItem(propertyName, argumentName, description);
+        Register(item);
+        return item;
+    }
+
+    /// <summary>
+    /// Removes the value with the specified key from the mapping.
+    /// </summary>
+    /// <param name="propertyName">The property name.</param>
+    /// <returns>true if the element is successfully found and removed; otherwise, false. This method returns false if key is not found in the mapping.</returns>
+    public bool Remove(string propertyName)
+        => propertyName != null && dict.Remove(propertyName);
+
+    /// <summary>
+    /// Gets the specific mapping item.
+    /// </summary>
+    /// <param name="propertyName">The property name.</param>
+    /// <returns>The mapping item; or null, if non-exist.</returns>
+    public RoutedJsonOperationMappingItem Get(string propertyName)
+        => propertyName != null && dict.TryGetValue(propertyName, out var item) ? item : null;
+
+    /// <summary>
+    /// Tests if has the specific mapping item.
+    /// </summary>
+    /// <param name="propertyName">The property name.</param>
+    /// <returns>true if contains; otherwise, false.</returns>
+    public bool Contains(string propertyName)
+        => propertyName != null && dict.TryGetValue(propertyName, out _);
+
+    /// <summary>
+    /// Tests if has the specific mapping item.
+    /// </summary>
+    /// <param name="item">The property to test.</param>
+    /// <returns>true if contains; otherwise, false.</returns>
+    public bool Contains(RoutedJsonOperationMappingItem item)
+        => !string.IsNullOrEmpty(item?.PropertyName) && Get(item.PropertyName) == item;
+
+    /// <summary>
+    /// Processes.
+    /// </summary>
+    /// <param name="json">The input data.</param>
+    /// <param name="contextValue">The context value.</param>
+    /// <param name="cancellationToken">The optional cancellation token.</param>
+    /// <returns>The response.</returns>
+    /// <exception cref="ArgumentNullException">json was null.</exception>
+    /// <exception cref="InvalidOperationException">The URI of the Web API was null or invalid; or the data is invalid.</exception>
+    /// <exception cref="FailedHttpException">HTTP failure.</exception>
+    /// <exception cref="JsonException">The response content is not JSON.</exception>
+    public override async Task<JsonObjectNode> ProcessAsync(JsonObjectNode json, object contextValue, CancellationToken cancellationToken = default)
+    {
+        if (json == null) throw new ArgumentNullException(nameof(json), "json was null.");
+        var args = json.ToString();
+        var result = await ProcessAsync(args, contextValue, cancellationToken);
+        return JsonObjectNode.Parse(result);
+    }
+
+    /// <summary>
+    /// Processes.
+    /// </summary>
+    /// <param name="args">The input data.</param>
+    /// <param name="contextValue">The context value.</param>
+    /// <param name="cancellationToken">The optional cancellation token.</param>
+    /// <returns>The response.</returns>
+    /// <exception cref="ArgumentNullException">args was null.</exception>
+    /// <exception cref="ArgumentException">args was invalid.</exception>
+    /// <exception cref="InvalidOperationException">The URI of the Web API was null or invalid; or the data is invalid.</exception>
+    /// <exception cref="FailedHttpException">HTTP failure.</exception>
+    /// <exception cref="JsonException">args or response content is not JSON.</exception>
+    public override async Task<string> ProcessAsync(string args, object contextValue, CancellationToken cancellationToken = default)
+    {
+        if (args == null) throw new ArgumentNullException(nameof(args), "args was null.");
+        var uri = WebApiUri ?? throw new InvalidOperationException("The URI of the Web API does not configured.", new ArgumentNullException(nameof(WebApiUri), "The URI of the Web API was null."));
+        var q = new QueryData();
+        var json = JsonObjectNode.Parse(args) ?? throw new ArgumentException(nameof(args), "args was not a JSON object format string.");
+        var context = new RoutedJsonOperationContext(json, contextValue, q);
+        foreach (var kvp in dict)
+        {
+            var converter = kvp.Value;
+            if (string.IsNullOrWhiteSpace(converter?.ArgumentName)) continue;
+            q[converter.ArgumentName] = converter.GetArgumentValue(json);
+        }
+
+        var url = q.ToString(uri);
+        url = FormatUrl(url, context);
+        if (url == null) throw new InvalidOperationException("The URI of the Web API or the JSON input data is invalid.");
+        var http = CreateHttpClient(context) ?? new();
+        try
+        {
+            var resp = await SendAsync(http, url, context, cancellationToken);
+            var result = await ProcessResponseAsync(resp, context, cancellationToken);
+            return JsonSerializer.Serialize(result);
+        }
+        catch (FailedHttpException ex)
+        {
+            OnHttpFailure(ex, context);
+            throw;
+        }
+        catch (HttpRequestException ex)
+        {
+            var ex2 = new FailedHttpException(null, ex.Message, ex);
+            OnHttpFailure(ex2, context);
+            throw ex2;
+        }
+        catch (JsonException ex)
+        {
+            OnJsonParsingFailure(ex, context);
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// Creates operation description.
+    /// </summary>
+    /// <returns>The operation description.</returns>
+    public override JsonOperationDescription CreateDescription()
+    {
+        var type = GetType();
+        var desc = new JsonOperationDescription()
+        {
+            Id = Id ?? (type == typeof(BaseRoutedJsonOperation) ? null : type.Name),
+            Description = Description ?? StringExtensions.GetDescription(type),
+            ArgumentSchema = CreateArgumentSchema(),
+            ResultSchema = ResultSchema,
+            ErrorSchema = ErrorSchema,
+        };
+        desc.Data.SetValue("httpError", out JsonObjectNode errors);
+        foreach (var error in ErrorCodes)
+        {
+            errors.SetValueIfNotEmpty(error.Key.ToString("g"), error.Value);
+        }
+
+        JsonOperations.UpdatePath(desc, GetPathInfo(), type);
+        OnOperationDescriptionDataFill(desc.Data);
+        return desc;
+    }
+
+    /// <summary>
+    /// Creates the JSON schema.
+    /// </summary>
+    /// <returns>The JSON schema description instance.</returns>
+    public virtual JsonObjectSchemaDescription CreateArgumentSchema()
+    {
+        var schema = new JsonObjectSchemaDescription();
+        foreach (var kvp in dict)
+        {
+            var converter = kvp.Value;
+            if (string.IsNullOrWhiteSpace(converter?.ArgumentName)) continue;
+            var desc = converter.Schema ?? CreateDefaultPropertySchema();
+            if (desc != null) schema.Properties[converter.ArgumentName] = desc;
+        }
+
+        return schema;
+    }
+
+    /// <summary>
+    /// Formats the URL to send request.
+    /// </summary>
+    /// <param name="url">The URL.</param>
+    /// <param name="context">The context object.</param>
+    /// <returns>A new URL.</returns>
+    /// <exception cref="InvalidOperationException">The data is invalid.</exception>
+    protected virtual string FormatUrl(string url, RoutedJsonOperationContext context)
+        => url;
+
+    /// <summary>
+    /// Processes the response data.
+    /// </summary>
+    /// <param name="json">The response content.</param>
+    /// <param name="context">The context object.</param>
+    /// <param name="cancellationToken">The optional cancellation token.</param>
+    /// <returns>The result.</returns>
+    protected virtual Task<T> ProcessResponseAsync(string json, RoutedJsonOperationContext context, CancellationToken cancellationToken = default)
+        => Task.FromResult(JsonSerializer.Deserialize<T>(json));
+
+    /// <summary>
+    /// Creates the default property schema.
+    /// </summary>
+    /// <returns>The schema description instance.</returns>
+    protected virtual JsonNodeSchemaDescription CreateDefaultPropertySchema()
+        => new JsonStringSchemaDescription();
+
+    /// <summary>
+    /// Creates a JSON HTTP client.
+    /// </summary>
+    /// <param name="context">The context object.</param>
+    /// <returns>A JSON HTTP client.</returns>
+    protected virtual JsonHttpClient<string> CreateHttpClient(RoutedJsonOperationContext context)
+        => new();
+
+    /// <summary>
+    /// Sends HTTP request and receives JSON result.
+    /// </summary>
+    /// <param name="http">The JSON HTTP client.</param>
+    /// <param name="url">The URL.</param>
+    /// <param name="context">The context object.</param>
+    /// <param name="cancellationToken">The optional cancellation token.</param>
+    /// <returns>The result.</returns>
+    /// <exception cref="FailedHttpException">HTTP failure.</exception>
+    /// <exception cref="JsonException">The response content is not JSON.</exception>
+    protected virtual Task<string> SendAsync(JsonHttpClient<string> http, string url, RoutedJsonOperationContext context, CancellationToken cancellationToken = default)
+        => http.SendAsync(HttpMethod, url, cancellationToken);
+
+    /// <summary>
+    /// Occurs on HTTP failure.
+    /// </summary>
+    /// <param name="ex">The exception</param>
+    /// <param name="context">The context object.</param>
+    protected virtual void OnHttpFailure(FailedHttpException ex, RoutedJsonOperationContext context)
+    {
+    }
 
     /// <summary>
     /// Occurs on response JSON parsing failure.
