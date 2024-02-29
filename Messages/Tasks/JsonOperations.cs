@@ -279,7 +279,7 @@ public static class JsonOperations
         }
         else if (type != null)
         {
-            d.Data.SetValue(PathProperty, type.Name);
+            d.Data.SetValue(PathProperty, type.Name.Replace('\'', '-').Replace('`', '-').Replace('.', '-').Replace(',', '-'));
         }
     }
 
@@ -330,10 +330,11 @@ public static class JsonOperations
     {
         var type = obj.GetType();
         var props = type.GetProperties();
+        var typeName = type.Name.Replace('\'', '-').Replace('`', '-').Replace('.', '-').Replace(',', '-');
         foreach (var prop in props)
         {
             var d = JsonOperationDescription.CreateFromProperty(obj, prop.Name);
-            if (d == null || !UpdateOperation(d, prop, string.Concat(type.Name, '-', prop.Name))) continue;
+            if (d == null || !UpdateOperation(d, prop, string.Concat(typeName, '-', prop.Name))) continue;
             yield return d;
         }
 
@@ -382,10 +383,11 @@ public static class JsonOperations
         if (type == null) yield break;
         var methods = type.GetMethods();
         handler ??= SchemaHandler;
+        var typeName = type.Name.Replace('\'', '-').Replace('`', '-').Replace('.', '-').Replace(',', '-');
         foreach (var method in methods)
         {
             var d = JsonOperationDescription.Create(method, null, handler);
-            if (!UpdateOperation(d, method, string.Concat(type.Name, '-', method.Name))) continue;
+            if (!UpdateOperation(d, method, string.Concat(typeName, '-', method.Name))) continue;
             handler.OnCreate(method, d);
             yield return d;
         }

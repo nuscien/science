@@ -47,6 +47,11 @@ public class JsonOperationApi : IJsonObjectHost
     public HttpMethod DefaultHttpMethod { get; set; } = HttpMethod.Post;
 
     /// <summary>
+    /// Gets all identifiers of the operations registered.
+    /// </summary>
+    public IEnumerable<string> Ids => ops.Keys;
+
+    /// <summary>
     /// Processes.
     /// </summary>
     /// <param name="input">The input info.</param>
@@ -331,7 +336,7 @@ public class JsonOperationApi : IJsonObjectHost
     {
         if (property == null || !ObjectConvert.TryGetProperty(target, property, out BaseJsonOperation operation)) return null;
         var desc = JsonOperationDescription.CreateFromProperty(target, property, id);
-        if (string.IsNullOrWhiteSpace(desc.Id)) return null;
+        if (string.IsNullOrWhiteSpace(desc?.Id)) return null;
         var op = new JsonOperationInfo(operation, desc);
         ops[op.Id] = op;
         return op.Operation;
@@ -349,7 +354,7 @@ public class JsonOperationApi : IJsonObjectHost
         if (target is Type type) return RegisterFromProperty(null, type.GetProperty(propertyName), id);
         if (string.IsNullOrWhiteSpace(propertyName) || !ObjectConvert.TryGetProperty(target, propertyName, out BaseJsonOperation operation)) return null;
         var desc = JsonOperationDescription.CreateFromProperty(target, propertyName, id);
-        if (string.IsNullOrWhiteSpace(desc.Id)) return null;
+        if (string.IsNullOrWhiteSpace(desc?.Id)) return null;
         var op = new JsonOperationInfo(operation, desc);
         ops[op.Id] = op;
         return op.Operation;
@@ -385,6 +390,24 @@ public class JsonOperationApi : IJsonObjectHost
             var operation = RegisterFromProperty(target, property);
             if (operation == null) continue;
             list.Add(operation);
+        }
+
+        return list;
+    }
+
+    /// <summary>
+    /// Registers all operations.
+    /// </summary>
+    /// <param name="operations">The operation list to register.</param>
+    /// <returns>The operation identifier list.</returns>
+    public IList<string> RegisterRange(IEnumerable<BaseJsonOperation> operations)
+    {
+        var list = new List<string>();
+        if (operations == null) return list;
+        foreach (var operation in operations)
+        {
+            var id = Register(operation);
+            list.Add(id);
         }
 
         return list;

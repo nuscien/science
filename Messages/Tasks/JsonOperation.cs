@@ -110,7 +110,7 @@ public abstract class BaseJsonOperation<TIn, TOut> : BaseJsonOperation
     public override JsonOperationDescription CreateDescription()
     {
         var type = GetType();
-        var method = type.GetMethod("ProcessAsync", [typeof(TIn), typeof(object), typeof(CancellationToken)]);
+        var method = type.GetMethod(nameof(ProcessAsync), [typeof(TIn), typeof(object), typeof(CancellationToken)]);
         var handler = SchemaHandler ?? JsonOperations.SchemaHandler;
         var desc = JsonOperationDescription.Create(method, null, handler);
         if (desc == null) return null;

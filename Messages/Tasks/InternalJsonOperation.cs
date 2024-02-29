@@ -23,6 +23,7 @@ internal class InternalJsonOperation<TIn, TOut> : BaseJsonOperation<TIn, TOut>
     /// Initializes a new instance of the InternalJsonOperation class.
     /// </summary>
     /// <param name="handler">The processing handler.</param>
+    /// <param name="id">The operation identifier.</param>
     public InternalJsonOperation(Func<TIn, object, CancellationToken, Task<TOut>> handler, string id = null)
     {
         Id = id;
@@ -64,6 +65,7 @@ internal class InternalSimpleJsonOperation<TIn, TOut> : BaseJsonOperation<TIn, T
     /// Initializes a new instance of the InternalSimpleJsonOperation class.
     /// </summary>
     /// <param name="handler">The processing handler.</param>
+    /// <param name="id">The operation identifier.</param>
     public InternalSimpleJsonOperation(Func<TIn, CancellationToken, Task<TOut>> handler, string id = null)
     {
         Id = id;
@@ -105,6 +107,7 @@ internal class InternalSyncJsonOperation<TIn, TOut> : BaseJsonOperation<TIn, TOu
     /// Initializes a new instance of the InternalSyncJsonOperation class.
     /// </summary>
     /// <param name="handler">The processing handler.</param>
+    /// <param name="id">The operation identifier.</param>
     public InternalSyncJsonOperation(Func<TIn, object, TOut> handler, string id = null)
     {
         Id = id;
@@ -146,6 +149,7 @@ internal class InternalSimpleSyncJsonOperation<TIn, TOut> : BaseJsonOperation<TI
     /// Initializes a new instance of the InternalSimpleSyncJsonOperation class.
     /// </summary>
     /// <param name="handler">The processing handler.</param>
+    /// <param name="id">The operation identifier.</param>
     public InternalSimpleSyncJsonOperation(Func<TIn, TOut> handler, string id = null)
     {
         Id = id;
@@ -180,8 +184,8 @@ internal class InternalSimpleSyncJsonOperation<TIn, TOut> : BaseJsonOperation<TI
 
 internal class InternalMethodJsonOperation : BaseJsonOperation
 {
-    private Func<object, object, CancellationToken, Task<object>> handler;
-    private MethodInfo methodInfo;
+    private readonly Func<object, object, CancellationToken, Task<object>> handler;
+    private readonly MethodInfo methodInfo;
 
     /// <summary>
     /// Gets a value indicating whether the operation is valid.
