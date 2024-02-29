@@ -21,8 +21,7 @@ public class JsonOperationTest
     public async Task TestOperationAsync()
     {
         var api = new JsonOperationApi();
-        api.RegisterFromMethod(null, typeof(JsonOperationRegistry).GetMethod(nameof(JsonOperationRegistry.DoSomething)));
-        api.RegisterFromProperty(null, typeof(JsonOperationRegistry).GetProperty(nameof(JsonOperationRegistry.AnOperation)));
+        api.RegisterRange(typeof(JsonOperationRegistry));
         var desc = JsonOperations.CreateDescription(api);
         Assert.IsNotNull(desc);
         var yaml = desc.ToJson().ToYamlString();

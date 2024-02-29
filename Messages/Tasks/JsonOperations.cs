@@ -62,7 +62,6 @@ public static class JsonOperations
     /// <summary>
     /// Creates a JSON operation.
     /// </summary>
-    /// <typeparam name="TOut">The type of output data.</typeparam>
     /// <param name="target">The target object.</param>
     /// <param name="method">The method info.</param>
     /// <param name="schemaHandler">The optional schema handler.</param>

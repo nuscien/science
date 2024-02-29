@@ -281,10 +281,43 @@ public class JsonOperationApi : IJsonObjectHost
     /// <returns>The operation identifier.</returns>
     public BaseJsonOperation RegisterFromMethod(object target, string methodName, BaseJsonOperationSchemaHandler schemaHandler = null, string id = null)
     {
-        var op = new JsonOperationInfo(JsonOperations.Create(target, target.GetType().GetMethod(methodName), schemaHandler));
-        if (string.IsNullOrWhiteSpace(op.Id)) return null;
-        ops[op.Id] = op;
-        return op.Operation;
+        MethodInfo method;
+        if (target is Type type)
+        {
+            method = type.GetMethod(methodName);
+            target = null;
+        }
+        else
+        {
+            method = target.GetType().GetMethod(methodName);
+        }
+
+        return RegisterFromMethod(target, method, schemaHandler, id);
+    }
+
+    /// <summary>
+    /// Registers.
+    /// </summary>
+    /// <param name="target">The target object.</param>
+    /// <param name="methodName">The method name.</param>
+    /// <param name="parameterTypes">An array of type objects representing the number, order, and type of the parameters for the method to get; or an empty array of type objects to get a method that takes no parameters.</param>
+    /// <param name="schemaHandler">The optional schema handler.</param>
+    /// <param name="id">The operation identifier.</param>
+    /// <returns>The operation identifier.</returns>
+    public BaseJsonOperation RegisterFromMethod(object target, string methodName, Type[] parameterTypes, BaseJsonOperationSchemaHandler schemaHandler = null, string id = null)
+    {
+        MethodInfo method;
+        if (target is Type type)
+        {
+            method = type.GetMethod(methodName, parameterTypes);
+            target = null;
+        }
+        else
+        {
+            method = target.GetType().GetMethod(methodName, parameterTypes);
+        }
+
+        return RegisterFromMethod(target, method, schemaHandler, id);
     }
 
     /// <summary>
@@ -313,12 +346,48 @@ public class JsonOperationApi : IJsonObjectHost
     /// <returns>The JSON operation.</returns>
     public BaseJsonOperation RegisterFromProperty(object target, string propertyName, string id = null)
     {
+        if (target is Type type) return RegisterFromProperty(null, type.GetProperty(propertyName), id);
         if (string.IsNullOrWhiteSpace(propertyName) || !ObjectConvert.TryGetProperty(target, propertyName, out BaseJsonOperation operation)) return null;
         var desc = JsonOperationDescription.CreateFromProperty(target, propertyName, id);
         if (string.IsNullOrWhiteSpace(desc.Id)) return null;
         var op = new JsonOperationInfo(operation, desc);
         ops[op.Id] = op;
         return op.Operation;
+    }
+
+    /// <summary>
+    /// Registers all members with path info.
+    /// </summary>
+    /// <param name="target">The target object.</param>
+    /// <param name="schemaHandler">The optional schema handler.</param>
+    /// <returns>The JSON operation list registered.</returns>
+    public IList<BaseJsonOperation> RegisterRange(object target, BaseJsonOperationSchemaHandler schemaHandler = null)
+    {
+        var list = new List<BaseJsonOperation>();
+        if (target == null) return list;
+        if (target is Type type) target = null;
+        else type = target.GetType();
+        var methods = type.GetMethods();
+        foreach (var method in methods)
+        {
+            var path = JsonOperations.GetJsonDescriptionPath(method);
+            if (path == null) continue;
+            var operation = RegisterFromMethod(target, method, schemaHandler);
+            if (operation == null) continue;
+            list.Add(operation);
+        }
+
+        var properties = type.GetProperties();
+        foreach (var property in properties)
+        {
+            var path = JsonOperations.GetJsonDescriptionPath(property);
+            if (path == null) continue;
+            var operation = RegisterFromProperty(target, property);
+            if (operation == null) continue;
+            list.Add(operation);
+        }
+
+        return list;
     }
 
     /// <summary>
