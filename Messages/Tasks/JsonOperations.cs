@@ -25,6 +25,7 @@ public static class JsonOperations
 {
     internal const string PathProperty = "path";
     internal const string HttpMethodProperty = "httpMethod";
+    internal const string HttpErrorProperty = "httpError";
 
     internal static BaseJsonOperationSchemaHandler SchemaHandler { get; } = new();
 
@@ -204,7 +205,7 @@ public static class JsonOperations
             
             // Response
             SetResponseContentSchema(responseBody, 200, string.Concat("#/components/schemas/", opRespKey), item.Data.TryGetStringTrimmedValue("httpRespDesc", true) ?? "Successful resposne.");
-            var errorResponse = item.Data.TryGetObjectValue("httpError");
+            var errorResponse = item.Data.TryGetObjectValue(HttpErrorProperty);
             if (errorResponse == null || item.ErrorSchema == null) continue;
             foreach (var errorItem in errorResponse)
             {

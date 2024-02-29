@@ -465,7 +465,7 @@ public class BaseRoutedJsonOperation : BaseJsonOperation
             ResultSchema = ResultSchema,
             ErrorSchema = ErrorSchema,
         };
-        desc.Data.SetValue("httpError", out JsonObjectNode errors);
+        desc.Data.SetValue(JsonOperations.HttpErrorProperty, out JsonObjectNode errors);
         foreach (var error in ErrorCodes)
         {
             errors.SetValueIfNotEmpty(error.Key.ToString("g"), error.Value);
@@ -624,11 +624,6 @@ public class BaseRoutedJsonOperation<T> : BaseJsonOperation
     /// Gets or sets the optional operation description.
     /// </summary>
     public string Description { get; set; }
-
-    /// <summary>
-    /// Gets or sets the result schema description.
-    /// </summary>
-    public JsonNodeSchemaDescription ResultSchema { get; set; }
 
     /// <summary>
     /// Gets or sets the error schema description.
@@ -830,10 +825,10 @@ public class BaseRoutedJsonOperation<T> : BaseJsonOperation
             Id = Id ?? (type == typeof(BaseRoutedJsonOperation) ? null : type.Name),
             Description = Description ?? StringExtensions.GetDescription(type),
             ArgumentSchema = CreateArgumentSchema(),
-            ResultSchema = ResultSchema,
+            ResultSchema = CreateResultSchema(),
             ErrorSchema = ErrorSchema,
         };
-        desc.Data.SetValue("httpError", out JsonObjectNode errors);
+        desc.Data.SetValue(JsonOperations.HttpErrorProperty, out JsonObjectNode errors);
         foreach (var error in ErrorCodes)
         {
             errors.SetValueIfNotEmpty(error.Key.ToString("g"), error.Value);
@@ -845,7 +840,7 @@ public class BaseRoutedJsonOperation<T> : BaseJsonOperation
     }
 
     /// <summary>
-    /// Creates the JSON schema.
+    /// Creates the JSON schema for argument.
     /// </summary>
     /// <returns>The JSON schema description instance.</returns>
     public virtual JsonObjectSchemaDescription CreateArgumentSchema()
@@ -861,6 +856,13 @@ public class BaseRoutedJsonOperation<T> : BaseJsonOperation
 
         return schema;
     }
+
+    /// <summary>
+    /// Creates the JSON schema for result.
+    /// </summary>
+    /// <returns>The JSON schema description instance.</returns>
+    public virtual JsonNodeSchemaDescription CreateResultSchema()
+        => JsonValues.CreateSchema(typeof(T));
 
     /// <summary>
     /// Formats the URL to send request.
