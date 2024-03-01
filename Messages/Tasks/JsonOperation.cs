@@ -22,22 +22,22 @@ public abstract class BaseJsonOperation : IJsonOperationDescriptive
     /// <summary>
     /// Processes.
     /// </summary>
-    /// <param name="args">The arguments.</param>
+    /// <param name="arguments">The arguments.</param>
     /// <param name="contextValue">The context value.</param>
     /// <param name="cancellationToken">The optional cancellation token.</param>
     /// <returns>The result.</returns>
-    public abstract Task<JsonObjectNode> ProcessAsync(JsonObjectNode args, object contextValue, CancellationToken cancellationToken = default);
+    public abstract Task<JsonObjectNode> ProcessAsync(JsonObjectNode arguments, object contextValue, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Processes.
     /// </summary>
-    /// <param name="args">The arguments.</param>
+    /// <param name="arguments">The arguments.</param>
     /// <param name="contextValue">The context value.</param>
     /// <param name="cancellationToken">The optional cancellation token.</param>
     /// <returns>The result.</returns>
-    public virtual async Task<string> ProcessAsync(string args, object contextValue, CancellationToken cancellationToken = default)
+    public virtual async Task<string> ProcessAsync(string arguments, object contextValue, CancellationToken cancellationToken = default)
     {
-        var result = await ProcessAsync(JsonObjectNode.Parse(args), contextValue, cancellationToken);
+        var result = await ProcessAsync(JsonObjectNode.Parse(arguments), contextValue, cancellationToken);
         return JsonSerializer.Serialize(result);
     }
 
@@ -69,37 +69,37 @@ public abstract class BaseJsonOperation<TIn, TOut> : BaseJsonOperation
     /// <summary>
     /// Processes.
     /// </summary>
-    /// <param name="args">The arguments.</param>
+    /// <param name="arguments">The arguments.</param>
     /// <param name="contextValue">The context value.</param>
     /// <param name="cancellationToken">The optional cancellation token.</param>
     /// <returns>The result.</returns>
-    public abstract Task<TOut> ProcessAsync(TIn args, object contextValue, CancellationToken cancellationToken = default);
+    public abstract Task<TOut> ProcessAsync(TIn arguments, object contextValue, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Processes.
     /// </summary>
-    /// <param name="args">The arguments.</param>
+    /// <param name="arguments">The arguments.</param>
     /// <param name="contextValue">The context value.</param>
     /// <param name="cancellationToken">The optional cancellation token.</param>
     /// <returns>The result.</returns>
-    public override async Task<JsonObjectNode> ProcessAsync(JsonObjectNode args, object contextValue, CancellationToken cancellationToken = default)
+    public override async Task<JsonObjectNode> ProcessAsync(JsonObjectNode arguments, object contextValue, CancellationToken cancellationToken = default)
     {
-        if (args == null) return null;
-        var result = await ProcessAsync(args.Deserialize<TIn>(), contextValue, cancellationToken);
+        if (arguments == null) return null;
+        var result = await ProcessAsync(arguments.Deserialize<TIn>(), contextValue, cancellationToken);
         return JsonObjectNode.ConvertFrom(result);
     }
 
     /// <summary>
     /// Processes.
     /// </summary>
-    /// <param name="args">The arguments.</param>
+    /// <param name="arguments">The arguments.</param>
     /// <param name="contextValue">The context value.</param>
     /// <param name="cancellationToken">The optional cancellation token.</param>
     /// <returns>The result.</returns>
-    public override async Task<string> ProcessAsync(string args, object contextValue, CancellationToken cancellationToken = default)
+    public override async Task<string> ProcessAsync(string arguments, object contextValue, CancellationToken cancellationToken = default)
     {
-        if (string.IsNullOrEmpty(args)) return null;
-        var result = await ProcessAsync(JsonSerializer.Deserialize<TIn>(args), contextValue, cancellationToken);
+        if (string.IsNullOrEmpty(arguments)) return null;
+        var result = await ProcessAsync(JsonSerializer.Deserialize<TIn>(arguments), contextValue, cancellationToken);
         return JsonSerializer.Serialize(result);
     }
 

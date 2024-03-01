@@ -169,22 +169,22 @@ public class RoutedJsonOperationContext
     /// <summary>
     /// Initializes a new instance of the RoutedJsonOperationContext class.
     /// </summary>
-    /// <param name="args">The arguments.</param>
-    public RoutedJsonOperationContext(JsonObjectNode args)
+    /// <param name="arguments">The arguments.</param>
+    public RoutedJsonOperationContext(JsonObjectNode arguments)
     {
-        Arguments = args;
+        Arguments = arguments;
         Query = new();
     }
 
     /// <summary>
     /// Initializes a new instance of the RoutedJsonOperationContext class.
     /// </summary>
-    /// <param name="args">The arguments.</param>
+    /// <param name="arguments">The arguments.</param>
     /// <param name="value">The context value.</param>
     /// <param name="q">The query data.</param>
-    public RoutedJsonOperationContext(JsonObjectNode args, object value, QueryData q)
+    public RoutedJsonOperationContext(JsonObjectNode arguments, object value, QueryData q)
     {
-        Arguments = args;
+        Arguments = arguments;
         Value = value;
         Query = q ?? new();
     }
@@ -262,7 +262,7 @@ public class BaseRoutedJsonOperation : BaseJsonOperation
     public string Id { get; }
 
     /// <summary>
-    /// Gets or sets the URI of the web API.
+    /// Gets or sets the base URI of the web API.
     /// </summary>
     public Uri WebApiUri { get; set; }
 
@@ -762,21 +762,21 @@ public class BaseRoutedJsonOperation<T> : BaseJsonOperation
     /// <summary>
     /// Processes.
     /// </summary>
-    /// <param name="args">The input data.</param>
+    /// <param name="arguments">The input data.</param>
     /// <param name="contextValue">The context value.</param>
     /// <param name="cancellationToken">The optional cancellation token.</param>
     /// <returns>The response.</returns>
-    /// <exception cref="ArgumentNullException">args was null.</exception>
-    /// <exception cref="ArgumentException">args was invalid.</exception>
+    /// <exception cref="ArgumentNullException">arguments was null.</exception>
+    /// <exception cref="ArgumentException">arguments was invalid.</exception>
     /// <exception cref="InvalidOperationException">The URI of the Web API was null or invalid; or the data is invalid.</exception>
     /// <exception cref="FailedHttpException">HTTP failure.</exception>
-    /// <exception cref="JsonException">args or response content is not JSON.</exception>
-    public override async Task<string> ProcessAsync(string args, object contextValue, CancellationToken cancellationToken = default)
+    /// <exception cref="JsonException">arguments or response content is not JSON.</exception>
+    public override async Task<string> ProcessAsync(string arguments, object contextValue, CancellationToken cancellationToken = default)
     {
-        if (args == null) throw new ArgumentNullException(nameof(args), "args was null.");
+        if (arguments == null) throw new ArgumentNullException(nameof(arguments), "args was null.");
         var uri = WebApiUri ?? throw new InvalidOperationException("The URI of the Web API does not configured.", new ArgumentNullException(nameof(WebApiUri), "The URI of the Web API was null."));
         var q = new QueryData();
-        var json = JsonObjectNode.Parse(args) ?? throw new ArgumentException(nameof(args), "args was not a JSON object format string.");
+        var json = JsonObjectNode.Parse(arguments) ?? throw new ArgumentException(nameof(arguments), "args was not a JSON object format string.");
         var context = new RoutedJsonOperationContext(json, contextValue, q);
         foreach (var kvp in dict)
         {

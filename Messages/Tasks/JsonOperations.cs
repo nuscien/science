@@ -171,7 +171,7 @@ public static class JsonOperations
     /// <returns>A JSON object.</returns>
     public static JsonObjectNode ToJson(JsonObjectNode baseJson, IEnumerable<JsonOperationDescription> col, JsonObjectNode info = null, IEnumerable<Uri> uris = null)
     {
-        if (col == null) return null;
+        if (col == null) return baseJson;
         var json = baseJson ?? new();
         json.SetValueIfNotNull("info", info);
         if (uris != null) json.SetValue("servers", uris.Select(ele => ele.OriginalString).Where(ele => !string.IsNullOrWhiteSpace(ele)));
@@ -302,7 +302,7 @@ public static class JsonOperations
             d.Data.SetValueIfNotNull(PathProperty, path.Path);
             if (path.HttpMethod != null) d.Data.SetValue(HttpMethodProperty, path.HttpMethod.Method);
         }
-        else if (type != null)
+        else if (type != null && !d.Data.ContainsKey(PathProperty))
         {
             d.Data.SetValue(PathProperty, type.Name.Replace('\'', '-').Replace('`', '-').Replace('.', '-').Replace(',', '-'));
         }
