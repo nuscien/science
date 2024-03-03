@@ -1,8 +1,10 @@
 # Text
 
-In `Trivial.Text` namespace of `Trivial.dll` [library](../).
+In `Trivial.Text` namespace of `Trivial.Maths.dll` library.
 
-- [JSON](./json)
-- [CSV](./csv)
-- [String utilities](./string)
-- [Chinese Pinyin](./pinyin)
+- [String collection operators](./string)
+
+In `Trivial.Text` namespace of `Trivial.Messages.dll` library.
+
+- [Extended chat](./chat)
+- [Locale JSON property](./json)

@@ -13,9 +13,9 @@ using Trivial.Text;
 namespace Trivial.Users
 {
     /// <summary>
-    /// Security entity types.
+    /// Security principal entity types.
     /// </summary>
-    public enum SecurityEntityTypes : byte
+    public enum PrincipalEntityTypes : byte
     {
         /// <summary>
         /// Unknown.
@@ -28,12 +28,12 @@ namespace Trivial.Users
         User = 1,
 
         /// <summary>
-        /// User group.
+        /// User group or role.
         /// </summary>
         Group = 2,
 
         /// <summary>
-        /// Service.
+        /// App or service.
         /// </summary>
         Service = 3,
 
@@ -43,8 +43,18 @@ namespace Trivial.Users
         Bot = 4,
 
         /// <summary>
+        /// Authenticated device.
+        /// </summary>
+        Device = 5,
+
+        /// <summary>
         /// The special agent.
         /// </summary>
         Agent = 6,
+
+        /// <summary>
+        /// The other type.
+        /// </summary>
+        Other = 63,
     }
 }

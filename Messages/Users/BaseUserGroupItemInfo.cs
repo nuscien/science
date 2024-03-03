@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Runtime.InteropServices;
@@ -16,13 +17,13 @@ namespace Trivial.Users;
 /// <summary>
 /// The user group item information.
 /// </summary>
-public class BaseUserGroupItemInfo : BaseSecurityEntityInfo
+public class BaseUserGroupItemInfo : BasePrincipalEntityInfo
 {
     /// <summary>
     /// Initializes a new instance of the BaseUserGroupItemInfo class.
     /// </summary>
     public BaseUserGroupItemInfo()
-        : base(SecurityEntityTypes.Group)
+        : base(PrincipalEntityTypes.Group)
     {
     }
 
@@ -30,7 +31,7 @@ public class BaseUserGroupItemInfo : BaseSecurityEntityInfo
     /// Initializes a new instance of the BaseUserGroupItemInfo class.
     /// </summary>
     public BaseUserGroupItemInfo(string id, string nickname, Uri avatar = null)
-        : base(SecurityEntityTypes.Group, id, nickname, avatar)
+        : base(PrincipalEntityTypes.Group, id, nickname, avatar)
     {
     }
 
@@ -39,15 +40,16 @@ public class BaseUserGroupItemInfo : BaseSecurityEntityInfo
     /// </summary>
     /// <param name="json">The JSON object to parse.</param>
     public BaseUserGroupItemInfo(JsonObjectNode json)
-        : base(SecurityEntityTypes.Group, json)
+        : base(PrincipalEntityTypes.Group, json)
     {
         if (json == null) return;
         DefaultMembershipPolicy = json.TryGetEnumValue<UserGroupMembershipPolicies>("memberPolicy") ?? UserGroupMembershipPolicies.Forbidden;
     }
 
     /// <summary>
-    /// Gets or sets the membership policy.
+    /// Gets or sets the membership policy about how a user or bot joins into this user group.
     /// </summary>
+    [Description("The default policy about ")]
     public UserGroupMembershipPolicies DefaultMembershipPolicy
     {
         get => GetCurrentProperty<UserGroupMembershipPolicies>();

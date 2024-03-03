@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
@@ -14,13 +15,13 @@ namespace Trivial.Users;
 /// <summary>
 /// The user item information.
 /// </summary>
-public class UserItemInfo : BaseSecurityEntityInfo
+public class UserItemInfo : BasePrincipalEntityInfo
 {
     /// <summary>
     /// Initializes a new instance of the UserItemInfo class.
     /// </summary>
     public UserItemInfo()
-        : base(SecurityEntityTypes.User)
+        : base(PrincipalEntityTypes.User)
     {
     }
 
@@ -28,7 +29,7 @@ public class UserItemInfo : BaseSecurityEntityInfo
     /// Initializes a new instance of the UserItemInfo class.
     /// </summary>
     public UserItemInfo(string id, string nickname, Genders gender = Genders.Unknown, Uri avatar = null)
-        : base(gender == Genders.Machine ? SecurityEntityTypes.Bot : SecurityEntityTypes.User, id, nickname, avatar)
+        : base(gender == Genders.Machine ? PrincipalEntityTypes.Bot : PrincipalEntityTypes.User, id, nickname, avatar)
     {
         Gender = gender;
     }
@@ -38,7 +39,7 @@ public class UserItemInfo : BaseSecurityEntityInfo
     /// </summary>
     /// <param name="json">The JSON object to parse.</param>
     public UserItemInfo(JsonObjectNode json)
-        : base(json, GetSecurityEntityType, SecurityEntityTypes.User)
+        : base(json, GetPrincipalEntityType, PrincipalEntityTypes.User)
     {
         if (json == null) return;
         Gender = json.TryGetEnumValue<Genders>("gender") ?? Genders.Unknown;
@@ -47,6 +48,7 @@ public class UserItemInfo : BaseSecurityEntityInfo
     /// <summary>
     /// Gets or sets the gender.
     /// </summary>
+    [Description("The gender of the user.")]
     public Genders Gender
     {
         get => GetCurrentProperty<Genders>();
@@ -80,15 +82,19 @@ public class UserItemInfo : BaseSecurityEntityInfo
     public static explicit operator JsonObjectNode(UserItemInfo value)
         => value?.ToJson();
 
-    private static SecurityEntityTypes GetSecurityEntityType(JsonObjectNode json)
+    private static PrincipalEntityTypes GetPrincipalEntityType(JsonObjectNode json)
     {
         var type = json?.TryGetStringTrimmedValue("gender", true)?.ToLowerInvariant();
-        if (type == null) return SecurityEntityTypes.User;
+        if (type == null) return PrincipalEntityTypes.User;
         return type switch
         {
-            "bot" or "robot" or "machine" or "6" => SecurityEntityTypes.Bot,
-            "agent" => SecurityEntityTypes.Agent,
-            _ => SecurityEntityTypes.User
+            "u" or "user" or "account" or "用户" or "1" => PrincipalEntityTypes.User,
+            "g" or "group" or "role" or "container" or "list" or "组" or "角色" or "2" => PrincipalEntityTypes.Group,
+            "app" or "service" or "服务" or "3" => PrincipalEntityTypes.Service,
+            "b" or "bot" or "robot" or "ai" or "assistance" or "machine" or "机器人" or "4" => PrincipalEntityTypes.Bot,
+            "d" or "device" or "iot" or "client" or "设备" or "5" => PrincipalEntityTypes.Device,
+            "agent" or "代理" or "6" => PrincipalEntityTypes.Agent,
+            _ => PrincipalEntityTypes.Other
         };
     }
 }

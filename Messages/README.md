@@ -9,8 +9,14 @@ Add following namespace to your code file to use.
 ```csharp
 using Trivial.Tasks;
 using Trivial.Text;
-using Trivial.Users;
 ```
+
+## JSON based operation
+
+- `JsonOperationApi`
+- `JsonOperations`
+- `BaseJsonOperation`
+- `BaseRoutedJsonOperation`
 
 ## Message models
 
@@ -18,11 +24,18 @@ using Trivial.Users;
 
 ## User models
 
-Get MIME by a specific file extension name.
-
-- `UserItemInfo`
+- `Trivial.Users.UserItemInfo`
 
 ## ChatBot
 
 - `BaseChatCommandGuidanceClient`
 - `BaseChatCommandGuidanceEngine`
+
+## MIME
+
+- `Trivial.Web.MimeConstants`
+
+## Barcode
+
+- `Trivial.Data.InternationalArticleNumber`
+- `Trivial.Data.Code128`

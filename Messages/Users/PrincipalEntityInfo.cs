@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using System.Reflection;
 using System.Text;
@@ -12,27 +13,27 @@ using Trivial.Text;
 namespace Trivial.Users;
 
 /// <summary>
-/// The user item information.
+/// The principal entity information.
 /// </summary>
-public abstract class BaseSecurityEntityInfo : BaseResourceEntityInfo
+public abstract class BasePrincipalEntityInfo : BaseResourceEntityInfo
 {
     /// <summary>
-    /// Initializes a new instance of the BaseSecurityEntityInfo class.
+    /// Initializes a new instance of the BasePrincipalEntityInfo class.
     /// </summary>
-    /// <param name="type">The security entity type.</param>
-    protected BaseSecurityEntityInfo(SecurityEntityTypes type)
+    /// <param name="type">The security principal entity type.</param>
+    protected BasePrincipalEntityInfo(PrincipalEntityTypes type)
     {
-        SecurityEntityType = type;
+        PrincipalEntityType = type;
     }
 
     /// <summary>
-    /// Initializes a new instance of the BaseSecurityEntityInfo class.
+    /// Initializes a new instance of the BasePrincipalEntityInfo class.
     /// </summary>
-    /// <param name="type">The security entity type.</param>
+    /// <param name="type">The security principal entity type.</param>
     /// <param name="id">The resource identifier.</param>
     /// <param name="nickname">The nickname or display name.</param>
     /// <param name="avatar">The avatar URI.</param>
-    protected BaseSecurityEntityInfo(SecurityEntityTypes type, string id, string nickname, Uri avatar = null)
+    protected BasePrincipalEntityInfo(PrincipalEntityTypes type, string id, string nickname, Uri avatar = null)
         : this(type)
     {
         Id = id;
@@ -41,11 +42,11 @@ public abstract class BaseSecurityEntityInfo : BaseResourceEntityInfo
     }
 
     /// <summary>
-    /// Initializes a new instance of the BaseSecurityEntityInfo class.
+    /// Initializes a new instance of the BasePrincipalEntityInfo class.
     /// </summary>
-    /// <param name="type">The security entity type.</param>
+    /// <param name="type">The security principal entity type.</param>
     /// <param name="json">The JSON object to parse.</param>
-    protected BaseSecurityEntityInfo(SecurityEntityTypes type, JsonObjectNode json)
+    protected BasePrincipalEntityInfo(PrincipalEntityTypes type, JsonObjectNode json)
         : this(type)
     {
         if (json == null) return;
@@ -56,20 +57,20 @@ public abstract class BaseSecurityEntityInfo : BaseResourceEntityInfo
     }
 
     /// <summary>
-    /// Initializes a new instance of the BaseSecurityEntityInfo class.
+    /// Initializes a new instance of the BasePrincipalEntityInfo class.
     /// </summary>
     /// <param name="json">The JSON object to parse.</param>
-    /// <param name="typeConverter">The security entity type converter.</param>
-    /// <param name="defaultType">The default security entity type.</param>
-    protected BaseSecurityEntityInfo(JsonObjectNode json, Func<JsonObjectNode, SecurityEntityTypes> typeConverter, SecurityEntityTypes defaultType = SecurityEntityTypes.Unknown)
+    /// <param name="typeConverter">The security principal entity type converter.</param>
+    /// <param name="defaultType">The default security principal entity type.</param>
+    protected BasePrincipalEntityInfo(JsonObjectNode json, Func<JsonObjectNode, PrincipalEntityTypes> typeConverter, PrincipalEntityTypes defaultType = PrincipalEntityTypes.Unknown)
     {
         if (json == null)
         {
-            SecurityEntityType = defaultType;
+            PrincipalEntityType = defaultType;
             return;
         }
 
-        SecurityEntityType = typeConverter?.Invoke(json) ?? defaultType;
+        PrincipalEntityType = typeConverter?.Invoke(json) ?? defaultType;
         Id = json.TryGetStringTrimmedValue("id", true) ?? json.Id;
         Nickname = json.TryGetStringTrimmedValue("nickname", true) ?? json.TryGetStringTrimmedValue("name", true);
         AvatarUri = json.TryGetUriValue("avatar") ?? json.TryGetUriValue("icon");
@@ -77,13 +78,15 @@ public abstract class BaseSecurityEntityInfo : BaseResourceEntityInfo
     }
 
     /// <summary>
-    /// Gets the security entity type.
+    /// Gets the security principal entity type.
     /// </summary>
-    public SecurityEntityTypes SecurityEntityType { get; }
+    [Description("This kind of entity can be used as an owner of the resource. This property is to define the type of the owner, e.g. a user, a user group, a service agent, etc.")]
+    public PrincipalEntityTypes PrincipalEntityType { get; }
 
     /// <summary>
     /// Gets or sets the nickname.
     /// </summary>
+    [Description("The nickname.")]
     public string Nickname
     {
         get => GetCurrentProperty<string>();
@@ -93,6 +96,7 @@ public abstract class BaseSecurityEntityInfo : BaseResourceEntityInfo
     /// <summary>
     /// Gets or sets the URI of avatar.
     /// </summary>
+    [Description("The URI of the avatar.")]
     public Uri AvatarUri
     {
         get => GetCurrentProperty<Uri>();
@@ -112,6 +116,7 @@ public abstract class BaseSecurityEntityInfo : BaseResourceEntityInfo
     public override JsonObjectNode ToJson()
     {
         var json = base.ToJson();
+        json.SetValue("type", PrincipalEntityType.ToString());
         json.SetValue("nickname", Nickname);
         json.SetValue("avatar", AvatarUri);
         return json;
@@ -142,6 +147,6 @@ public abstract class BaseSecurityEntityInfo : BaseResourceEntityInfo
     /// </summary>
     /// <param name="value">The JSON value.</param>
     /// <returns>A JSON object.</returns>
-    public static explicit operator JsonObjectNode(BaseSecurityEntityInfo value)
+    public static explicit operator JsonObjectNode(BasePrincipalEntityInfo value)
         => value?.ToJson();
 }

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using System.Runtime.Serialization;
 using System.Text;
@@ -46,6 +47,7 @@ public abstract class BaseResourceEntityInfo : BaseObservableProperties, IJsonOb
     /// </summary>
     [DataMember(Name = "id")]
     [JsonPropertyName("id")]
+    [Description("The unique identifier of the entity.")]
     public string Id
     {
         get => GetCurrentProperty<string>();
