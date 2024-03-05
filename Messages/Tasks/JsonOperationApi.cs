@@ -488,7 +488,42 @@ public class JsonOperationApi : IJsonObjectHost
     /// </summary>
     /// <returns>The JSON object about the JSON operations registered.</returns>
     public JsonObjectNode ToJson()
-        => JsonOperations.ToJson(Operations.Select(ele => ele.OperationDescription));
+        => ToJson(null, null, null);
+
+    /// <summary>
+    /// Converts to JSON object node about the JSON operations of this instance.
+    /// </summary>
+    /// <param name="contextValue">The context value.</param>
+    /// <returns>The JSON object about the JSON operations registered.</returns>
+    public virtual JsonObjectNode ToJson(object contextValue)
+        => ToJson(contextValue, null, null);
+
+    /// <summary>
+    /// Converts to JSON.
+    /// </summary>
+    /// <param name="contextValue">The context value.</param>
+    /// <param name="col">The JSON operation description list; or null, to use default.</param>
+    /// <param name="info">The operations information; or null, if does not add info properties.</param>
+    /// <param name="uris">The optional server URIs.</param>
+    /// <returns>A JSON object.</returns>
+    protected JsonObjectNode ToJson(object contextValue, JsonObjectNode info, IEnumerable<JsonOperationDescription> col = null, IEnumerable<Uri> uris = null)
+        => JsonOperations.ToJson(OnJsonInit(contextValue), col ?? Operations.Select(ele => ele.OperationDescription), info, uris, CreateJsonSchemaDescriptionCollection(contextValue));
+
+    /// <summary>
+    /// Initializes a JSON object to generate contract.
+    /// </summary>
+    /// <param name="contextValue">The context value.</param>
+    /// <returns>A new JSON object; or null, as an empty one.</returns>
+    protected virtual JsonObjectNode OnJsonInit(object contextValue)
+        => null;
+
+    /// <summary>
+    /// Creates a JSON schema description collection.
+    /// </summary>
+    /// <param name="contextValue">The context value.</param>
+    /// <returns>A JSON schema description collection used to generate contract.</returns>
+    protected virtual JsonNodeSchemaDescriptionCollection CreateJsonSchemaDescriptionCollection(object contextValue)
+        => null;
 
     /// <summary>
     /// Processes on operation routed.

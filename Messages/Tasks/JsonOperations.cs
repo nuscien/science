@@ -155,68 +155,12 @@ public static class JsonOperations
     /// Converts to JSON.
     /// </summary>
     /// <param name="col">The JSON operation description list.</param>
-    /// <param name="info">The operations information.</param>
-    /// <param name="uris">The server URIs.</param>
+    /// <param name="info">The operations information; or null, if does not add info properties.</param>
+    /// <param name="uris">The optional server URIs.</param>
+    /// <param name="schemaCol">The optional schema collection.</param>
     /// <returns>A JSON object.</returns>
-    public static JsonObjectNode ToJson(this IEnumerable<JsonOperationDescription> col, JsonObjectNode info = null, IEnumerable<Uri> uris = null)
+    public static JsonObjectNode ToJson(this IEnumerable<JsonOperationDescription> col, JsonObjectNode info = null, IEnumerable<Uri> uris = null, JsonNodeSchemaDescriptionCollection schemaCol = null)
         => ToJson(null, col, info, uris);
-
-    /// <summary>
-    /// Converts to JSON.
-    /// </summary>
-    /// <param name="baseJson">The base JSON object to fill properties.</param>
-    /// <param name="col">The JSON operation description list.</param>
-    /// <param name="info">The operations information.</param>
-    /// <param name="uris">The server URIs.</param>
-    /// <returns>A JSON object.</returns>
-    public static JsonObjectNode ToJson(JsonObjectNode baseJson, IEnumerable<JsonOperationDescription> col, JsonObjectNode info = null, IEnumerable<Uri> uris = null)
-    {
-        if (col == null) return baseJson;
-        var json = baseJson ?? new();
-        json.SetValueIfNotNull("info", info);
-        if (uris != null) json.SetValue("servers", uris.Select(ele => ele.OriginalString).Where(ele => !string.IsNullOrWhiteSpace(ele)));
-        json.SetValue("paths", out JsonObjectNode paths);
-        json.SetValue("components", "schemas", out JsonObjectNode schemas);
-        var i = 0;
-        var schemaCol = new JsonNodeSchemaDescriptionCollection();
-        foreach (var item in col)
-        {
-            // Schema
-            var op = item.Id ?? string.Concat("op-", i);
-            if (item.ArgumentSchema == null || item.ResultSchema == null) continue;
-            var opReqKey = schemaCol.GetId(item.ArgumentSchema, string.Concat(op, "-req"), schemas);
-            var opRespKey = schemaCol.GetId(item.ResultSchema, string.Concat(op, "-resp"), schemas);
-            var opErrKey = item.ErrorSchema != null ? schemaCol.GetId(item.ResultSchema, string.Concat(op, "-err"), schemas) : null;
-
-            // Path and contract
-            var path = item.Data.TryGetStringValue(PathProperty);
-            if (string.IsNullOrWhiteSpace(path)) continue;
-            paths.SetValue(path, out JsonObjectNode server);
-            var m = item.Data.TryGetStringTrimmedValue(HttpMethodProperty, true)?.ToLowerInvariant() ?? "post";
-            server.SetValue(m, out server);
-            server.SetValue("operationId", op);
-            server.SetValue("description", item.Description);
-            server.SetValue("requestBody", out JsonObjectNode requestBody);
-            server.SetValue("responses", out JsonObjectNode responseBody);
-
-            // Request
-            requestBody.SetValue("required", !(item.Data.TryGetBooleanValue("argsOptional") ?? false));
-            requestBody = SetContentSchema(requestBody, string.Concat("#/components/schemas/", opReqKey));
-            
-            // Response
-            SetResponseContentSchema(responseBody, 200, string.Concat("#/components/schemas/", opRespKey), item.Data.TryGetStringTrimmedValue("httpRespDesc", true) ?? "Successful resposne.");
-            var errorResponse = item.Data.TryGetObjectValue(HttpErrorProperty);
-            if (errorResponse == null || item.ErrorSchema == null) continue;
-            foreach (var errorItem in errorResponse)
-            {
-                if (!int.TryParse(errorItem.Key, out var code) || errorItem.Value == null || errorItem.Value.ValueKind != JsonValueKind.String) continue;
-                var errorDesc = errorResponse.TryGetStringValue(errorItem.Key);
-                SetResponseContentSchema(responseBody, code, string.Concat("#/components/schemas/", opErrKey), errorDesc);
-            }
-        }
-
-        return json;
-    }
 
     /// <summary>
     /// Creates the JSON schema for data result.
@@ -273,6 +217,65 @@ public static class JsonOperations
         if (desc?.Data == null || attr == null) return;
         desc.Data.SetValue(PathProperty, attr.Path);
         if (attr.HttpMethod != null) desc.Data.SetValue(HttpMethodProperty, attr.HttpMethod.Method);
+    }
+
+    /// <summary>
+    /// Converts to JSON.
+    /// </summary>
+    /// <param name="baseJson">The base JSON object to fill properties.</param>
+    /// <param name="col">The JSON operation description list.</param>
+    /// <param name="info">The operations information; or null, if does not add info properties.</param>
+    /// <param name="uris">The server URIs; or null, if no such information.</param>
+    /// <param name="schemaCol">The optional schema collection.</param>
+    /// <returns>A JSON object.</returns>
+    internal static JsonObjectNode ToJson(JsonObjectNode baseJson, IEnumerable<JsonOperationDescription> col, JsonObjectNode info = null, IEnumerable<Uri> uris = null, JsonNodeSchemaDescriptionCollection schemaCol = null)
+    {
+        if (col == null) return baseJson;
+        var json = baseJson ?? new();
+        json.SetValueIfNotNull("info", info);
+        if (uris != null) json.SetValue("servers", uris.Select(ele => ele.OriginalString).Where(ele => !string.IsNullOrWhiteSpace(ele)));
+        json.SetValue("paths", out JsonObjectNode paths);
+        json.SetValue("components", "schemas", out JsonObjectNode schemas);
+        var i = 0;
+        schemaCol ??= new JsonNodeSchemaDescriptionCollection();
+        foreach (var item in col)
+        {
+            // Schema
+            var op = item.Id ?? string.Concat("op-", i);
+            if (item.ArgumentSchema == null || item.ResultSchema == null) continue;
+            var opReqKey = schemaCol.GetId(item.ArgumentSchema, string.Concat(op, "-req"));
+            var opRespKey = schemaCol.GetId(item.ResultSchema, string.Concat(op, "-resp"));
+            var opErrKey = item.ErrorSchema != null ? schemaCol.GetId(item.ResultSchema, string.Concat(op, "-err")) : null;
+
+            // Path and contract
+            var path = item.Data.TryGetStringValue(PathProperty);
+            if (string.IsNullOrWhiteSpace(path)) continue;
+            paths.SetValue(path, out JsonObjectNode server);
+            var m = item.Data.TryGetStringTrimmedValue(HttpMethodProperty, true)?.ToLowerInvariant() ?? "post";
+            server.SetValue(m, out server);
+            server.SetValue("operationId", op);
+            server.SetValue("description", item.Description);
+            server.SetValue("requestBody", out JsonObjectNode requestBody);
+            server.SetValue("responses", out JsonObjectNode responseBody);
+
+            // Request
+            requestBody.SetValue("required", !(item.Data.TryGetBooleanValue("argsOptional") ?? false));
+            requestBody = SetContentSchema(requestBody, string.Concat("#/components/schemas/", opReqKey));
+
+            // Response
+            SetResponseContentSchema(responseBody, 200, string.Concat("#/components/schemas/", opRespKey), item.Data.TryGetStringTrimmedValue("httpRespDesc", true) ?? "Successful resposne.");
+            var errorResponse = item.Data.TryGetObjectValue(HttpErrorProperty);
+            if (errorResponse == null || item.ErrorSchema == null) continue;
+            foreach (var errorItem in errorResponse)
+            {
+                if (!int.TryParse(errorItem.Key, out var code) || errorItem.Value == null || errorItem.Value.ValueKind != JsonValueKind.String) continue;
+                var errorDesc = errorResponse.TryGetStringValue(errorItem.Key);
+                SetResponseContentSchema(responseBody, code, string.Concat("#/components/schemas/", opErrKey), errorDesc);
+            }
+        }
+
+        schemaCol.WriteTo(schemas);
+        return json;
     }
 
     internal static string FormatPath(string s)

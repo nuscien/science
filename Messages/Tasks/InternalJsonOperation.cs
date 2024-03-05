@@ -15,6 +15,95 @@ using Trivial.Text;
 namespace Trivial.Tasks;
 
 /// <summary>
+/// The JSON schema description collection.
+/// </summary>
+public class JsonNodeSchemaDescriptionCollection
+{
+    private readonly Dictionary<string, JsonNodeSchemaDescriptionMappingItem> list = new();
+
+    /// <summary>
+    /// Sets a JSON schema.
+    /// </summary>
+    /// <param name="id">The identifier.</param>
+    /// <param name="value">The JSON schema.</param>
+    public void Set(string id, JsonNodeSchemaDescription value)
+    {
+        if (string.IsNullOrWhiteSpace(id)) return;
+        list[id] = new(id, value);
+        var col = new List<JsonNodeSchemaDescriptionMappingItem>(list.Values);
+        foreach (var item in col)
+        {
+            if (item.Id == id || !ReferenceEquals(item.Value, value)) continue;
+            col.Remove(item);
+        }
+    }
+
+    /// <summary>
+    /// Gets a JSON schema by given identifier.
+    /// </summary>
+    /// <param name="id">The identifier.</param>
+    /// <returns>The JSON schema; or null, if does not exist.</returns>
+    public JsonNodeSchemaDescription Get(string id)
+        => !string.IsNullOrEmpty(id) && list.TryGetValue(id, out var desc) ? desc?.Value : null;
+
+    /// <summary>
+    /// Removes the value with the specified identifier from the collection.
+    /// </summary>
+    /// <param name="id">The identifier.</param>
+    /// <returns>true if the element is successfully found and removed; otherwise, false. This method returns false if key is not found in the mapping.</returns>
+    public bool Remove(string id)
+        => list.Remove(id);
+
+    /// <summary>
+    /// Removes the value with the specified JSON schema from the collection.
+    /// </summary>
+    /// <param name="value">The JSON schema to remove.</param>
+    /// <returns>true if the element is successfully found and removed; otherwise, false. This method returns false if key is not found in the mapping.</returns>
+    public bool Remove(JsonNodeSchemaDescription value)
+    {
+        if (value == null) return false;
+        var col = new List<JsonNodeSchemaDescriptionMappingItem>(list.Values);
+        var i = 0;
+        foreach (var item in col)
+        {
+            if (!ReferenceEquals(item.Value, value)) continue;
+            col.Remove(item);
+            i++;
+        }
+
+        return i > 0;
+    }
+
+    /// <summary>
+    /// Gets the identifier of a JSON schema.
+    /// </summary>
+    /// <param name="value">The JSON schema.</param>
+    /// <param name="id">The identifier.</param>
+    /// <returns>The identifier.</returns>
+    public string GetId(JsonNodeSchemaDescription value, string id)
+    {
+        if (string.IsNullOrWhiteSpace(id)) return null;
+        if (value == null) return null;
+        foreach (var item in list.Values)
+        {
+            if (ReferenceEquals(item.Value, value)) return item.Id;
+        }
+
+        list[id] = new(id, value);
+        return id;
+    }
+
+    internal void WriteTo(JsonObjectNode schema)
+    {
+        foreach (var kvp in list)
+        {
+            var json = kvp.Value.Value?.ToJson();
+            if (json != null) schema.SetValue(kvp.Key, json);
+        }
+    }
+}
+
+/// <summary>
 /// The internal JSON operation.
 /// </summary>
 internal class InternalJsonOperation<TIn, TOut> : BaseJsonOperation<TIn, TOut>
@@ -332,17 +421,15 @@ internal class InternalPropertyJsonOperation : BaseJsonOperation
     }
 }
 
-internal class JsonNodeSchemaDescriptionCollection : List<(JsonNodeSchemaDescription, string)>
+internal class JsonNodeSchemaDescriptionMappingItem
 {
-    public string GetId(JsonNodeSchemaDescription value, string id, JsonObjectNode schemas)
+    public JsonNodeSchemaDescriptionMappingItem(string id, JsonNodeSchemaDescription value)
     {
-        foreach (var item in this)
-        {
-            if (ReferenceEquals(item.Item1, value)) return item.Item2; 
-        }
-
-        Add((value, id));
-        schemas.SetValue(id, value.ToJson());
-        return id;
+        Id = id;
+        Value = value;
     }
+
+    public string Id { get; set; }
+
+    public JsonNodeSchemaDescription Value { get; set; }
 }
