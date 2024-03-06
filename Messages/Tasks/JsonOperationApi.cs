@@ -9,6 +9,7 @@ using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using Trivial.Data;
+using Trivial.Net;
 using Trivial.Reflection;
 using Trivial.Text;
 
@@ -57,10 +58,15 @@ public class JsonOperationApi : IJsonObjectHost
     /// <param name="input">The input info.</param>
     /// <param name="cancellationToken">The optional cancellation token.</param>
     /// <returns>The result.</returns>
+    /// <exception cref="ArgumentException">arguments was not valid.</exception>
     /// <exception cref="ArgumentNullException">input should not be null.</exception>
     /// <exception cref="ArgumentOutOfRangeException">The relative path is not found.</exception>
+    /// <exception cref="JsonException">JSON serialize or deserialize failed.</exception>
     /// <exception cref="InvalidOperationException">Operation is not valid.</exception>
     /// <exception cref="OperationCanceledException">Operation is cancelled.</exception>
+    /// <exception cref="FailedHttpException">HTTP is failed.</exception>
+    /// <exception cref="UnauthorizedAccessException">The operation is not authorized to access.</exception>
+    /// <exception cref="NotSupportedException">Something not supported.</exception>
     public async Task<JsonObjectNode> ProcessAsync(JsonOperationInput<JsonObjectNode> input, CancellationToken cancellationToken = default)
     {
         if (input == null) throw new ArgumentNullException(nameof(input), "input was null.");
@@ -103,6 +109,15 @@ public class JsonOperationApi : IJsonObjectHost
     /// <param name="contextValue">The context value.</param>
     /// <param name="cancellationToken">The optional cancellation token.</param>
     /// <returns>The result.</returns>
+    /// <exception cref="ArgumentException">arguments was not valid.</exception>
+    /// <exception cref="ArgumentNullException">input should not be null.</exception>
+    /// <exception cref="ArgumentOutOfRangeException">The relative path is not found.</exception>
+    /// <exception cref="JsonException">JSON serialize or deserialize failed.</exception>
+    /// <exception cref="InvalidOperationException">Operation is not valid.</exception>
+    /// <exception cref="OperationCanceledException">Operation is cancelled.</exception>
+    /// <exception cref="FailedHttpException">HTTP is failed.</exception>
+    /// <exception cref="UnauthorizedAccessException">The operation is not authorized to access.</exception>
+    /// <exception cref="NotSupportedException">Something not supported.</exception>
     public Task<JsonObjectNode> ProcessAsync(string path, HttpMethod httpMethod, JsonObjectNode argument, object contextValue, CancellationToken cancellationToken = default)
         => ProcessAsync(new JsonOperationInput<JsonObjectNode>(path, httpMethod, argument, contextValue), cancellationToken);
 
@@ -116,6 +131,15 @@ public class JsonOperationApi : IJsonObjectHost
     /// <param name="contextValue">The context value.</param>
     /// <param name="cancellationToken">The optional cancellation token.</param>
     /// <returns>The result.</returns>
+    /// <exception cref="ArgumentException">arguments was not valid.</exception>
+    /// <exception cref="ArgumentNullException">input should not be null.</exception>
+    /// <exception cref="ArgumentOutOfRangeException">The relative path is not found.</exception>
+    /// <exception cref="JsonException">JSON serialize or deserialize failed.</exception>
+    /// <exception cref="InvalidOperationException">Operation is not valid.</exception>
+    /// <exception cref="OperationCanceledException">Operation is cancelled.</exception>
+    /// <exception cref="FailedHttpException">HTTP is failed.</exception>
+    /// <exception cref="UnauthorizedAccessException">The operation is not authorized to access.</exception>
+    /// <exception cref="NotSupportedException">Something not supported.</exception>
     public Task<JsonObjectNode> ProcessAsync(string path, bool ignorePathCase, HttpMethod httpMethod, JsonObjectNode argument, object contextValue, CancellationToken cancellationToken = default)
         => ProcessAsync(new JsonOperationInput<JsonObjectNode>(path, ignorePathCase, httpMethod, argument, contextValue), cancellationToken);
 
@@ -125,10 +149,15 @@ public class JsonOperationApi : IJsonObjectHost
     /// <param name="input">The input info.</param>
     /// <param name="cancellationToken">The optional cancellation token.</param>
     /// <returns>The result.</returns>
+    /// <exception cref="ArgumentException">arguments was not valid.</exception>
     /// <exception cref="ArgumentNullException">input should not be null.</exception>
     /// <exception cref="ArgumentOutOfRangeException">The relative path is not found.</exception>
+    /// <exception cref="JsonException">JSON serialize or deserialize failed.</exception>
     /// <exception cref="InvalidOperationException">Operation is not valid.</exception>
     /// <exception cref="OperationCanceledException">Operation is cancelled.</exception>
+    /// <exception cref="FailedHttpException">HTTP is failed.</exception>
+    /// <exception cref="UnauthorizedAccessException">The operation is not authorized to access.</exception>
+    /// <exception cref="NotSupportedException">Something not supported.</exception>
     public async Task<string> ProcessAsync(JsonOperationInput<string> input, CancellationToken cancellationToken = default)
     {
         if (input == null) throw new ArgumentNullException(nameof(input), "input was null.");
@@ -171,6 +200,15 @@ public class JsonOperationApi : IJsonObjectHost
     /// <param name="contextValue">The context value.</param>
     /// <param name="cancellationToken">The optional cancellation token.</param>
     /// <returns>The result.</returns>
+    /// <exception cref="ArgumentException">arguments was not valid.</exception>
+    /// <exception cref="ArgumentNullException">input should not be null.</exception>
+    /// <exception cref="ArgumentOutOfRangeException">The relative path is not found.</exception>
+    /// <exception cref="JsonException">JSON serialize or deserialize failed.</exception>
+    /// <exception cref="InvalidOperationException">Operation is not valid.</exception>
+    /// <exception cref="OperationCanceledException">Operation is cancelled.</exception>
+    /// <exception cref="FailedHttpException">HTTP is failed.</exception>
+    /// <exception cref="UnauthorizedAccessException">The operation is not authorized to access.</exception>
+    /// <exception cref="NotSupportedException">Something not supported.</exception>
     public Task<string> ProcessAsync(string path, HttpMethod httpMethod, string argument, object contextValue, CancellationToken cancellationToken = default)
         => ProcessAsync(new JsonOperationInput<string>(path, httpMethod, argument, contextValue), cancellationToken);
 
@@ -184,6 +222,15 @@ public class JsonOperationApi : IJsonObjectHost
     /// <param name="contextValue">The context value.</param>
     /// <param name="cancellationToken">The optional cancellation token.</param>
     /// <returns>The result.</returns>
+    /// <exception cref="ArgumentException">arguments was not valid.</exception>
+    /// <exception cref="ArgumentNullException">input should not be null.</exception>
+    /// <exception cref="ArgumentOutOfRangeException">The relative path is not found.</exception>
+    /// <exception cref="JsonException">JSON serialize or deserialize failed.</exception>
+    /// <exception cref="InvalidOperationException">Operation is not valid.</exception>
+    /// <exception cref="OperationCanceledException">Operation is cancelled.</exception>
+    /// <exception cref="FailedHttpException">HTTP is failed.</exception>
+    /// <exception cref="UnauthorizedAccessException">The operation is not authorized to access.</exception>
+    /// <exception cref="NotSupportedException">Something not supported.</exception>
     public Task<string> ProcessAsync(string path, bool ignorePathCase, HttpMethod httpMethod, string argument, object contextValue, CancellationToken cancellationToken = default)
         => ProcessAsync(new JsonOperationInput<string>(path, ignorePathCase, httpMethod, argument, contextValue), cancellationToken);
 
@@ -507,7 +554,11 @@ public class JsonOperationApi : IJsonObjectHost
     /// <param name="uris">The optional server URIs.</param>
     /// <returns>A JSON object.</returns>
     protected JsonObjectNode ToJson(object contextValue, JsonObjectNode info, IEnumerable<JsonOperationDescription> col = null, IEnumerable<Uri> uris = null)
-        => JsonOperations.ToJson(OnJsonInit(contextValue), col ?? Operations.Select(ele => ele.OperationDescription), info, uris, CreateJsonSchemaDescriptionCollection(contextValue));
+    {
+        var schemaCol = CreateJsonSchemaDescriptionCollection(contextValue);
+        col ??= schemaCol == null ? Operations.Select(ele => ele.OperationDescription) : JsonOperations.CreateDescription(this);
+        return JsonOperations.ToJson(OnJsonInit(contextValue), col, info, uris, schemaCol);
+    }
 
     /// <summary>
     /// Initializes a JSON object to generate contract.

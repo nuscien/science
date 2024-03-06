@@ -354,6 +354,71 @@ public static class JsonOperations
     {
     }
 
+    internal static JsonObjectNode ToResultJson(object value)
+    {
+        try
+        {
+            return JsonObjectNode.ConvertFrom(value);
+        }
+        catch (JsonException ex)
+        {
+            if (ex.InnerException is JsonException jsonEx) ex = jsonEx;
+            throw new InvalidOperationException("Cannot convert the result to JSON.", ex);
+        }
+        catch (NotSupportedException ex)
+        {
+            throw new InvalidOperationException("Cannot convert the result to JSON.", ex);
+        }
+    }
+
+    internal static T DeserializeArguments<T>(string arguments)
+    {
+        try
+        {
+            return JsonSerializer.Deserialize<T>(arguments);
+        }
+        catch (JsonException ex)
+        {
+            throw new ArgumentException("The arguments should be in JSON format with required schema.", ex);
+        }
+        catch (NotSupportedException ex)
+        {
+            throw new ArgumentException("The target type of arguments does not support for deserializing.", ex);
+        }
+    }
+
+    internal static object DeserializeArguments(string json, Type type)
+    {
+        try
+        {
+            return JsonSerializer.Deserialize(json, type);
+        }
+        catch (JsonException ex)
+        {
+            throw new ArgumentException("The arguments should be in JSON format with required schema.", ex);
+        }
+        catch (NotSupportedException ex)
+        {
+            throw new ArgumentException("The target type of arguments does not support for deserializing.", ex);
+        }
+    }
+
+    internal static string SerializeResult(object value)
+    {
+        try
+        {
+            return JsonSerializer.Serialize(value);
+        }
+        catch (JsonException ex)
+        {
+            throw new InvalidOperationException("Serialize result to JSON failed.", ex);
+        }
+        catch (NotSupportedException ex)
+        {
+            throw new InvalidOperationException("Serialize result to JSON failed.", ex);
+        }
+    }
+
     private static IEnumerable<JsonOperationDescription> CreateDescriptionByProperties(object obj)
     {
         var type = obj.GetType();
@@ -476,4 +541,93 @@ public class JsonOperationPathAttribute : Attribute
     /// Gets or sets the HTTP method.
     /// </summary>
     public HttpMethod HttpMethod { get; set; }
+}
+
+/// <summary>
+/// The JSON schema description collection.
+/// </summary>
+public class JsonNodeSchemaDescriptionCollection
+{
+    private readonly Dictionary<string, JsonNodeSchemaDescriptionMappingItem> list = new();
+
+    /// <summary>
+    /// Sets a JSON schema.
+    /// </summary>
+    /// <param name="id">The identifier.</param>
+    /// <param name="value">The JSON schema.</param>
+    public void Set(string id, JsonNodeSchemaDescription value)
+    {
+        if (string.IsNullOrWhiteSpace(id)) return;
+        list[id] = new(id, value);
+        var col = new List<JsonNodeSchemaDescriptionMappingItem>(list.Values);
+        foreach (var item in col)
+        {
+            if (item.Id == id || !ReferenceEquals(item.Value, value)) continue;
+            col.Remove(item);
+        }
+    }
+
+    /// <summary>
+    /// Gets a JSON schema by given identifier.
+    /// </summary>
+    /// <param name="id">The identifier.</param>
+    /// <returns>The JSON schema; or null, if does not exist.</returns>
+    public JsonNodeSchemaDescription Get(string id)
+        => !string.IsNullOrEmpty(id) && list.TryGetValue(id, out var desc) ? desc?.Value : null;
+
+    /// <summary>
+    /// Removes the value with the specified identifier from the collection.
+    /// </summary>
+    /// <param name="id">The identifier.</param>
+    /// <returns>true if the element is successfully found and removed; otherwise, false. This method returns false if key is not found in the mapping.</returns>
+    public bool Remove(string id)
+        => list.Remove(id);
+
+    /// <summary>
+    /// Removes the value with the specified JSON schema from the collection.
+    /// </summary>
+    /// <param name="value">The JSON schema to remove.</param>
+    /// <returns>true if the element is successfully found and removed; otherwise, false. This method returns false if key is not found in the mapping.</returns>
+    public bool Remove(JsonNodeSchemaDescription value)
+    {
+        if (value == null) return false;
+        var col = new List<JsonNodeSchemaDescriptionMappingItem>(list.Values);
+        var i = 0;
+        foreach (var item in col)
+        {
+            if (!ReferenceEquals(item.Value, value)) continue;
+            col.Remove(item);
+            i++;
+        }
+
+        return i > 0;
+    }
+
+    /// <summary>
+    /// Gets the identifier of a JSON schema.
+    /// </summary>
+    /// <param name="value">The JSON schema.</param>
+    /// <param name="id">The identifier.</param>
+    /// <returns>The identifier.</returns>
+    public string GetId(JsonNodeSchemaDescription value, string id)
+    {
+        if (string.IsNullOrWhiteSpace(id)) return null;
+        if (value == null) return null;
+        foreach (var item in list.Values)
+        {
+            if (ReferenceEquals(item.Value, value)) return item.Id;
+        }
+
+        list[id] = new(id, value);
+        return id;
+    }
+
+    internal void WriteTo(JsonObjectNode schema)
+    {
+        foreach (var kvp in list)
+        {
+            var json = kvp.Value.Value?.ToJson();
+            if (json != null) schema.SetValue(kvp.Key, json);
+        }
+    }
 }

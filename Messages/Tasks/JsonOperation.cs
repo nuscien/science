@@ -35,10 +35,13 @@ public abstract class BaseJsonOperation : IJsonOperationDescriptive
     /// <param name="contextValue">The context value.</param>
     /// <param name="cancellationToken">The optional cancellation token.</param>
     /// <returns>The result.</returns>
+    /// <exception cref="ArgumentException">arguments was not valid.</exception>
+    /// <exception cref="JsonException">JSON serialize or deserialize failed.</exception>
+    /// <exception cref="NotSupportedException">Not supported.</exception>
     public virtual async Task<string> ProcessAsync(string arguments, object contextValue, CancellationToken cancellationToken = default)
     {
         var result = await ProcessAsync(JsonObjectNode.Parse(arguments), contextValue, cancellationToken);
-        return JsonSerializer.Serialize(result);
+        return JsonOperations.SerializeResult(result);
     }
 
     /// <summary>
@@ -82,11 +85,14 @@ public abstract class BaseJsonOperation<TIn, TOut> : BaseJsonOperation
     /// <param name="contextValue">The context value.</param>
     /// <param name="cancellationToken">The optional cancellation token.</param>
     /// <returns>The result.</returns>
+    /// <exception cref="ArgumentException">arguments was not valid.</exception>
+    /// <exception cref="JsonException">JSON serialize or deserialize failed.</exception>
+    /// <exception cref="NotSupportedException">Not supported.</exception>
     public override async Task<JsonObjectNode> ProcessAsync(JsonObjectNode arguments, object contextValue, CancellationToken cancellationToken = default)
     {
         if (arguments == null) return null;
-        var result = await ProcessAsync(arguments.Deserialize<TIn>(), contextValue, cancellationToken);
-        return JsonObjectNode.ConvertFrom(result);
+        var result = await ProcessAsync(JsonOperations.DeserializeArguments<TIn>(arguments?.ToString()), contextValue, cancellationToken);
+        return JsonOperations.ToResultJson(result);
     }
 
     /// <summary>
@@ -96,11 +102,14 @@ public abstract class BaseJsonOperation<TIn, TOut> : BaseJsonOperation
     /// <param name="contextValue">The context value.</param>
     /// <param name="cancellationToken">The optional cancellation token.</param>
     /// <returns>The result.</returns>
+    /// <exception cref="ArgumentException">arguments was not valid.</exception>
+    /// <exception cref="JsonException">JSON serialize or deserialize failed.</exception>
+    /// <exception cref="NotSupportedException">Not supported.</exception>
     public override async Task<string> ProcessAsync(string arguments, object contextValue, CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrEmpty(arguments)) return null;
-        var result = await ProcessAsync(JsonSerializer.Deserialize<TIn>(arguments), contextValue, cancellationToken);
-        return JsonSerializer.Serialize(result);
+        var result = await ProcessAsync(JsonOperations.DeserializeArguments<TIn>(arguments), contextValue, cancellationToken);
+        return JsonOperations.SerializeResult(result);
     }
 
     /// <summary>
