@@ -486,9 +486,9 @@ public class BaseRoutedJsonOperation : BaseJsonOperation
         foreach (var kvp in dict)
         {
             var converter = kvp.Value;
-            if (string.IsNullOrWhiteSpace(converter?.ArgumentName)) continue;
+            if (string.IsNullOrWhiteSpace(converter?.PropertyName)) continue;
             var desc = converter.Schema ?? CreateDefaultPropertySchema();
-            if (desc != null) schema.Properties[converter.ArgumentName] = desc;
+            if (desc != null) schema.Properties[converter.PropertyName] = desc;
         }
 
         return schema;
