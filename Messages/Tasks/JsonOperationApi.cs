@@ -556,8 +556,7 @@ public class JsonOperationApi : IJsonObjectHost
     protected JsonObjectNode ToJson(object contextValue, JsonObjectNode info, IEnumerable<JsonOperationDescription> col = null, IEnumerable<Uri> uris = null)
     {
         var schemaCol = CreateJsonSchemaDescriptionCollection(contextValue);
-        col ??= schemaCol == null ? Operations.Select(ele => ele.OperationDescription) : JsonOperations.CreateDescription(this);
-        return JsonOperations.ToJson(OnJsonInit(contextValue), col, info, uris, schemaCol);
+        return JsonOperations.ToJson(OnJsonInit(contextValue), col ?? JsonOperations.CreateDescription(this), info, uris, schemaCol);
     }
 
     /// <summary>
@@ -614,12 +613,13 @@ public class JsonOperationApi : IJsonObjectHost
     /// <summary>
     /// Creates JSON operation description collection by a given type.
     /// </summary>
+    /// <param name="handler">The additional handler to control the creation.</param>
     /// <returns>A collection of the JSON operation description.</returns>
-    internal IEnumerable<JsonOperationDescription> CreateDescription()
+    internal IEnumerable<JsonOperationDescription> CreateDescription(BaseJsonOperationSchemaHandler handler = null)
     {
         foreach (var item in ops.Values)
         {
-            var d = item?.CreateDescription();
+            var d = item?.CreateDescription(handler);
             if (d != null) yield return d;
         }
     }
@@ -902,4 +902,16 @@ public class JsonOperationInfo : IJsonOperationDescriptive
     /// <returns>The operation description.</returns>
     public JsonOperationDescription CreateDescription()
         => Operation?.CreateDescription();
+
+    /// <summary>
+    /// Creates operation description.
+    /// </summary>
+    /// <param name="handler">The additional handler to control the creation.</param>
+    /// <returns>The operation description.</returns>
+    public JsonOperationDescription CreateDescription(BaseJsonOperationSchemaHandler handler)
+    {
+        var op = Operation;
+        if (op == null) return null;
+        return op is IJsonTypeOperationDescriptive tod ? tod.CreateDescription(handler) : op.CreateDescription();
+    }
 }

@@ -13,6 +13,18 @@ using Trivial.Reflection;
 using Trivial.Text;
 
 namespace Trivial.Tasks;
+/// <summary>
+/// The interface for JSON operation self-describing host.
+/// </summary>
+public interface IJsonTypeOperationDescriptive : IJsonOperationDescriptive
+{
+    /// <summary>
+    /// Creates operation description.
+    /// </summary>
+    /// <param name="handler">The additional handler to control the creation.</param>
+    /// <returns>The operation description.</returns>
+    JsonOperationDescription CreateDescription(BaseJsonOperationSchemaHandler handler);
+}
 
 /// <summary>
 /// The base JSON operation.
@@ -62,7 +74,7 @@ public abstract class BaseJsonOperation : IJsonOperationDescriptive
 /// <summary>
 /// The base JSON operation.
 /// </summary>
-public abstract class BaseJsonOperation<TIn, TOut> : BaseJsonOperation
+public abstract class BaseJsonOperation<TIn, TOut> : BaseJsonOperation, IJsonTypeOperationDescriptive
 {
     /// <summary>
     /// Gets or sets the schema description creation handler.
@@ -117,10 +129,17 @@ public abstract class BaseJsonOperation<TIn, TOut> : BaseJsonOperation
     /// </summary>
     /// <returns>The operation description.</returns>
     public override JsonOperationDescription CreateDescription()
+        => CreateDescription(null);
+
+    /// <summary>
+    /// Creates operation description.
+    /// </summary>
+    /// <returns>The operation description.</returns>
+    public virtual JsonOperationDescription CreateDescription(BaseJsonOperationSchemaHandler handler)
     {
         var type = GetType();
         var method = type.GetMethod(nameof(ProcessAsync), [typeof(TIn), typeof(object), typeof(CancellationToken)]);
-        var handler = SchemaHandler ?? JsonOperations.SchemaHandler;
+        handler ??= SchemaHandler ?? JsonOperations.SchemaHandler;
         var desc = JsonOperationDescription.Create(method, null, handler);
         if (desc == null) return null;
         if (string.IsNullOrEmpty(desc.Description)) desc.Description = StringExtensions.GetDescription(type);
@@ -159,10 +178,11 @@ public class BaseJsonOperationSchemaHandler : IJsonNodeSchemaCreationHandler<Typ
     /// <param name="breadcrumb">The path breadcrumb.</param>
     /// <returns>The JSON schema of final result.</returns>
     public virtual JsonNodeSchemaDescription Convert(Type type, JsonNodeSchemaDescription result, NodePathBreadcrumb<Type> breadcrumb)
-    {
-        if (result is JsonIntegerSchemaDescription i) return new JsonNumberSchemaDescription(i);
-        return result;
-    }
+        => result is JsonIntegerSchemaDescription i ? new JsonNumberSchemaDescription(i)
+        {
+            Tag = i.Tag,
+            Description = i.Description,
+        } : result;
 
     /// <summary>
     /// Occurs on the JSON operation description is created.

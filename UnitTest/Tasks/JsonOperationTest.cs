@@ -7,6 +7,7 @@ using System.Text;
 using System.Text.Json.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
+using Trivial.Data;
 using Trivial.Net;
 using Trivial.Text;
 
@@ -32,6 +33,7 @@ public class JsonOperationTest
             { "name", "Unit test" },
             { "num", 1000 }
         }, null);
+        resp = resp?.TryGetObjectValue("data");
         Assert.IsNotNull(resp);
         Assert.AreEqual("Unit test", resp.TryGetStringValue("name"));
         Assert.AreEqual(1000, resp.TryGetInt32Value("num"));
@@ -50,8 +52,8 @@ public static class JsonOperationRegistry
 
     [JsonOperationPath("/test/something")]
     [System.ComponentModel.Description("Do something.")]
-    public static Task<TestDataModel> DoSomething(TestDataModel m, CancellationToken cancellation = default)
-        => Task.FromResult(m);
+    public static Task<DataResult<TestDataModel>> DoSomething(TestDataModel m, CancellationToken cancellation = default)
+        => Task.FromResult(new DataResult<TestDataModel>(m));
 }
 
 public class TestDataModel

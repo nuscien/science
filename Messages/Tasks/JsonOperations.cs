@@ -39,10 +39,10 @@ public static class JsonOperations
     {
         if (obj is null) return YieldReturn<JsonOperationDescription>();
         if (obj is Type t) return CreateDescription(t, handler);
-        if (obj is JsonOperationApi api) return api.CreateDescription();
+        if (obj is JsonOperationApi api) return api.CreateDescription(handler);
         if (obj is IJsonOperationDescriptive desc) return YieldReturn(desc.CreateDescription());
         if (obj is IEnumerable<IJsonOperationDescriptive> col2) return CreateDescription(col2);
-        return CreateDescriptionByProperties(obj);
+        return CreateDescriptionByProperties(obj, handler);
     }
 
     /// <summary>
@@ -419,7 +419,7 @@ public static class JsonOperations
         }
     }
 
-    private static IEnumerable<JsonOperationDescription> CreateDescriptionByProperties(object obj)
+    private static IEnumerable<JsonOperationDescription> CreateDescriptionByProperties(object obj, BaseJsonOperationSchemaHandler handler)
     {
         var type = obj.GetType();
         var props = type.GetProperties();
@@ -431,7 +431,7 @@ public static class JsonOperations
             yield return d;
         }
 
-        var more = CreateDescription(type);
+        var more = CreateDescription(type, handler);
         if (more == null) yield break;
         foreach (var item in more)
         {

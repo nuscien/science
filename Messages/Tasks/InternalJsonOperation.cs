@@ -48,9 +48,9 @@ internal class InternalJsonOperation<TIn, TOut> : BaseJsonOperation<TIn, TOut>
     }
 
     /// <inheritdoc />
-    public override JsonOperationDescription CreateDescription()
+    public override JsonOperationDescription CreateDescription(BaseJsonOperationSchemaHandler handler)
     {
-        var desc = base.CreateDescription();
+        var desc = base.CreateDescription(handler);
         if (!string.IsNullOrEmpty(Id)) desc.Id = Id;
         return desc;
     }
@@ -90,9 +90,9 @@ internal class InternalSimpleJsonOperation<TIn, TOut> : BaseJsonOperation<TIn, T
     }
 
     /// <inheritdoc />
-    public override JsonOperationDescription CreateDescription()
+    public override JsonOperationDescription CreateDescription(BaseJsonOperationSchemaHandler handler)
     {
-        var desc = base.CreateDescription();
+        var desc = base.CreateDescription(handler);
         if (!string.IsNullOrEmpty(Id)) desc.Id = Id;
         return desc;
     }
@@ -132,9 +132,9 @@ internal class InternalSyncJsonOperation<TIn, TOut> : BaseJsonOperation<TIn, TOu
     }
 
     /// <inheritdoc />
-    public override JsonOperationDescription CreateDescription()
+    public override JsonOperationDescription CreateDescription(BaseJsonOperationSchemaHandler handler)
     {
-        var desc = base.CreateDescription();
+        var desc = base.CreateDescription(handler);
         if (!string.IsNullOrEmpty(Id)) desc.Id = Id;
         return desc;
     }
@@ -174,15 +174,15 @@ internal class InternalSimpleSyncJsonOperation<TIn, TOut> : BaseJsonOperation<TI
     }
 
     /// <inheritdoc />
-    public override JsonOperationDescription CreateDescription()
+    public override JsonOperationDescription CreateDescription(BaseJsonOperationSchemaHandler handler)
     {
-        var desc = base.CreateDescription();
+        var desc = base.CreateDescription(handler);
         if (!string.IsNullOrEmpty(Id)) desc.Id = Id;
         return desc;
     }
 }
 
-internal class InternalMethodJsonOperation : BaseJsonOperation
+internal class InternalMethodJsonOperation : BaseJsonOperation, IJsonTypeOperationDescriptive
 {
     private readonly Func<object, object, CancellationToken, Task<object>> handler;
     private readonly MethodInfo methodInfo;
@@ -276,8 +276,15 @@ internal class InternalMethodJsonOperation : BaseJsonOperation
 
     /// <inheritdoc />
     public override JsonOperationDescription CreateDescription()
+        => CreateDescription(null);
+
+    /// <summary>
+    /// Creates operation description.
+    /// </summary>
+    /// <returns>The operation description.</returns>
+    public JsonOperationDescription CreateDescription(BaseJsonOperationSchemaHandler handler)
     {
-        var desc = JsonOperationDescription.Create(methodInfo, Id, SchemaHandler);
+        var desc = JsonOperationDescription.Create(methodInfo, Id, handler ?? SchemaHandler ?? JsonOperations.SchemaHandler);
         JsonOperations.UpdatePath(desc, JsonOperations.GetJsonDescriptionPath(methodInfo), methodInfo.ReflectedType);
         return desc;
     }
