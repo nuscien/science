@@ -290,7 +290,7 @@ internal class InternalMethodJsonOperation : BaseJsonOperation, IJsonTypeOperati
     }
 }
 
-internal class InternalPropertyJsonOperation : BaseJsonOperation
+internal class InternalPropertyJsonOperation : BaseJsonOperation, IJsonTypeOperationDescriptive
 {
     private readonly PropertyInfo propertyInfo;
     private readonly object target;
@@ -331,8 +331,15 @@ internal class InternalPropertyJsonOperation : BaseJsonOperation
 
     /// <inheritdoc />
     public override JsonOperationDescription CreateDescription()
+        => CreateDescription(null);
+
+    /// <inheritdoc />
+    public JsonOperationDescription CreateDescription(IJsonNodeSchemaCreationHandler<Type> schemaHandler)
     {
-        var desc = JsonOperationDescription.CreateFromProperty(target, propertyInfo, Id);
+        var desc = JsonOperationDescription.CreateFromProperty(target, propertyInfo, h =>
+        {
+            return h is IJsonTypeOperationDescriptive tod ? tod.CreateDescription(schemaHandler) : h.CreateDescription();
+        }, Id);
         if (string.IsNullOrWhiteSpace(desc?.Id)) return null;
         JsonOperations.UpdatePath(desc, JsonOperations.GetJsonDescriptionPath(propertyInfo), propertyInfo.ReflectedType);
         return desc;

@@ -429,6 +429,7 @@ public class BaseRoutedJsonOperation : BaseJsonOperation
         {
             var resp = await SendAsync(http, url, context, cancellationToken);
             resp = await ProcessResponseAsync(resp, context, cancellationToken);
+            resp = ProcessResponse(resp, context);
             return resp;
         }
         catch (FailedHttpException ex)
@@ -525,6 +526,15 @@ public class BaseRoutedJsonOperation : BaseJsonOperation
         => Task.FromResult(json);
 
     /// <summary>
+    /// Processes the response data.
+    /// </summary>
+    /// <param name="json">The response content.</param>
+    /// <param name="context">The context object.</param>
+    /// <returns>The result.</returns>
+    protected virtual JsonObjectNode ProcessResponse(JsonObjectNode json, RoutedJsonOperationContext context)
+        => json;
+
+    /// <summary>
     /// Creates the default property schema.
     /// </summary>
     /// <returns>The schema description instance.</returns>
@@ -589,7 +599,7 @@ public class BaseRoutedJsonOperation : BaseJsonOperation
 /// The base JSON API operation of routed web API.
 /// </summary>
 /// <typeparam name="T">The type of result.</typeparam>
-public class BaseRoutedJsonOperation<T> : BaseJsonOperation
+public class BaseRoutedJsonOperation<T> : BaseJsonOperation, IJsonTypeOperationDescriptive
 {
     private readonly Dictionary<string, RoutedJsonOperationMappingItem> dict = new();
 
@@ -805,11 +815,11 @@ public class BaseRoutedJsonOperation<T> : BaseJsonOperation
         url = FormatUrl(url, context);
         if (url == null) throw new InvalidOperationException("The URI of the Web API or the JSON input data is invalid.");
         var http = CreateHttpClient(context) ?? new();
+        T result;
         try
         {
             var resp = await SendAsync(http, url, context, cancellationToken);
-            var result = await ProcessResponseAsync(resp, context, cancellationToken);
-            return JsonSerializer.Serialize(result);
+            result = await ProcessResponseAsync(resp, context, cancellationToken);
         }
         catch (FailedHttpException ex)
         {
@@ -822,7 +832,17 @@ public class BaseRoutedJsonOperation<T> : BaseJsonOperation
             OnHttpFailure(ex2, context);
             throw ex2;
         }
+
+        try
+        {
+            return Serialize(result, context);
+        }
         catch (JsonException ex)
+        {
+            OnJsonParsingFailure(ex, context);
+            throw;
+        }
+        catch (NotSupportedException ex)
         {
             OnJsonParsingFailure(ex, context);
             throw;
@@ -834,6 +854,14 @@ public class BaseRoutedJsonOperation<T> : BaseJsonOperation
     /// </summary>
     /// <returns>The operation description.</returns>
     public override JsonOperationDescription CreateDescription()
+        => CreateDescription(null);
+
+    /// <summary>
+    /// Creates operation description.
+    /// </summary>
+    /// <param name="schemaHandler">The optional schema handler.</param>
+    /// <returns>The operation description.</returns>
+    public virtual JsonOperationDescription CreateDescription(IJsonNodeSchemaCreationHandler<Type> schemaHandler)
     {
         var type = GetType();
         var desc = new JsonOperationDescription()
@@ -841,7 +869,7 @@ public class BaseRoutedJsonOperation<T> : BaseJsonOperation
             Id = Id ?? (type == typeof(BaseRoutedJsonOperation) ? null : type.Name),
             Description = Description ?? StringExtensions.GetDescription(type),
             ArgumentSchema = CreateArgumentSchema(),
-            ResultSchema = CreateResultSchema(),
+            ResultSchema = CreateResultSchema(schemaHandler ?? SchemaHandler),
             ErrorSchema = ErrorSchema,
         };
         desc.Data.SetValue(JsonOperations.HttpErrorProperty, out JsonObjectNode errors);
@@ -877,8 +905,16 @@ public class BaseRoutedJsonOperation<T> : BaseJsonOperation
     /// Creates the JSON schema for result.
     /// </summary>
     /// <returns>The JSON schema description instance.</returns>
-    public virtual JsonNodeSchemaDescription CreateResultSchema()
-        => JsonValues.CreateSchema(typeof(T), null, SchemaHandler);
+    public JsonNodeSchemaDescription CreateResultSchema()
+        => CreateResultSchema(null);
+
+    /// <summary>
+    /// Creates the JSON schema for result.
+    /// </summary>
+    /// <param name="schemaHandler">The optional schema handler.</param>
+    /// <returns>The JSON schema description instance.</returns>
+    public virtual JsonNodeSchemaDescription CreateResultSchema(IJsonNodeSchemaCreationHandler<Type> schemaHandler)
+        => JsonValues.CreateSchema(typeof(T), null, schemaHandler ?? SchemaHandler);
 
     /// <summary>
     /// Formats the URL to send request.
@@ -954,6 +990,26 @@ public class BaseRoutedJsonOperation<T> : BaseJsonOperation
     protected virtual void OnJsonParsingFailure(JsonException ex, RoutedJsonOperationContext context)
     {
     }
+
+    /// <summary>
+    /// Occurs on response JSON parsing failure.
+    /// </summary>
+    /// <param name="ex">The exception</param>
+    /// <param name="context">The context object.</param>
+    protected virtual void OnJsonParsingFailure(NotSupportedException ex, RoutedJsonOperationContext context)
+    {
+    }
+
+    /// <summary>
+    /// Serializes
+    /// </summary>
+    /// <param name="result">The result.</param>
+    /// <param name="context">The context object.</param>
+    /// <returns>The JSON format string.</returns>
+    /// <exception cref="NotSupportedException">There is no compatible JSON converter for the typeor its serializable members.</exception>
+    /// <exception cref="JsonException">JSON serialize failed.</exception>
+    protected string Serialize(T result, RoutedJsonOperationContext context)
+        => JsonSerializer.Serialize(result);
 
     /// <summary>
     /// Occurs on fill the JSON operation description data.

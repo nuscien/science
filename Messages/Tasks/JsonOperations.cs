@@ -40,8 +40,9 @@ public static class JsonOperations
         if (obj is null) return YieldReturn<JsonOperationDescription>();
         if (obj is Type t) return CreateDescription(t, handler);
         if (obj is JsonOperationApi api) return api.CreateDescription(handler);
+        if (obj is IJsonTypeOperationDescriptive tod) return YieldReturn(tod.CreateDescription(handler));
         if (obj is IJsonOperationDescriptive desc) return YieldReturn(desc.CreateDescription());
-        if (obj is IEnumerable<IJsonOperationDescriptive> col2) return CreateDescription(col2);
+        if (obj is IEnumerable<IJsonOperationDescriptive> col2) return CreateDescription(col2, handler);
         return CreateDescriptionByProperties(obj, handler);
     }
 
@@ -49,13 +50,17 @@ public static class JsonOperations
     /// Creates JSON operation description collection.
     /// </summary>
     /// <param name="col">A collection of route JSON operation.</param>
+    /// <param name="schemaHandler">The optional schema handler.</param>
     /// <returns>A collection of the JSON operation description.</returns>
-    public static IEnumerable<JsonOperationDescription> CreateDescription<T>(this IEnumerable<T> col) where T : IJsonOperationDescriptive
+    public static IEnumerable<JsonOperationDescription> CreateDescription<T>(this IEnumerable<T> col, IJsonNodeSchemaCreationHandler<Type> schemaHandler = null) where T : IJsonOperationDescriptive
     {
         if (col == null) yield break;
         foreach (var item in col)
         {
-            var desc = item?.CreateDescription();
+            if (item == null) continue;
+            var desc = item is IJsonTypeOperationDescriptive tod
+                ? tod.CreateDescription(schemaHandler)
+                : item?.CreateDescription();
             if (desc != null) yield return desc;
         }
     }
@@ -427,7 +432,10 @@ public static class JsonOperations
         var typeName = type.Name.Replace('\'', '-').Replace('`', '-').Replace('.', '-').Replace(',', '-');
         foreach (var prop in props)
         {
-            var d = JsonOperationDescription.CreateFromProperty(obj, prop.Name);
+            var d = JsonOperationDescription.CreateFromProperty(obj, prop.Name, h =>
+            {
+                return h is IJsonTypeOperationDescriptive tod ? tod.CreateDescription(handler) : h.CreateDescription();
+            });
             if (d == null || !UpdateOperation(d, prop, string.Concat(typeName, '-', prop.Name))) continue;
             yield return d;
         }
@@ -532,138 +540,5 @@ public static class JsonOperations
         }
 
         return arr.Count < 1 ? null : arr;
-    }
-}
-
-/// <summary>
-/// The path attribute of JSON operation.
-/// </summary>
-[AttributeUsage(AttributeTargets.Method | AttributeTargets.Property)]
-public class JsonOperationPathAttribute : Attribute
-{
-    /// <summary>
-    /// Initializes a new instance of the JsonOperationPathAttribute class.
-    /// </summary>
-    public JsonOperationPathAttribute()
-    {
-    }
-
-    /// <summary>
-    /// Initializes a new instance of the JsonOperationPathAttribute class.
-    /// </summary>
-    /// <param name="path">The path.</param>
-    public JsonOperationPathAttribute(string path)
-    {
-        Path = path;
-    }
-
-    /// <summary>
-    /// Initializes a new instance of the JsonOperationPathAttribute class.
-    /// </summary>
-    /// <param name="path">The path.</param>
-    /// <param name="httpMethod">The HTTP method.</param>
-    public JsonOperationPathAttribute(string path, HttpMethod httpMethod)
-        : this(path)
-    {
-        HttpMethod = httpMethod;
-    }
-
-    /// <summary>
-    /// Gets or sets the path.
-    /// </summary>
-    public string Path { get; set; }
-
-    /// <summary>
-    /// Gets or sets the HTTP method.
-    /// </summary>
-    public HttpMethod HttpMethod { get; set; }
-}
-
-/// <summary>
-/// The JSON schema description collection.
-/// </summary>
-public class JsonNodeSchemaDescriptionCollection
-{
-    private readonly Dictionary<string, JsonNodeSchemaDescriptionMappingItem> list = new();
-
-    /// <summary>
-    /// Sets a JSON schema.
-    /// </summary>
-    /// <param name="id">The identifier.</param>
-    /// <param name="value">The JSON schema.</param>
-    public void Set(string id, JsonNodeSchemaDescription value)
-    {
-        if (string.IsNullOrWhiteSpace(id)) return;
-        list[id] = new(id, value);
-        var col = new List<JsonNodeSchemaDescriptionMappingItem>(list.Values);
-        foreach (var item in col)
-        {
-            if (item.Id == id || !ReferenceEquals(item.Value, value)) continue;
-            col.Remove(item);
-        }
-    }
-
-    /// <summary>
-    /// Gets a JSON schema by given identifier.
-    /// </summary>
-    /// <param name="id">The identifier.</param>
-    /// <returns>The JSON schema; or null, if does not exist.</returns>
-    public JsonNodeSchemaDescription Get(string id)
-        => !string.IsNullOrEmpty(id) && list.TryGetValue(id, out var desc) ? desc?.Value : null;
-
-    /// <summary>
-    /// Removes the value with the specified identifier from the collection.
-    /// </summary>
-    /// <param name="id">The identifier.</param>
-    /// <returns>true if the element is successfully found and removed; otherwise, false. This method returns false if key is not found in the mapping.</returns>
-    public bool Remove(string id)
-        => list.Remove(id);
-
-    /// <summary>
-    /// Removes the value with the specified JSON schema from the collection.
-    /// </summary>
-    /// <param name="value">The JSON schema to remove.</param>
-    /// <returns>true if the element is successfully found and removed; otherwise, false. This method returns false if key is not found in the mapping.</returns>
-    public bool Remove(JsonNodeSchemaDescription value)
-    {
-        if (value == null) return false;
-        var col = new List<JsonNodeSchemaDescriptionMappingItem>(list.Values);
-        var i = 0;
-        foreach (var item in col)
-        {
-            if (!ReferenceEquals(item.Value, value)) continue;
-            col.Remove(item);
-            i++;
-        }
-
-        return i > 0;
-    }
-
-    /// <summary>
-    /// Gets the identifier of a JSON schema.
-    /// </summary>
-    /// <param name="value">The JSON schema.</param>
-    /// <param name="id">The identifier.</param>
-    /// <returns>The identifier.</returns>
-    public string GetId(JsonNodeSchemaDescription value, string id)
-    {
-        if (string.IsNullOrWhiteSpace(id)) return null;
-        if (value == null) return null;
-        foreach (var item in list.Values)
-        {
-            if (ReferenceEquals(item.Value, value)) return item.Id;
-        }
-
-        list[id] = new(id, value);
-        return id;
-    }
-
-    internal void WriteTo(JsonObjectNode schema)
-    {
-        foreach (var kvp in list)
-        {
-            var json = kvp.Value.Value?.ToJson();
-            if (json != null) schema.SetValue(kvp.Key, json);
-        }
     }
 }

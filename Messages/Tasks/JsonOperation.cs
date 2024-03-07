@@ -13,6 +13,7 @@ using Trivial.Reflection;
 using Trivial.Text;
 
 namespace Trivial.Tasks;
+
 /// <summary>
 /// The interface for JSON operation self-describing host.
 /// </summary>
@@ -134,18 +135,19 @@ public abstract class BaseJsonOperation<TIn, TOut> : BaseJsonOperation, IJsonTyp
     /// <summary>
     /// Creates operation description.
     /// </summary>
+    /// <param name="schemaHandler">The optional schema handler.</param>
     /// <returns>The operation description.</returns>
-    public virtual JsonOperationDescription CreateDescription(IJsonNodeSchemaCreationHandler<Type> handler)
+    public virtual JsonOperationDescription CreateDescription(IJsonNodeSchemaCreationHandler<Type> schemaHandler)
     {
         var type = GetType();
         var method = type.GetMethod(nameof(ProcessAsync), [typeof(TIn), typeof(object), typeof(CancellationToken)]);
-        handler ??= SchemaHandler ?? JsonOperations.SchemaHandler;
-        var desc = JsonOperationDescription.Create(method, null, handler);
+        schemaHandler ??= SchemaHandler ?? JsonOperations.SchemaHandler;
+        var desc = JsonOperationDescription.Create(method, null, schemaHandler);
         if (desc == null) return null;
         if (string.IsNullOrEmpty(desc.Description)) desc.Description = StringExtensions.GetDescription(type);
         JsonOperations.UpdatePath(desc, GetPathInfo() ?? JsonOperations.GetJsonDescriptionPath(method), type);
         OnOperationDescriptionDataFill(desc.Data);
-        if (handler is BaseJsonOperationSchemaHandler sh) sh.OnCreate(method, desc);
+        if (schemaHandler is BaseJsonOperationSchemaHandler sh) sh.OnCreate(method, desc);
         return desc;
     }
 
@@ -163,33 +165,4 @@ public abstract class BaseJsonOperation<TIn, TOut> : BaseJsonOperation, IJsonTyp
     /// <returns>THe path info.</returns>
     protected virtual JsonOperationPathAttribute GetPathInfo()
         => null;
-}
-
-/// <summary>
-/// The schema creation handler for JSON operation.
-/// </summary>
-public class BaseJsonOperationSchemaHandler : IJsonNodeSchemaCreationHandler<Type>
-{
-    /// <summary>
-    /// Formats or converts the schema instance by customization.
-    /// </summary>
-    /// <param name="type">The source type.</param>
-    /// <param name="result">The JSON schema created to convert or format.</param>
-    /// <param name="breadcrumb">The path breadcrumb.</param>
-    /// <returns>The JSON schema of final result.</returns>
-    public virtual JsonNodeSchemaDescription Convert(Type type, JsonNodeSchemaDescription result, NodePathBreadcrumb<Type> breadcrumb)
-        => result is JsonIntegerSchemaDescription i ? new JsonNumberSchemaDescription(i)
-        {
-            Tag = i.Tag,
-            Description = i.Description,
-        } : result;
-
-    /// <summary>
-    /// Occurs on the JSON operation description is created.
-    /// </summary>
-    /// <param name="method">The method info.</param>
-    /// <param name="description">The JSON operation description.</param>
-    public virtual void OnCreate(MethodInfo method, JsonOperationDescription description)
-    {
-    }
 }
