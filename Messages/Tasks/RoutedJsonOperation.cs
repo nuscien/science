@@ -413,6 +413,7 @@ public class BaseRoutedJsonOperation : BaseJsonOperation
         var uri = WebApiUri ?? throw new InvalidOperationException("The URI of the Web API does not configured.", new ArgumentNullException(nameof(WebApiUri), "The URI of the Web API was null."));
         var q = new QueryData();
         var context = new RoutedJsonOperationContext(json, contextValue, q);
+        OnQueryDataInit(q, context);
         foreach (var kvp in dict)
         {
             var converter = kvp.Value;
@@ -503,6 +504,15 @@ public class BaseRoutedJsonOperation : BaseJsonOperation
     /// <exception cref="InvalidOperationException">The data is invalid.</exception>
     protected virtual string FormatUrl(string url, RoutedJsonOperationContext context)
         => url;
+
+    /// <summary>
+    /// Occurs on the query data is created.
+    /// </summary>
+    /// <param name="context">The context object.</param>
+    /// <param name="q">The query data.</param>
+    protected virtual void OnQueryDataInit(QueryData q, RoutedJsonOperationContext context)
+    {
+    }
 
     /// <summary>
     /// Processes the response data.
@@ -778,6 +788,7 @@ public class BaseRoutedJsonOperation<T> : BaseJsonOperation
         var q = new QueryData();
         var json = JsonObjectNode.Parse(arguments) ?? throw new ArgumentException(nameof(arguments), "args was not a JSON object format string.");
         var context = new RoutedJsonOperationContext(json, contextValue, q);
+        OnQueryDataInit(q, context);
         foreach (var kvp in dict)
         {
             var converter = kvp.Value;
@@ -873,6 +884,15 @@ public class BaseRoutedJsonOperation<T> : BaseJsonOperation
     /// <exception cref="InvalidOperationException">The data is invalid.</exception>
     protected virtual string FormatUrl(string url, RoutedJsonOperationContext context)
         => url;
+
+    /// <summary>
+    /// Occurs on the query data is created.
+    /// </summary>
+    /// <param name="context">The context object.</param>
+    /// <param name="q">The query data.</param>
+    protected virtual void OnQueryDataInit(QueryData q, RoutedJsonOperationContext context)
+    {
+    }
 
     /// <summary>
     /// Processes the response data.

@@ -233,7 +233,8 @@ public static class JsonOperations
         if (col == null) return baseJson;
         var json = baseJson ?? new();
         json.SetValueIfNotNull("info", info);
-        if (uris != null) json.SetValue("servers", uris.Select(ele => ele.OriginalString).Where(ele => !string.IsNullOrWhiteSpace(ele)));
+        var urls = GenerateUrlsJson(uris);
+        if (urls != null) json.SetValue("servers", urls);
         json.SetValue("paths", out JsonObjectNode paths);
         json.SetValue("components", "schemas", out JsonObjectNode schemas);
         var i = 0;
@@ -496,6 +497,29 @@ public static class JsonOperations
         if (path == null && !d.Data.ContainsKey(PathProperty)) d.Data.SetValue(PathProperty, fallbackPath);
         else SetValue(d, path);
         return true;
+    }
+
+    private static JsonArrayNode GenerateUrlsJson(IEnumerable<Uri> uris)
+    {
+        if (uris == null) return null;
+        var arr = new JsonArrayNode();
+        foreach (var uri in uris)
+        {
+            try
+            {
+                var url = uri.OriginalString;
+                if (string.IsNullOrWhiteSpace(url)) continue;
+                arr.Add(new JsonObjectNode
+                {
+                    { "url", url }
+                });
+            }
+            catch (InvalidOperationException)
+            {
+            }
+        }
+
+        return arr.Count < 1 ? null : arr;
     }
 }
 
