@@ -35,7 +35,7 @@ public static class JsonOperations
     /// <param name="obj">The object to load description.</param>
     /// <param name="handler">The additional handler to control the creation.</param>
     /// <returns>A collection of the JSON operation description.</returns>
-    public static IEnumerable<JsonOperationDescription> CreateDescription(object obj, BaseJsonOperationSchemaHandler handler = null)
+    public static IEnumerable<JsonOperationDescription> CreateDescription(object obj, IJsonNodeSchemaCreationHandler<Type> handler = null)
     {
         if (obj is null) return YieldReturn<JsonOperationDescription>();
         if (obj is Type t) return CreateDescription(t, handler);
@@ -68,7 +68,7 @@ public static class JsonOperations
     /// <param name="schemaHandler">The optional schema handler.</param>
     /// <param name="id">The operation identifier.</param>
     /// <returns>The JSON operation.</returns>
-    public static BaseJsonOperation Create(object target, MethodInfo method, BaseJsonOperationSchemaHandler schemaHandler = null, string id = null)
+    public static BaseJsonOperation Create(object target, MethodInfo method, IJsonNodeSchemaCreationHandler<Type> schemaHandler = null, string id = null)
     {
         if (method == null) return null;
         var op = new InternalMethodJsonOperation(target, method, id)
@@ -100,7 +100,7 @@ public static class JsonOperations
     /// <param name="id">The operation identifier.</param>
     /// <param name="schemaHandler">The optional schema handler.</param>
     /// <returns>The JSON operation.</returns>
-    public static BaseJsonOperation Create<TIn, TOut>(Func<TIn, object, CancellationToken, Task<TOut>> handler, string id = null, BaseJsonOperationSchemaHandler schemaHandler = null)
+    public static BaseJsonOperation Create<TIn, TOut>(Func<TIn, object, CancellationToken, Task<TOut>> handler, string id = null, IJsonNodeSchemaCreationHandler<Type> schemaHandler = null)
         => handler == null ? null : new InternalJsonOperation<TIn, TOut>(handler, id)
         {
             SchemaHandler = schemaHandler
@@ -115,7 +115,7 @@ public static class JsonOperations
     /// <param name="id">The operation identifier.</param>
     /// <param name="schemaHandler">The optional schema handler.</param>
     /// <returns>The JSON operation.</returns>
-    public static BaseJsonOperation Create<TIn, TOut>(Func<TIn, CancellationToken, Task<TOut>> handler, string id = null, BaseJsonOperationSchemaHandler schemaHandler = null)
+    public static BaseJsonOperation Create<TIn, TOut>(Func<TIn, CancellationToken, Task<TOut>> handler, string id = null, IJsonNodeSchemaCreationHandler<Type> schemaHandler = null)
         => handler == null ? null : new InternalSimpleJsonOperation<TIn, TOut>(handler, id)
         {
             SchemaHandler = schemaHandler
@@ -130,7 +130,7 @@ public static class JsonOperations
     /// <param name="id">The operation identifier.</param>
     /// <param name="schemaHandler">The optional schema handler.</param>
     /// <returns>The JSON operation.</returns>
-    public static BaseJsonOperation Create<TIn, TOut>(Func<TIn, object, TOut> handler, string id = null, BaseJsonOperationSchemaHandler schemaHandler = null)
+    public static BaseJsonOperation Create<TIn, TOut>(Func<TIn, object, TOut> handler, string id = null, IJsonNodeSchemaCreationHandler<Type> schemaHandler = null)
         => handler == null ? null : new InternalSyncJsonOperation<TIn, TOut>(handler, id)
         {
             SchemaHandler = schemaHandler
@@ -145,7 +145,7 @@ public static class JsonOperations
     /// <param name="id">The operation identifier.</param>
     /// <param name="schemaHandler">The optional schema handler.</param>
     /// <returns>The JSON operation.</returns>
-    public static BaseJsonOperation Create<TIn, TOut>(Func<TIn, TOut> handler, string id = null, BaseJsonOperationSchemaHandler schemaHandler = null)
+    public static BaseJsonOperation Create<TIn, TOut>(Func<TIn, TOut> handler, string id = null, IJsonNodeSchemaCreationHandler<Type> schemaHandler = null)
         => handler == null ? null : new InternalSimpleSyncJsonOperation<TIn, TOut>(handler, id)
         {
             SchemaHandler = schemaHandler
@@ -420,7 +420,7 @@ public static class JsonOperations
         }
     }
 
-    private static IEnumerable<JsonOperationDescription> CreateDescriptionByProperties(object obj, BaseJsonOperationSchemaHandler handler)
+    private static IEnumerable<JsonOperationDescription> CreateDescriptionByProperties(object obj, IJsonNodeSchemaCreationHandler<Type> handler)
     {
         var type = obj.GetType();
         var props = type.GetProperties();
@@ -472,18 +472,30 @@ public static class JsonOperations
     /// <param name="type">The type defined with the opertion set.</param>
     /// <param name="handler">The additional handler to control the creation.</param>
     /// <returns>A collection of the JSON operation description.</returns>
-    private static IEnumerable<JsonOperationDescription> CreateDescription(Type type, BaseJsonOperationSchemaHandler handler = null)
+    private static IEnumerable<JsonOperationDescription> CreateDescription(Type type, IJsonNodeSchemaCreationHandler<Type> handler = null)
     {
         if (type == null) yield break;
         var methods = type.GetMethods();
         handler ??= SchemaHandler;
         var typeName = type.Name.Replace('\'', '-').Replace('`', '-').Replace('.', '-').Replace(',', '-');
-        foreach (var method in methods)
+        if (handler is BaseJsonOperationSchemaHandler sh)
         {
-            var d = JsonOperationDescription.Create(method, null, handler);
-            if (!UpdateOperation(d, method, string.Concat(typeName, '-', method.Name))) continue;
-            handler.OnCreate(method, d);
-            yield return d;
+            foreach (var method in methods)
+            {
+                var d = JsonOperationDescription.Create(method, null, sh);
+                if (!UpdateOperation(d, method, string.Concat(typeName, '-', method.Name))) continue;
+                sh.OnCreate(method, d);
+                yield return d;
+            }
+        }
+        else
+        {
+            foreach (var method in methods)
+            {
+                var d = JsonOperationDescription.Create(method, null, handler);
+                if (!UpdateOperation(d, method, string.Concat(typeName, '-', method.Name))) continue;
+                yield return d;
+            }
         }
     }
 

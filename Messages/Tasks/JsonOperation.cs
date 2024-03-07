@@ -23,7 +23,7 @@ public interface IJsonTypeOperationDescriptive : IJsonOperationDescriptive
     /// </summary>
     /// <param name="handler">The additional handler to control the creation.</param>
     /// <returns>The operation description.</returns>
-    JsonOperationDescription CreateDescription(BaseJsonOperationSchemaHandler handler);
+    JsonOperationDescription CreateDescription(IJsonNodeSchemaCreationHandler<Type> handler);
 }
 
 /// <summary>
@@ -79,7 +79,7 @@ public abstract class BaseJsonOperation<TIn, TOut> : BaseJsonOperation, IJsonTyp
     /// <summary>
     /// Gets or sets the schema description creation handler.
     /// </summary>
-    public BaseJsonOperationSchemaHandler SchemaHandler { get; set; }
+    public IJsonNodeSchemaCreationHandler<Type> SchemaHandler { get; set; }
 
     /// <summary>
     /// Processes.
@@ -135,7 +135,7 @@ public abstract class BaseJsonOperation<TIn, TOut> : BaseJsonOperation, IJsonTyp
     /// Creates operation description.
     /// </summary>
     /// <returns>The operation description.</returns>
-    public virtual JsonOperationDescription CreateDescription(BaseJsonOperationSchemaHandler handler)
+    public virtual JsonOperationDescription CreateDescription(IJsonNodeSchemaCreationHandler<Type> handler)
     {
         var type = GetType();
         var method = type.GetMethod(nameof(ProcessAsync), [typeof(TIn), typeof(object), typeof(CancellationToken)]);
@@ -145,7 +145,7 @@ public abstract class BaseJsonOperation<TIn, TOut> : BaseJsonOperation, IJsonTyp
         if (string.IsNullOrEmpty(desc.Description)) desc.Description = StringExtensions.GetDescription(type);
         JsonOperations.UpdatePath(desc, GetPathInfo() ?? JsonOperations.GetJsonDescriptionPath(method), type);
         OnOperationDescriptionDataFill(desc.Data);
-        handler.OnCreate(method, desc);
+        if (handler is BaseJsonOperationSchemaHandler sh) sh.OnCreate(method, desc);
         return desc;
     }
 

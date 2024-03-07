@@ -615,7 +615,7 @@ public class JsonOperationApi : IJsonObjectHost
     /// </summary>
     /// <param name="handler">The additional handler to control the creation.</param>
     /// <returns>A collection of the JSON operation description.</returns>
-    internal IEnumerable<JsonOperationDescription> CreateDescription(BaseJsonOperationSchemaHandler handler = null)
+    internal IEnumerable<JsonOperationDescription> CreateDescription(IJsonNodeSchemaCreationHandler<Type> handler = null)
     {
         foreach (var item in ops.Values)
         {
@@ -908,7 +908,7 @@ public class JsonOperationInfo : IJsonOperationDescriptive
     /// </summary>
     /// <param name="handler">The additional handler to control the creation.</param>
     /// <returns>The operation description.</returns>
-    public JsonOperationDescription CreateDescription(BaseJsonOperationSchemaHandler handler)
+    public JsonOperationDescription CreateDescription(IJsonNodeSchemaCreationHandler<Type> handler)
     {
         var op = Operation;
         if (op == null) return null;

@@ -550,7 +550,7 @@ public class BaseRoutedJsonOperation : BaseJsonOperation
     /// <exception cref="FailedHttpException">HTTP failure.</exception>
     /// <exception cref="JsonException">The response content is not JSON.</exception>
     protected virtual Task<JsonObjectNode> SendAsync(JsonHttpClient<JsonObjectNode> http, string url, RoutedJsonOperationContext context, CancellationToken cancellationToken = default)
-        => http.SendAsync(HttpMethod, url, cancellationToken);
+        => http.SendAsync(HttpMethod ?? HttpMethod.Get, url, cancellationToken);
 
     /// <summary>
     /// Occurs on HTTP failure.
@@ -645,6 +645,11 @@ public class BaseRoutedJsonOperation<T> : BaseJsonOperation
     /// These are following error schema.
     /// </summary>
     public Dictionary<int, string> ErrorCodes { get; } = new();
+
+    /// <summary>
+    /// Gets or sets the schema handler.
+    /// </summary>
+    public IJsonNodeSchemaCreationHandler<Type> SchemaHandler { get; set; }
 
     /// <summary>
     /// Registers.
@@ -873,7 +878,7 @@ public class BaseRoutedJsonOperation<T> : BaseJsonOperation
     /// </summary>
     /// <returns>The JSON schema description instance.</returns>
     public virtual JsonNodeSchemaDescription CreateResultSchema()
-        => JsonValues.CreateSchema(typeof(T));
+        => JsonValues.CreateSchema(typeof(T), null, SchemaHandler);
 
     /// <summary>
     /// Formats the URL to send request.
@@ -930,7 +935,7 @@ public class BaseRoutedJsonOperation<T> : BaseJsonOperation
     /// <exception cref="FailedHttpException">HTTP failure.</exception>
     /// <exception cref="JsonException">The response content is not JSON.</exception>
     protected virtual Task<string> SendAsync(JsonHttpClient<string> http, string url, RoutedJsonOperationContext context, CancellationToken cancellationToken = default)
-        => http.SendAsync(HttpMethod, url, cancellationToken);
+        => http.SendAsync(HttpMethod ?? HttpMethod.Get, url, cancellationToken);
 
     /// <summary>
     /// Occurs on HTTP failure.

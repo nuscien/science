@@ -48,7 +48,7 @@ internal class InternalJsonOperation<TIn, TOut> : BaseJsonOperation<TIn, TOut>
     }
 
     /// <inheritdoc />
-    public override JsonOperationDescription CreateDescription(BaseJsonOperationSchemaHandler handler)
+    public override JsonOperationDescription CreateDescription(IJsonNodeSchemaCreationHandler<Type> handler)
     {
         var desc = base.CreateDescription(handler);
         if (!string.IsNullOrEmpty(Id)) desc.Id = Id;
@@ -90,7 +90,7 @@ internal class InternalSimpleJsonOperation<TIn, TOut> : BaseJsonOperation<TIn, T
     }
 
     /// <inheritdoc />
-    public override JsonOperationDescription CreateDescription(BaseJsonOperationSchemaHandler handler)
+    public override JsonOperationDescription CreateDescription(IJsonNodeSchemaCreationHandler<Type> handler)
     {
         var desc = base.CreateDescription(handler);
         if (!string.IsNullOrEmpty(Id)) desc.Id = Id;
@@ -132,7 +132,7 @@ internal class InternalSyncJsonOperation<TIn, TOut> : BaseJsonOperation<TIn, TOu
     }
 
     /// <inheritdoc />
-    public override JsonOperationDescription CreateDescription(BaseJsonOperationSchemaHandler handler)
+    public override JsonOperationDescription CreateDescription(IJsonNodeSchemaCreationHandler<Type> handler)
     {
         var desc = base.CreateDescription(handler);
         if (!string.IsNullOrEmpty(Id)) desc.Id = Id;
@@ -174,7 +174,7 @@ internal class InternalSimpleSyncJsonOperation<TIn, TOut> : BaseJsonOperation<TI
     }
 
     /// <inheritdoc />
-    public override JsonOperationDescription CreateDescription(BaseJsonOperationSchemaHandler handler)
+    public override JsonOperationDescription CreateDescription(IJsonNodeSchemaCreationHandler<Type> handler)
     {
         var desc = base.CreateDescription(handler);
         if (!string.IsNullOrEmpty(Id)) desc.Id = Id;
@@ -195,7 +195,7 @@ internal class InternalMethodJsonOperation : BaseJsonOperation, IJsonTypeOperati
     /// <summary>
     /// Gets or sets the schema description creation handler.
     /// </summary>
-    public BaseJsonOperationSchemaHandler SchemaHandler { get; set; }
+    public IJsonNodeSchemaCreationHandler<Type> SchemaHandler { get; set; }
 
     /// <summary>
     /// Gets or sets the operation identifier.
@@ -282,7 +282,7 @@ internal class InternalMethodJsonOperation : BaseJsonOperation, IJsonTypeOperati
     /// Creates operation description.
     /// </summary>
     /// <returns>The operation description.</returns>
-    public JsonOperationDescription CreateDescription(BaseJsonOperationSchemaHandler handler)
+    public JsonOperationDescription CreateDescription(IJsonNodeSchemaCreationHandler<Type> handler)
     {
         var desc = JsonOperationDescription.Create(methodInfo, Id, handler ?? SchemaHandler ?? JsonOperations.SchemaHandler);
         JsonOperations.UpdatePath(desc, JsonOperations.GetJsonDescriptionPath(methodInfo), methodInfo.ReflectedType);
