@@ -425,31 +425,38 @@ public class BaseRoutedJsonOperation : BaseJsonOperation
         url = FormatUrl(url, context);
         if (url == null) throw new InvalidOperationException("The URI of the Web API or the JSON input data is invalid.");
         var http = CreateHttpClient(context) ?? new();
+        JsonObjectNode resp;
         try
         {
-            var resp = await SendAsync(http, url, context, cancellationToken);
-            resp = await ProcessResponseAsync(resp, context, cancellationToken);
-            resp = ProcessResponse(resp, context);
-            return resp;
-        }
-        catch (FailedHttpException ex)
-        {
-            var resp = OnHttpFailure(ex, context);
-            if (resp != null) return resp;
-            throw;
-        }
-        catch (HttpRequestException ex)
-        {
-            var ex2 = new FailedHttpException(null, ex.Message, ex);
-            var resp = OnHttpFailure(ex2, context);
-            if (resp != null) return resp;
-            throw ex2;
+            resp = await SendAsync(http, url, context, cancellationToken);
         }
         catch (JsonException ex)
         {
             OnJsonParsingFailure(ex, context);
             throw;
         }
+        catch (NotSupportedException ex)
+        {
+            OnJsonParsingFailure(ex, context);
+            throw;
+        }
+        catch (FailedHttpException ex)
+        {
+            resp = OnHttpFailure(ex, context);
+            if (resp != null) return resp;
+            throw;
+        }
+        catch (HttpRequestException ex)
+        {
+            var ex2 = new FailedHttpException(null, ex.Message, ex);
+            resp = OnHttpFailure(ex2, context);
+            if (resp != null) return resp;
+            throw ex2;
+        }
+
+        resp = await ProcessResponseAsync(resp, context, cancellationToken);
+        resp = ProcessResponse(resp, context);
+        return resp;
     }
 
     /// <summary>
@@ -576,6 +583,15 @@ public class BaseRoutedJsonOperation : BaseJsonOperation
     /// <param name="ex">The exception</param>
     /// <param name="context">The context object.</param>
     protected virtual void OnJsonParsingFailure(JsonException ex, RoutedJsonOperationContext context)
+    {
+    }
+
+    /// <summary>
+    /// Occurs on response JSON parsing failure.
+    /// </summary>
+    /// <param name="ex">The exception</param>
+    /// <param name="context">The context object.</param>
+    protected virtual void OnJsonParsingFailure(NotSupportedException ex, RoutedJsonOperationContext context)
     {
     }
 
@@ -839,12 +855,12 @@ public class BaseRoutedJsonOperation<T> : BaseJsonOperation, IJsonTypeOperationD
         }
         catch (JsonException ex)
         {
-            OnJsonParsingFailure(ex, context);
+            OnResultSerializeFailure(ex, context);
             throw;
         }
         catch (NotSupportedException ex)
         {
-            OnJsonParsingFailure(ex, context);
+            OnResultSerializeFailure(ex, context);
             throw;
         }
     }
@@ -987,7 +1003,7 @@ public class BaseRoutedJsonOperation<T> : BaseJsonOperation, IJsonTypeOperationD
     /// </summary>
     /// <param name="ex">The exception</param>
     /// <param name="context">The context object.</param>
-    protected virtual void OnJsonParsingFailure(JsonException ex, RoutedJsonOperationContext context)
+    protected virtual void OnResultSerializeFailure(JsonException ex, RoutedJsonOperationContext context)
     {
     }
 
@@ -996,7 +1012,7 @@ public class BaseRoutedJsonOperation<T> : BaseJsonOperation, IJsonTypeOperationD
     /// </summary>
     /// <param name="ex">The exception</param>
     /// <param name="context">The context object.</param>
-    protected virtual void OnJsonParsingFailure(NotSupportedException ex, RoutedJsonOperationContext context)
+    protected virtual void OnResultSerializeFailure(NotSupportedException ex, RoutedJsonOperationContext context)
     {
     }
 

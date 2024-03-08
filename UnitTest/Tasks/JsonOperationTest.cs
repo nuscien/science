@@ -26,7 +26,7 @@ public class JsonOperationTest
         api.RegisterRange(typeof(JsonOperationRegistry));
         var desc = JsonOperations.CreateDescription(api);
         Assert.IsNotNull(desc);
-        var yaml = desc.ToJson().ToYamlString();
+        var yaml = desc.ToJson(null, [new("https://www.kingcean.net")]).ToYamlString();
         Assert.IsNotNull(yaml);
         var resp = await api.ProcessAsync("/test/something", HttpMethod.Post, new JsonObjectNode()
         {
@@ -56,6 +56,7 @@ public static class JsonOperationRegistry
         => Task.FromResult(new DataResult<TestDataModel>(m));
 }
 
+[JsonNodeSchemaAdjustment(typeof(TestJsonSchemaAdjustment), "something")]
 public class TestDataModel
 {
     [JsonPropertyName("name")]
@@ -89,5 +90,13 @@ public class TestRoutedJsonOperation : BaseRoutedJsonOperation
             { "state", true },
             { "url", url }
         });
+    }
+}
+
+public class TestJsonSchemaAdjustment : IJsonNodeSchemaAdjustment
+{
+    public void Adjust(Type type, JsonNodeSchemaDescription schema, string code)
+    {
+        if (schema.Tag == null) schema.Tag = string.Concat("Test ", code);
     }
 }

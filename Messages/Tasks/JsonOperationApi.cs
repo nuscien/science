@@ -556,7 +556,7 @@ public class JsonOperationApi : IJsonObjectHost
     protected JsonObjectNode ToJson(object contextValue, JsonObjectNode info, IEnumerable<JsonOperationDescription> col = null, IEnumerable<Uri> uris = null)
     {
         var schemaCol = CreateJsonSchemaDescriptionCollection(contextValue);
-        return JsonOperations.ToJson(OnJsonInit(contextValue), col ?? JsonOperations.CreateDescription(this), info, uris, schemaCol);
+        return JsonOperations.ToJson(OnJsonInit(contextValue), col ?? CreateDescription(GetJsonSchemaCreationHandler(contextValue)), info, uris, schemaCol);
     }
 
     /// <summary>
@@ -609,6 +609,14 @@ public class JsonOperationApi : IJsonObjectHost
     protected virtual void OnFailure(JsonOperationInput input, Exception exception)
     {
     }
+
+    /// <summary>
+    /// Gets the JSON schema creation handler.
+    /// </summary>
+    /// <param name="contextValue">The context value.</param>
+    /// <returns>The JSON schema creation handler.</returns>
+    protected virtual IJsonNodeSchemaCreationHandler<Type> GetJsonSchemaCreationHandler(object contextValue)
+        => null;
 
     /// <summary>
     /// Creates JSON operation description collection by a given type.
