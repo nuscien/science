@@ -2,7 +2,7 @@
 
 The chat message and client.
 
-In `Trivial.Text` [namespace](../) of `Trivial.Maths.dll` [library](../../).
+In `Trivial.Text` [namespace](../) of `Trivial.Messages.dll` [library](../../).
 
 ## ExtendedChatMessage
 
