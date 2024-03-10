@@ -809,7 +809,7 @@ public class BaseRoutedJsonOperation<T> : BaseJsonOperation, IJsonTypeOperationD
     /// <returns>The response.</returns>
     /// <exception cref="ArgumentNullException">arguments was null.</exception>
     /// <exception cref="ArgumentException">arguments was invalid.</exception>
-    /// <exception cref="InvalidOperationException">The URI of the Web API was null or invalid; or the data is invalid.</exception>
+    /// <exception cref="InvalidOperationException">The URI of the Web API was null or invalid; or the data is invalid; or the result is failed to serialize.</exception>
     /// <exception cref="FailedHttpException">HTTP failure.</exception>
     /// <exception cref="JsonException">arguments or response content is not JSON.</exception>
     public override async Task<string> ProcessAsync(string arguments, object contextValue, CancellationToken cancellationToken = default)
@@ -1022,10 +1022,11 @@ public class BaseRoutedJsonOperation<T> : BaseJsonOperation, IJsonTypeOperationD
     /// <param name="result">The result.</param>
     /// <param name="context">The context object.</param>
     /// <returns>The JSON format string.</returns>
+    /// <exception cref="InvalidOperationException">Serialize result to JSON failed.</exception>
     /// <exception cref="NotSupportedException">There is no compatible JSON converter for the typeor its serializable members.</exception>
     /// <exception cref="JsonException">JSON serialize failed.</exception>
-    protected string Serialize(T result, RoutedJsonOperationContext context)
-        => JsonSerializer.Serialize(result);
+    protected virtual string Serialize(T result, RoutedJsonOperationContext context)
+        => JsonOperations.SerializeResult(result);
 
     /// <summary>
     /// Occurs on fill the JSON operation description data.
