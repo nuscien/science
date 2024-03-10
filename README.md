@@ -16,17 +16,6 @@ Including the periodic table and basic chemistry models, e.g. chemical element, 
 ![.NET Framework 4.8](./docs/assets/badge_NET_Fx_4_8.svg)
 ![.NET Framework 4.6.1](./docs/assets/badge_NET_Fx_4_6_1.svg)
 
-## [Trivial.Web](./Web)
-
-The useful utilities for ASP.NET application.
-
-[![NuGet package](https://img.shields.io/nuget/dt/Trivial.Web?label=nuget+downloads)](https://www.nuget.org/packages/Trivial.Web)
-
-![ASP.NET Core 8.0](./docs/assets/badge_ASPNET_8_0.svg)
-![ASP.NET Core 6.0](./docs/assets/badge_ASPNET_6_0.svg)
-
-- [Controller extensions for ASP.NET Core](./docs/web/controller)
-
 ## [Trivial.Messages](./Messages)
 
 The messages library.
@@ -39,15 +28,9 @@ The messages library.
 - [EAN](./docs/data/ean)
 - [Code 128 and GS1-128](./docs/data/code128)
 
-## [Trivial.Console](./Console)
 
-The rich UX CLI controls.
+## [Trivial.Maths](./Maths)
 
-[![NuGet package](https://img.shields.io/nuget/dt/Trivial.Console?label=nuget+downloads)](https://www.nuget.org/packages/Trivial.Console)
+The maths.
 
-![.NET 8](./docs/assets/badge_NET_8.svg)
-![.NET 6](./docs/assets/badge_NET_6.svg)
-![.NET Framework 4.8](./docs/assets/badge_NET_Fx_4_8.svg)
-![.NET Framework 4.6.1](./docs/assets/badge_NET_Fx_4_6_1.svg)
-
-- [Console utilities and components](./docs/console)
+[![NuGet package](https://img.shields.io/nuget/dt/Trivial.Maths?label=nuget+downloads)](https://www.nuget.org/packages/Trivial.Maths)
