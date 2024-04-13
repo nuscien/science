@@ -862,7 +862,7 @@ public class JsonOperationInfo : IJsonOperationDescriptive
     /// <summary>
     /// Gets the operation identifier.
     /// </summary>
-    public string Id => OperationDescription?.Id;
+    public string Id => OperationDescription.Id;
 
     /// <summary>
     /// Gets the operation description.

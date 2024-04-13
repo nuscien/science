@@ -53,6 +53,11 @@ namespace Trivial.Users
         Agent = 6,
 
         /// <summary>
+        /// The oganization.
+        /// </summary>
+        Organization = 7,
+
+        /// <summary>
         /// The other type.
         /// </summary>
         Other = 63,

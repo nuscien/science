@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
+using System.Net;
 using System.Net.Http;
 using System.Reflection;
 using System.Security.Authentication.ExtendedProtection;
@@ -421,6 +422,7 @@ public class BaseRoutedJsonOperation : BaseJsonOperation
             q[converter.ArgumentName] = converter.GetArgumentValue(json);
         }
 
+        OnQueryDataFill(q, context);
         var url = q.ToString(uri);
         url = FormatUrl(url, context);
         if (url == null) throw new InvalidOperationException("The URI of the Web API or the JSON input data is invalid.");
@@ -442,14 +444,14 @@ public class BaseRoutedJsonOperation : BaseJsonOperation
         }
         catch (FailedHttpException ex)
         {
-            resp = OnHttpFailure(ex, context);
+            resp = OnHttpFailure(ex.StatusCode, ex, context);
             if (resp != null) return resp;
             throw;
         }
         catch (HttpRequestException ex)
         {
             var ex2 = new FailedHttpException(null, ex.Message, ex);
-            resp = OnHttpFailure(ex2, context);
+            resp = OnHttpFailure(ex2.StatusCode, ex2, context);
             if (resp != null) return resp;
             throw ex2;
         }
@@ -523,6 +525,15 @@ public class BaseRoutedJsonOperation : BaseJsonOperation
     }
 
     /// <summary>
+    /// Occurs on the query data is ready to generate URL.
+    /// </summary>
+    /// <param name="context">The context object.</param>
+    /// <param name="q">The query data.</param>
+    protected virtual void OnQueryDataFill(QueryData q, RoutedJsonOperationContext context)
+    {
+    }
+
+    /// <summary>
     /// Processes the response data.
     /// </summary>
     /// <param name="json">The response content.</param>
@@ -572,9 +583,10 @@ public class BaseRoutedJsonOperation : BaseJsonOperation
     /// <summary>
     /// Occurs on HTTP failure.
     /// </summary>
+    /// <param name="status">The HTTP status code.</param>
     /// <param name="ex">The exception</param>
     /// <param name="context">The context object.</param>
-    protected virtual JsonObjectNode OnHttpFailure(FailedHttpException ex, RoutedJsonOperationContext context)
+    protected virtual JsonObjectNode OnHttpFailure(HttpStatusCode? status, FailedHttpException ex, RoutedJsonOperationContext context)
         => null;
 
     /// <summary>
@@ -827,6 +839,7 @@ public class BaseRoutedJsonOperation<T> : BaseJsonOperation, IJsonTypeOperationD
             q[converter.ArgumentName] = converter.GetArgumentValue(json);
         }
 
+        OnQueryDataFill(q, context);
         var url = q.ToString(uri);
         url = FormatUrl(url, context);
         if (url == null) throw new InvalidOperationException("The URI of the Web API or the JSON input data is invalid.");
@@ -839,13 +852,13 @@ public class BaseRoutedJsonOperation<T> : BaseJsonOperation, IJsonTypeOperationD
         }
         catch (FailedHttpException ex)
         {
-            OnHttpFailure(ex, context);
+            OnHttpFailure(ex.StatusCode, ex, context);
             throw;
         }
         catch (HttpRequestException ex)
         {
             var ex2 = new FailedHttpException(null, ex.Message, ex);
-            OnHttpFailure(ex2, context);
+            OnHttpFailure(ex2.StatusCode, ex2, context);
             throw ex2;
         }
 
@@ -952,6 +965,15 @@ public class BaseRoutedJsonOperation<T> : BaseJsonOperation, IJsonTypeOperationD
     }
 
     /// <summary>
+    /// Occurs on the query data is ready to generate URL.
+    /// </summary>
+    /// <param name="context">The context object.</param>
+    /// <param name="q">The query data.</param>
+    protected virtual void OnQueryDataFill(QueryData q, RoutedJsonOperationContext context)
+    {
+    }
+
+    /// <summary>
     /// Processes the response data.
     /// </summary>
     /// <param name="json">The response content.</param>
@@ -992,9 +1014,10 @@ public class BaseRoutedJsonOperation<T> : BaseJsonOperation, IJsonTypeOperationD
     /// <summary>
     /// Occurs on HTTP failure.
     /// </summary>
+    /// <param name="status">The HTTP status code.</param>
     /// <param name="ex">The exception</param>
     /// <param name="context">The context object.</param>
-    protected virtual void OnHttpFailure(FailedHttpException ex, RoutedJsonOperationContext context)
+    protected virtual void OnHttpFailure(HttpStatusCode? status, FailedHttpException ex, RoutedJsonOperationContext context)
     {
     }
 
