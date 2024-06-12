@@ -826,10 +826,10 @@ public class BaseRoutedJsonOperation<T> : BaseJsonOperation, IJsonTypeOperationD
     /// <exception cref="JsonException">arguments or response content is not JSON.</exception>
     public override async Task<string> ProcessAsync(string arguments, object contextValue, CancellationToken cancellationToken = default)
     {
-        if (arguments == null) throw new ArgumentNullException(nameof(arguments), "args was null.");
+        if (arguments == null) throw new ArgumentNullException(nameof(arguments), "arguments string was null.");
         var uri = WebApiUri ?? throw new InvalidOperationException("The URI of the Web API does not configured.", new ArgumentNullException(nameof(WebApiUri), "The URI of the Web API was null."));
         var q = new QueryData();
-        var json = JsonObjectNode.Parse(arguments) ?? throw new ArgumentException(nameof(arguments), "args was not a JSON object format string.");
+        var json = JsonObjectNode.Parse(arguments) ?? throw new ArgumentException(nameof(arguments), "arguments string was not a JSON object format string.");
         var context = new RoutedJsonOperationContext(json, contextValue, q);
         OnQueryDataInit(q, context);
         foreach (var kvp in dict)

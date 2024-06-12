@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Text;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
 namespace Trivial.Text;
@@ -15,22 +16,35 @@ public class LocaleJsonPropertyResolver : IJsonPropertyResolver<string>
     /// <summary>
     /// Gets or sets the optional current market code.
     /// </summary>
+    [JsonPropertyName("mkt")]
     public string Market { get; set; }
 
     /// <summary>
     /// Gets or sets the optional prefix of property key.
     /// </summary>
+    [JsonPropertyName("prefix")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public string Prefix { get; set; }
 
     /// <summary>
     /// Gets or sets the optional suffix of property key.
     /// </summary>
+    [JsonPropertyName("suffix")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public string Suffix { get; set; }
 
     /// <summary>
     /// Gets or sets the optional fallback market code.
     /// </summary>
+    [JsonPropertyName("fallback")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public string Fallback { get; set; }
+
+    /// <summary>
+    /// Gets or sets the optional tag object.
+    /// </summary>
+    [JsonIgnore]
+    public object Tag { get; set; }
 
     /// <summary>
     /// Gets the property value.
