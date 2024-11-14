@@ -7,7 +7,7 @@ using Trivial.Collection;
 
 namespace Trivial.Maths;
 
-public static partial class CollectionOperation
+public static partial class CollectionOperations
 {
     /// <summary>
     /// Balances 2 collections.

@@ -41,7 +41,7 @@ sealed class ChemicalElementJsonConverter : JsonConverter<ChemicalElement>
         var z = obj.TryGetInt32Value("number") ?? obj.TryGetInt32Value("z");
         var s = obj.TryGetStringValue("symbol")?.Trim();
         var n = obj.TryGetStringValue("name_en")?.Trim() ?? obj.TryGetStringValue("name")?.Trim();
-        var w = obj.TryGetDoubleValue("weight");
+        var w = obj.TryGetDoubleValue("weight", false);
         ChemicalElement ele = null;
         if (z.HasValue && z != 0)
         {

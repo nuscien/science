@@ -7,7 +7,7 @@ using Trivial.Text;
 
 namespace Trivial.Maths;
 
-public static partial class CollectionOperation
+public static partial class CollectionOperations
 {
     /// <summary>
     /// Gets one item by specific operator.

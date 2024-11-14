@@ -27,7 +27,7 @@ public class GeometryTest
         Assert.AreEqual(90, angle.AbsDegree);
 
         var point = JsonSerializer.Deserialize<IntPoint2D>("{ \"x\": 12.8, \"y\": \"62\" }");
-        Assert.AreEqual(13, point.X);
+        Assert.AreEqual(12, point.X);
         Assert.AreEqual(62, point.Y);
 
         var point2 = JsonSerializer.Deserialize<DoublePoint3D>("{ \"x\": 12.8, \"y\": \"62\" }");

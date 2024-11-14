@@ -450,7 +450,7 @@ public static class JsonOperations
 
     private static JsonObjectNode SetContentSchema(JsonObjectNode source, string reference)
     {
-        source.SetValue("content", Web.WebFormat.JsonMIME, out source);
+        source.SetValue("content", JsonValues.JsonMIME, out source);
         source.SetValue("schema", out source);
         source.SetValue("$ref", reference);
         return source;

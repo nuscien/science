@@ -43,7 +43,7 @@ public enum RatioConvertionOptions : byte
     EqualDivision = 7
 }
 
-public static partial class CollectionOperation
+public static partial class CollectionOperations
 {
     /// <summary>
     /// Converts to double-precision floating-point number collection.

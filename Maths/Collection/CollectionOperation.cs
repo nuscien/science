@@ -41,7 +41,7 @@ public enum ComparerCollectionOperators : byte
 /// <summary>
 /// The operations for data collection.
 /// </summary>
-public static partial class CollectionOperation
+public static partial class CollectionOperations
 {
     /// <summary>
     /// Gets one item by specific operator.

@@ -39,7 +39,7 @@ public enum DifferentCollectionCountOptions : byte
     Abort = 4,
 }
 
-public static partial class CollectionOperation
+public static partial class CollectionOperations
 {
     /// <summary>
     /// Pluses each item in 2 collections by index.

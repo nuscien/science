@@ -118,7 +118,7 @@ public class UserExtendedChatThread : IExtendedChatThread, INotifyPropertyChange
     public UserExtendedChatThread(UserItemInfo user)
     {
         User = user ?? new();
-        User.PropertyChanged += OnUserPropertyChanged;
+        (User as INotifyPropertyChanged).PropertyChanged += OnUserPropertyChanged;
     }
 
     /// <summary>
@@ -128,7 +128,7 @@ public class UserExtendedChatThread : IExtendedChatThread, INotifyPropertyChange
     {
         var user = User;
         if (user == null) return;
-        user.PropertyChanged -= OnUserPropertyChanged;
+        (user as INotifyPropertyChanged).PropertyChanged -= OnUserPropertyChanged;
     }
 
     /// <summary>

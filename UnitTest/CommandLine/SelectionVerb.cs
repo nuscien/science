@@ -86,7 +86,7 @@ class SelectionVerb : BaseCommandVerb
                 await ShowProgressAsync();
                 return;
             case "json":
-                cli.WriteLine(JsonUnitTest.CreateModel(DateTime.Now));
+                cli.WriteLine(CreateModel(DateTime.Now));
                 return;
             case "error":
                 cli.WriteLine(new InvalidOperationException("Test", new NotSupportedException()));
@@ -211,7 +211,7 @@ class SelectionVerb : BaseCommandVerb
             progress2.Report(0.03 * i);
             if (cli.Mode == StyleConsole.Modes.Text) continue;
             cli.BackspaceToBeginning();
-            cli.WriteImmediately("Update to {0} (total 50).", i);
+            cli.Write("Update to {0} (total 50).", i);
         }
 
         cli.WriteLine(" And following is failed.");
@@ -369,5 +369,29 @@ class SelectionVerb : BaseCommandVerb
                 Color.FromArgb(0xFF, 0xFF, 0xFF),
                 Color.FromArgb(0, 0, 0)
             };
+    }
+
+    internal static JsonObjectNode CreateModel(DateTime now)
+    {
+        var json = new JsonObjectNode();
+        json.SetValue("now", now);
+        json.SetValue("str-a", "abcdefg");
+        json.SetValue("str-a", "hijklmn");
+        json.SetValue("str-b", "opq");
+        json.SetRange(new Dictionary<string, string>
+        {
+            { "str-b", "rst" },
+            { "str-c", "uvw" },
+            { "str-d", "xyz" },
+            { "str-e", "$$$" }
+        });
+        json.Remove("str-e");
+        json.SetValue("str-d", "0123456789");
+        json.SetValue("num", 123);
+        json.SetJavaScriptDateTicksValue("ticks", now);
+        json.SetValue("props", json);
+        json.SetValue("arr", new JsonArrayNode());
+        json.SetRange(json);
+        return json;
     }
 }

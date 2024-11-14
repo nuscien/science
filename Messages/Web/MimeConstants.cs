@@ -142,9 +142,8 @@ public static partial class MimeConstants
         var i = 0;
         foreach (var item in json)
         {
-            if (item.Value?.ValueKind != JsonValueKind.String) continue;
-            if (!item.Value.TryGetString(out var s)) continue;
-            if (mapping.Set(item.Key, s, overrideIfExist)) i++;
+            if (item.Value is not IJsonValueNode<string> str) continue;
+            if (mapping.Set(item.Key, str.Value, overrideIfExist)) i++;
         }
 
         return i;

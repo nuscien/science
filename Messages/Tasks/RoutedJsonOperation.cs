@@ -138,10 +138,10 @@ public class RoutedJsonOperationMappingItem
     /// </summary>
     /// <param name="value">The JSON property token.</param>
     /// <returns>The argument value converted.</returns>
-    public virtual string Convert(IJsonDataNode value)
+    public virtual string Convert(IJsonValueNode value)
     {
         if (value == null) return null;
-        if (value is IJsonStringNode s) return s.StringValue;
+        if (value is IJsonValueNode<string> s) return s.Value;
         return value.ValueKind switch
         {
             JsonValueKind.Null or JsonValueKind.Undefined => null,
