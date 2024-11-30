@@ -10,6 +10,7 @@
 		<Description>The library with model of users and messages.</Description>
 		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
 		<GenerateDocumentationFile>true</GenerateDocumentationFile>
+		<ApplicationIcon>Logo.ico</ApplicationIcon>
 		<PackageIcon>messages.png</PackageIcon>
 		<PackageIconUrl>https://github.com/nuscien/trivial/raw/master/Materials/logo.png</PackageIconUrl>
 		<PackageTags>users messages gpt</PackageTags>

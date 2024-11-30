@@ -11,6 +11,7 @@
     <PackageProjectUrl>https://github.com/nuscien/trivial/wiki/chemistry</PackageProjectUrl>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <ApplicationIcon>Logo.ico</ApplicationIcon>
     <PackageIcon>chemistry.png</PackageIcon>
     <PackageIconUrl>https://github.com/nuscien/trivial/raw/master/Materials/logo.png</PackageIconUrl>
     <PackageTags>chemistry chemical-element periodic-table molecular</PackageTags>
