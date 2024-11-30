@@ -9,6 +9,7 @@
 		<PackageId>Trivial.Maths</PackageId>
 		<Description>The mathematics utilities.</Description>
 		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+		<GenerateDocumentationFile>true</GenerateDocumentationFile>
 		<PackageIcon>maths.png</PackageIcon>
 		<PackageIconUrl>https://github.com/nuscien/trivial/raw/master/Materials/logo.png</PackageIconUrl>
 		<PackageTags>maths</PackageTags>

@@ -53,7 +53,7 @@ public static partial class MimeConstants
         public const string Vbs = "text/vbscript";
 
         /// <summary>
-        /// The MIME content type of VB Script.
+        /// The MIME content type of Dart language.
         /// </summary>
         public const string Dart = "application/vnd.dart";
 

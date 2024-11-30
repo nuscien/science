@@ -108,6 +108,11 @@ public static partial class MimeConstants
         public const string Tgz = "application/tar+gzip";
 
         /// <summary>
+        /// The MIME content type of Tape Archive on Lempel-Ziv-Markov chain algorithm.
+        /// </summary>
+        public const string Xz = "application/x-xz-compressed-tar";
+
+        /// <summary>
         /// The MIME content type of z compress file.
         /// </summary>
         public const string Z = "application/x-compress";
