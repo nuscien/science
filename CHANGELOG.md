@@ -1,3 +1,3 @@
 # Change log
 
-Please see __[releases](https://github.com/nuscien/trivial/releases)__.
+Please see __[releases](https://github.com/nuscien/science/releases)__.

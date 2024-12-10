@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-	<Import Project="..\Common.props" />
+	<Import Project="..\Tools\Packages.props" />
 
 	<PropertyGroup>
 		<TargetFrameworks>net9.0;net8.0;net6.0;net48;net462;net461</TargetFrameworks>
@@ -8,13 +8,13 @@
 		<RootNamespace>Trivial</RootNamespace>
 		<PackageId>Trivial.Messages</PackageId>
 		<Description>The library with model of users and messages.</Description>
-		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-		<GenerateDocumentationFile>true</GenerateDocumentationFile>
 		<ApplicationIcon>Logo.ico</ApplicationIcon>
 		<PackageIcon>messages.png</PackageIcon>
 		<PackageIconUrl>https://github.com/nuscien/trivial/raw/master/Materials/logo.png</PackageIconUrl>
 		<PackageTags>users messages gpt</PackageTags>
 	</PropertyGroup>
+	
+	<Import Project="..\Tools\Build.props" />
 
 	<ItemGroup>
 		<None Include="..\Materials\messages.png" Pack="true" PackagePath="messages.png" />

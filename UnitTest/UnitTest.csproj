@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-  <Import Project="..\Common.props" />
+  <Import Project="..\Tools\Common.props" />
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
@@ -12,12 +12,14 @@
     <StartupObject>Trivial.CommandLine.Program</StartupObject>
   </PropertyGroup>
 
+  <Import Project="..\Tools\Build.props" />
+
   <ItemGroup>
     <PackageReference Include="Trivial.Console" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" />
     <PackageReference Include="MSTest.TestAdapter" />
     <PackageReference Include="MSTest.TestFramework" />
-    <PackageReference Include="coverlet.msbuild" >
+    <PackageReference Include="coverlet.msbuild">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
