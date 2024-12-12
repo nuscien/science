@@ -1,8 +1,8 @@
 # Maths
 
-In `Trivial.Maths` namespace of `Trivial.dll` [library](../).
+In `Trivial.Maths` namespace of `Trivial.Maths.dll` [library](../).
 
-- [Arithmetic](./arithmetic)
-- [Numerals and positional notation](./numerals)
+- [Statistics](./statistics)
 - [Spatial](./spatial)
-- [Set](./set)
+
+See also [Maths in core library](https://trivial.kingcean.net/maths/).

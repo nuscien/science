@@ -24,7 +24,7 @@ class SelectionVerb : BaseCommandVerb
     {
         await RunAsync(null, cancellationToken);
         var cli = StyleConsole.Default;
-        var col = new SelectionData();
+        var col = new SelectionData<object>();
         col.Add('a', "Aaa", null);
         col.Add('b', "Bbb 二号");
         col.Add('p', "Password");
