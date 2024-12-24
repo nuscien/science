@@ -8,7 +8,7 @@
     <RootNamespace>Trivial</RootNamespace>
     <PackageId>Trivial.Chemistry</PackageId>
     <Description>A library with basic chemical models.</Description>
-    <PackageProjectUrl>https://github.com/nuscien/trivial/wiki/chemistry</PackageProjectUrl>
+    <PackageProjectUrl>https://trivial.kingcean.net/chemistry</PackageProjectUrl>
     <ApplicationIcon>Logo.ico</ApplicationIcon>
     <PackageIcon>chemistry.png</PackageIcon>
     <PackageIconUrl>https://github.com/nuscien/trivial/raw/master/Materials/logo.png</PackageIconUrl>

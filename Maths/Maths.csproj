@@ -8,6 +8,7 @@
 		<RootNamespace>Trivial.Maths</RootNamespace>
 		<PackageId>Trivial.Maths</PackageId>
 		<Description>The mathematics utilities.</Description>
+		<PackageProjectUrl>https://trivial.kingcean.net/maths</PackageProjectUrl>
 		<ApplicationIcon>Logo.ico</ApplicationIcon>
 		<PackageIcon>maths.png</PackageIcon>
 		<PackageIconUrl>https://github.com/nuscien/trivial/raw/master/Materials/logo.png</PackageIconUrl>

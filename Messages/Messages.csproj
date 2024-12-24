@@ -8,6 +8,7 @@
 		<RootNamespace>Trivial</RootNamespace>
 		<PackageId>Trivial.Messages</PackageId>
 		<Description>The library with model of users and messages.</Description>
+		<PackageProjectUrl>https://trivial.kingcean.net</PackageProjectUrl>
 		<ApplicationIcon>Logo.ico</ApplicationIcon>
 		<PackageIcon>messages.png</PackageIcon>
 		<PackageIconUrl>https://github.com/nuscien/trivial/raw/master/Materials/logo.png</PackageIconUrl>

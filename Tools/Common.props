@@ -8,7 +8,6 @@
     <FileVersion>9.1.0.0</FileVersion>
     <Copyright>Copyright (c) 2018 Kingcean Tuan.</Copyright>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
-    <PackageProjectUrl>https://trivial.kingcean.net</PackageProjectUrl>
     <RepositoryUrl>https://github.com/nuscien/science</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
