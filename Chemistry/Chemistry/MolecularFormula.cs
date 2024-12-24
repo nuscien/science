@@ -14,19 +14,10 @@ public class MolecularFormula : IEquatable<MolecularFormula>
     /// <summary>
     /// The item.
     /// </summary>
-    public class Item : IEquatable<Item>
+    /// <param name="element">The chemical element.</param>
+    /// <param name="count">The atom count.</param>
+    public class Item(ChemicalElement element, int count = 1) : IEquatable<Item>
     {
-        /// <summary>
-        /// Initializes a new instance of the MolecularFormula.Item class.
-        /// </summary>
-        /// <param name="element">The chemical element.</param>
-        /// <param name="count">The atom count.</param>
-        public Item(ChemicalElement element, int count = 1)
-        {
-            Element = element;
-            Count = count;
-        }
-
         /// <summary>
         /// Initializes a new instance of the MolecularFormula.Item class.
         /// </summary>
@@ -40,12 +31,12 @@ public class MolecularFormula : IEquatable<MolecularFormula>
         /// <summary>
         /// Gets the chemical element.
         /// </summary>
-        public ChemicalElement Element { get; }
+        public ChemicalElement Element { get; } = element;
 
         /// <summary>
         /// Gets the atom count.
         /// </summary>
-        public int Count { get; }
+        public int Count { get; } = count;
 
         /// <summary>
         /// Peturns a string that represents the current chemical element information.

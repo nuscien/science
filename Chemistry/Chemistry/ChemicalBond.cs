@@ -30,26 +30,17 @@ public enum ChemicalBondTypes : byte
 /// <summary>
 /// The chemical bond information.
 /// </summary>
-public class ChemicalBond
+/// <param name="type">The chemical bond type.</param>
+/// <param name="numbers">The bond numbers.</param>
+public class ChemicalBond(ChemicalBondTypes type, int numbers)
 {
-    /// <summary>
-    /// Initializes a new instance of the ChemicalBond class.
-    /// </summary>
-    /// <param name="type">The chemical bond type.</param>
-    /// <param name="numbers">The bond numbers.</param>
-    public ChemicalBond(ChemicalBondTypes type, int numbers)
-    {
-        Type = type;
-        Numbers = numbers;
-    }
-
     /// <summary>
     /// Gets the chemical bond type.
     /// </summary>
-    public ChemicalBondTypes Type { get; }
+    public ChemicalBondTypes Type { get; } = type;
 
     /// <summary>
     /// Gets the bound numbers.
     /// </summary>
-    public int Numbers { get; }
+    public int Numbers { get; } = numbers;
 }

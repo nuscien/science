@@ -11,6 +11,9 @@ internal static class InternalHelper
 {
     internal const double DoubleAccuracy = 1E-10;
     internal const float SingleAccuracy = 1E-10F;
+#if NETFRAMEWORK
+    internal const float PI = 3.14159274F;
+#endif
 
     /// <summary>
     /// Generates point collection in the specific zone and accuracy.

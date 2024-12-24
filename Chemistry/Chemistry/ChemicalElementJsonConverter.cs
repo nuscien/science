@@ -78,6 +78,7 @@ sealed class ChemicalElementJsonConverter : JsonConverter<ChemicalElement>
     /// <inheritdoc />
     public override void Write(Utf8JsonWriter writer, ChemicalElement value, JsonSerializerOptions options)
     {
-        value.WriteTo(writer);
+        if (value is null) writer.WriteNullValue();
+        else value.WriteTo(writer);
     }
 }

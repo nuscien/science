@@ -15,7 +15,7 @@ namespace Trivial.CommandLine;
 /// <summary>
 /// The kinds to represent the information of chemical element.
 /// </summary>
-public enum ChemicalElementRepresentationKinds
+public enum ChemicalElementRepresentationKinds : byte
 {
     /// <summary>
     /// Summary.
