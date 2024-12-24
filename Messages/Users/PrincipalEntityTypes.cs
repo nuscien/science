@@ -10,56 +10,55 @@ using System.Text.Json.Serialization;
 using Trivial.Security;
 using Trivial.Text;
 
-namespace Trivial.Users
+namespace Trivial.Users;
+
+/// <summary>
+/// Security principal entity types.
+/// </summary>
+public enum PrincipalEntityTypes : byte
 {
     /// <summary>
-    /// Security principal entity types.
+    /// Unknown.
     /// </summary>
-    public enum PrincipalEntityTypes : byte
-    {
-        /// <summary>
-        /// Unknown.
-        /// </summary>
-        Unknown = 0,
+    Unknown = 0,
 
-        /// <summary>
-        /// User.
-        /// </summary>
-        User = 1,
+    /// <summary>
+    /// User.
+    /// </summary>
+    User = 1,
 
-        /// <summary>
-        /// User group or role.
-        /// </summary>
-        Group = 2,
+    /// <summary>
+    /// User group or role.
+    /// </summary>
+    Group = 2,
 
-        /// <summary>
-        /// App or service.
-        /// </summary>
-        Service = 3,
+    /// <summary>
+    /// App or service.
+    /// </summary>
+    Service = 3,
 
-        /// <summary>
-        /// Bot.
-        /// </summary>
-        Bot = 4,
+    /// <summary>
+    /// Bot.
+    /// </summary>
+    Bot = 4,
 
-        /// <summary>
-        /// Authenticated device.
-        /// </summary>
-        Device = 5,
+    /// <summary>
+    /// Authenticated device.
+    /// </summary>
+    Device = 5,
 
-        /// <summary>
-        /// The special agent.
-        /// </summary>
-        Agent = 6,
+    /// <summary>
+    /// The special agent.
+    /// </summary>
+    Agent = 6,
 
-        /// <summary>
-        /// The oganization.
-        /// </summary>
-        Organization = 7,
+    /// <summary>
+    /// The oganization.
+    /// </summary>
+    Organization = 7,
 
-        /// <summary>
-        /// The other type.
-        /// </summary>
-        Other = 63,
-    }
+    /// <summary>
+    /// The other type.
+    /// </summary>
+    Other = 63,
 }

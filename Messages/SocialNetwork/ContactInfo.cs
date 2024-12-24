@@ -20,7 +20,7 @@ namespace Trivial.SocialNetwork;
 /// <summary>
 /// The roles targeted for the contact information.
 /// </summary>
-public enum ContactInfoRoles
+public enum ContactInfoRoles : byte
 {
     /// <summary>
     /// Personal prime information.
@@ -66,7 +66,7 @@ public enum ContactInfoRoles
 /// <summary>
 /// The phone number types.
 /// </summary>
-public enum PhoneNumberTypes
+public enum PhoneNumberTypes : byte
 {
     /// <summary>
     /// Mobile phone.
@@ -136,7 +136,7 @@ public enum PhoneNumberTypes
     /// <summary>
     /// Others.
     /// </summary>
-    Other = 15
+    Other = 31
 }
 
 /// <summary>
