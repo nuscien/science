@@ -79,6 +79,7 @@ public static partial class CollectionOperations
             _ => throw NotSupported(op),
         };
     }
+
     private static NotSupportedException NotSupported<T>(T op)
-        => new($"The operation {op} is not supported.", new ArgumentException("op should be a valid one.", nameof(op)));
+        => new($"The operation {op} is not supported.", new ArgumentOutOfRangeException(nameof(op), "op should be a valid one."));
 }

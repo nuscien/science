@@ -7,6 +7,7 @@ using System.Net.Http;
 using System.Net.Mime;
 using System.Security;
 using System.Text;
+using System.Text.Json.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Xml.Linq;
@@ -22,6 +23,7 @@ namespace Trivial.Data;
 /// <summary>
 /// The attachment link item model.
 /// </summary>
+[JsonConverter(typeof(JsonValueNodeConverter))]
 public class AttachmentLinkItem : BaseObservableProperties, IJsonObjectHost
 {
     /// <summary>
@@ -206,6 +208,7 @@ public class AttachmentLinkItem : BaseObservableProperties, IJsonObjectHost
 /// <summary>
 /// The attachment link item model.
 /// </summary>
+[JsonConverter(typeof(JsonValueNodeConverter))]
 public class AttachmentLinkSet : IJsonObjectHost
 {
     /// <summary>

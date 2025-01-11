@@ -5,6 +5,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
+using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using Trivial.Data;
@@ -17,6 +18,7 @@ namespace Trivial.Users;
 /// <summary>
 /// The user group item information.
 /// </summary>
+[JsonConverter(typeof(BaseUserGroupItemInfoConverter))]
 public class BaseUserGroupItemInfo : BasePrincipalEntityInfo
 {
     /// <summary>
@@ -74,4 +76,14 @@ public class BaseUserGroupItemInfo : BasePrincipalEntityInfo
     /// <returns>The request instance.</returns>
     public static implicit operator BaseUserGroupItemInfo(JsonObjectNode value)
         => value is null ? null : new(value);
+}
+
+/// <summary>
+/// JSON value node converter.
+/// </summary>
+internal sealed class BaseUserGroupItemInfoConverter : JsonObjectHostConverter<BaseUserGroupItemInfo>
+{
+    /// <inheritdoc />
+    protected override BaseUserGroupItemInfo Create(JsonObjectNode json)
+        => new(json);
 }

@@ -4,6 +4,8 @@ using System.ComponentModel;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using Trivial.Data;
 using Trivial.Reflection;
@@ -15,6 +17,7 @@ namespace Trivial.Users;
 /// <summary>
 /// The user item information.
 /// </summary>
+[JsonConverter(typeof(UserItemInfoConverter))]
 public class UserItemInfo : BasePrincipalEntityInfo
 {
     /// <summary>
@@ -97,4 +100,14 @@ public class UserItemInfo : BasePrincipalEntityInfo
             _ => PrincipalEntityTypes.Other
         };
     }
+}
+
+/// <summary>
+/// JSON value node converter.
+/// </summary>
+internal sealed class UserItemInfoConverter : JsonObjectHostConverter<UserItemInfo>
+{
+    /// <inheritdoc />
+    protected override UserItemInfo Create(JsonObjectNode json)
+        => new(json);
 }

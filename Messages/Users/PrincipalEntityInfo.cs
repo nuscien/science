@@ -73,7 +73,7 @@ public abstract class BasePrincipalEntityInfo : BaseResourceEntityInfo
         PrincipalEntityType = typeConverter?.Invoke(json) ?? defaultType;
         Id = json.TryGetStringTrimmedValue("id", true) ?? json.Id;
         Nickname = json.TryGetStringTrimmedValue("nickname", true) ?? json.TryGetStringTrimmedValue("name", true);
-        AvatarUri = json.TryGetUriValue("avatar") ?? json.TryGetUriValue("icon");
+        AvatarUri = json.TryGetUriValue("avatar") ?? json.TryGetUriValue("icon") ?? json.TryGetUriValue("picture");
         if (json.TryGetBooleanValue("_raw") != false) SetProperty("_raw", json);
     }
 

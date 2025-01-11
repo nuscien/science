@@ -4,6 +4,7 @@ using System.ComponentModel;
 using System.Linq;
 using System.Runtime.Serialization;
 using System.Text;
+using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using System.Xml.Linq;
@@ -55,13 +56,24 @@ public abstract class BaseResourceEntityInfo : BaseObservableProperties, IJsonOb
     }
 
     /// <summary>
+    /// Gets or sets the JSON schema of the entity.
+    /// </summary>
+    [JsonIgnore]
+    public string Schema
+    {
+        get;
+        protected set;
+    }
+
+    /// <summary>
     /// Converts to JSON object.
     /// </summary>
     /// <returns>A JSON object.</returns>
     public virtual JsonObjectNode ToJson()
         => new()
         {
-            { "id", Id },
+            Schema = Schema,
+            Id = Id,
         };
 
     /// <summary>
@@ -83,4 +95,11 @@ public abstract class BaseResourceEntityInfo : BaseObservableProperties, IJsonOb
     /// <returns>true if contains; otherwise, false.</returns>
     public new bool GetProperty<T>(string key, out T result)
         => base.GetProperty(key, out result);
+
+    /// <summary>
+    /// Writes this instance to the specified writer as a JSON value.
+    /// </summary>
+    /// <param name="writer">The writer to which to write this instance.</param>
+    protected override void WriteTo(Utf8JsonWriter writer)
+        => ToJson().WriteTo(writer);
 }
