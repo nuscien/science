@@ -92,12 +92,13 @@ public class ChatCommandGuidanceTopic
     /// Sends a request to get response.
     /// </summary>
     /// <param name="message">The message text.</param>
+    /// <param name="format">The message format.</param>
     /// <param name="data">The message data.</param>
     /// <param name="cancellationToken">The optional cancellation token.</param>
     /// <returns>The response instance.</returns>
-    public async Task<ChatCommandGuidanceResponse> SendAsync(string message, JsonObjectNode data, CancellationToken cancellationToken = default)
+    public async Task<ChatCommandGuidanceResponse> SendAsync(string message, ExtendedChatMessageFormats format, JsonObjectNode data, CancellationToken cancellationToken = default)
     {
-        var result = await SendAsync(message, data, LatestResponse, cancellationToken);
+        var result = await SendAsync(message, format, data, LatestResponse, cancellationToken);
         return result?.Response;
     }
 
@@ -105,13 +106,14 @@ public class ChatCommandGuidanceTopic
     /// Sends a request to get response.
     /// </summary>
     /// <param name="message">The message text.</param>
+    /// <param name="format">The message format.</param>
     /// <param name="data">The message data.</param>
     /// <param name="callback">The callback.</param>
     /// <param name="cancellationToken">The optional cancellation token.</param>
     /// <returns>The reply instance with response.</returns>
-    public async Task<ChatCommandGuidanceResponse> SendAsync(string message, JsonObjectNode data, Action<ChatCommandGuidanceReply> callback, CancellationToken cancellationToken = default)
+    public async Task<ChatCommandGuidanceResponse> SendAsync(string message, ExtendedChatMessageFormats format, JsonObjectNode data, Action<ChatCommandGuidanceReply> callback, CancellationToken cancellationToken = default)
     {
-        var result = await SendAsync(message, data, LatestResponse, cancellationToken);
+        var result = await SendAsync(message, format, data, LatestResponse, cancellationToken);
         callback?.Invoke(result);
         return result?.Response;
     }
@@ -120,11 +122,12 @@ public class ChatCommandGuidanceTopic
     /// Sends a request to get response.
     /// </summary>
     /// <param name="message">The message text.</param>
+    /// <param name="format">The message format.</param>
     /// <param name="data">The message data.</param>
     /// <param name="reply">The response message to reply; or null, if starts a new topic.</param>
     /// <param name="cancellationToken">The optional cancellation token.</param>
     /// <returns>The response instance.</returns>
-    internal async Task<ChatCommandGuidanceReply> SendAsync(string message, JsonObjectNode data, ChatCommandGuidanceResponse reply, CancellationToken cancellationToken = default)
+    internal async Task<ChatCommandGuidanceReply> SendAsync(string message, ExtendedChatMessageFormats format, JsonObjectNode data, ChatCommandGuidanceResponse reply, CancellationToken cancellationToken = default)
     {
         var user = client.User;
         var request = new ChatCommandGuidanceRequest(user, message, data, new List<ExtendedChatMessage>(history), null, reply);
@@ -133,7 +136,7 @@ public class ChatCommandGuidanceTopic
         Sending?.Invoke(this, args);
         client.NotifySending(args);
         LatestRequest = request;
-        var record = new ExtendedChatMessage(request.Id, user, message, DateTime.Now, data)
+        var record = new ExtendedChatMessage(request.Id, user, message, format, DateTime.Now, data)
         {
             Category = client.RequestMessageKind
         };
@@ -157,7 +160,7 @@ public class ChatCommandGuidanceTopic
         Received?.Invoke(this, args);
         client.NotifyReceived(args);
         LatestResponse = response;
-        record = new ExtendedChatMessage(response.Id, user, response.Message, DateTime.Now, response.Data)
+        record = new ExtendedChatMessage(response.Id, user, response.Message, format, DateTime.Now, response.Data)
         {
             Category = response.Kind
         };
@@ -209,13 +212,14 @@ public class ChatCommandGuidanceReply
     /// Creates a request.
     /// </summary>
     /// <param name="message">The message text.</param>
+    /// <param name="format">The message format.</param>
     /// <param name="data">The message data.</param>
     /// <param name="cancellationToken">The optional cancellation token.</param>
     /// <returns>The request instance.</returns>
-    public async Task<ChatCommandGuidanceResponse> SendAsync(string message, JsonObjectNode data, CancellationToken cancellationToken = default)
+    public async Task<ChatCommandGuidanceResponse> SendAsync(string message, ExtendedChatMessageFormats format, JsonObjectNode data, CancellationToken cancellationToken = default)
     {
         HasReplied = true;
-        var result = await topic.SendAsync(message, data, Response, cancellationToken);
+        var result = await topic.SendAsync(message, format, data, Response, cancellationToken);
         return result.Response;
     }
 
@@ -223,14 +227,15 @@ public class ChatCommandGuidanceReply
     /// Creates a request.
     /// </summary>
     /// <param name="message">The message text.</param>
+    /// <param name="format">The message format.</param>
     /// <param name="data">The message data.</param>
     /// <param name="callback">The callback.</param>
     /// <param name="cancellationToken">The optional cancellation token.</param>
     /// <returns>The request instance.</returns>
-    public async Task<ChatCommandGuidanceResponse> SendAsync(string message, JsonObjectNode data, Action<ChatCommandGuidanceReply> callback, CancellationToken cancellationToken = default)
+    public async Task<ChatCommandGuidanceResponse> SendAsync(string message, ExtendedChatMessageFormats format, JsonObjectNode data, Action<ChatCommandGuidanceReply> callback, CancellationToken cancellationToken = default)
     {
         HasReplied = true;
-        var result = await topic.SendAsync(message, data, Response, cancellationToken);
+        var result = await topic.SendAsync(message, format, data, Response, cancellationToken);
         callback?.Invoke(result);
         return result.Response;
     }

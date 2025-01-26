@@ -17,47 +17,6 @@ using Trivial.Users;
 namespace Trivial.Text;
 
 /// <summary>
-/// The modification kinds of the message.
-/// </summary>
-public enum ChatMessageModificationKinds : byte
-{
-    /// <summary>
-    /// The message is neve modified.
-    /// </summary>
-    Original = 0,
-
-    /// <summary>
-    /// The streaming message which means the message is transferring by continious updating.
-    /// </summary>
-    Streaming = 1,
-
-    /// <summary>
-    /// The message has been modified by sender.
-    /// </summary>
-    Modified = 2,
-
-    /// <summary>
-    /// The message has been modified and is open to update by others.
-    /// </summary>
-    Collaborative = 3,
-
-    /// <summary>
-    /// The message has been removed by sender.
-    /// </summary>
-    Removed = 5,
-
-    /// <summary>
-    /// The message is banned by system.
-    /// </summary>
-    Ban = 9,
-
-    /// <summary>
-    /// Others.
-    /// </summary>
-    Others = 15
-}
-
-/// <summary>
 /// The chat message record.
 /// </summary>
 [JsonConverter(typeof(ExtendedChatMessageConverter.InternalConverter))]
@@ -71,7 +30,20 @@ public class ExtendedChatMessage : BaseResourceEntityInfo
     /// <param name="creation">The creation date time; or null if use now.</param>
     /// <param name="info">The additional information; or null if create a new one.</param>
     public ExtendedChatMessage(UserItemInfo sender, string message, DateTime? creation = null, JsonObjectNode info = null)
-        : this(Guid.NewGuid(), sender, message, creation, info, null)
+        : this(Guid.NewGuid(), sender, message, ExtendedChatMessageFormats.Text, creation, info, null)
+    {
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the ExtendedChatMessage class.
+    /// </summary>
+    /// <param name="sender">The nickname of the sender.</param>
+    /// <param name="message">The message text.</param>
+    /// <param name="format">The message format.</param>
+    /// <param name="creation">The creation date time; or null if use now.</param>
+    /// <param name="info">The additional information; or null if create a new one.</param>
+    public ExtendedChatMessage(UserItemInfo sender, string message, ExtendedChatMessageFormats format, DateTime? creation = null, JsonObjectNode info = null)
+        : this(Guid.NewGuid(), sender, message, format, creation, info, null)
     {
     }
 
@@ -81,11 +53,12 @@ public class ExtendedChatMessage : BaseResourceEntityInfo
     /// <param name="id">The message identifier.</param>
     /// <param name="sender">The nickname of the sender.</param>
     /// <param name="message">The message text.</param>
+    /// <param name="format">The message format.</param>
     /// <param name="creation">The creation date time; or null if use now.</param>
     /// <param name="info">The additional information; or null if create a new one.</param>
     /// <param name="type">The message type.</param>
-    public ExtendedChatMessage(Guid id, UserItemInfo sender, string message, DateTime? creation = null, JsonObjectNode info = null, string type = null)
-        : this(ExtendedChatMessages.ToIdString(id), sender, message, creation, info, type)
+    public ExtendedChatMessage(Guid id, UserItemInfo sender, string message, ExtendedChatMessageFormats format = ExtendedChatMessageFormats.Text, DateTime? creation = null, JsonObjectNode info = null, string type = null)
+        : this(ExtendedChatMessages.ToIdString(id), sender, message, format, creation, info, type)
     {
     }
 
@@ -95,15 +68,17 @@ public class ExtendedChatMessage : BaseResourceEntityInfo
     /// <param name="id">The message identifier.</param>
     /// <param name="sender">The nickname of the sender.</param>
     /// <param name="message">The message text.</param>
+    /// <param name="format">The message format.</param>
     /// <param name="creation">The creation date time; or null if use now.</param>
     /// <param name="info">The additional information; or null if create a new one.</param>
     /// <param name="type">The message type.</param>
-    public ExtendedChatMessage(string id, UserItemInfo sender, string message, DateTime? creation = null, JsonObjectNode info = null, string type = null)
+    public ExtendedChatMessage(string id, UserItemInfo sender, string message, ExtendedChatMessageFormats format = ExtendedChatMessageFormats.Text, DateTime? creation = null, JsonObjectNode info = null, string type = null)
         : base(id)
     {
         var time = creation ?? DateTime.Now;
         SetProperty(nameof(Sender), sender);
         SetProperty(nameof(Message), message);
+        SetProperty(nameof(MessageFormat), format);
         if (!string.IsNullOrEmpty(type)) SetProperty(nameof(MessageType), type);
         SetProperty(nameof(CreationTime), time);
         SetProperty(nameof(LastModificationTime), time);
@@ -121,8 +96,10 @@ public class ExtendedChatMessage : BaseResourceEntityInfo
         SetProperty(nameof(Sender), (UserItemInfo)json.TryGetObjectValue("sender"));
         SetProperty(nameof(Message), json.TryGetStringValue("text") ?? json.TryGetStringValue("message"));
         SetProperty(nameof(MessageType), json.TryGetStringTrimmedValue("type", true));
+        SetProperty(nameof(MessageFormat), json.TryGetEnumValue<ExtendedChatMessageFormats>("format") ?? ExtendedChatMessageFormats.Text);
         SetProperty(nameof(CreationTime), json.TryGetDateTimeValue("created") ?? DateTime.Now);
         SetProperty(nameof(LastModificationTime), json.TryGetDateTimeValue("modified") ?? DateTime.Now);
+        SetProperty(nameof(Priority), json.TryGetEnumValue<BasicPriorities>("priority") ?? BasicPriorities.Normal);
         Info = json.TryGetObjectValue("info") ?? new();
         Category = json.TryGetStringTrimmedValue("category", true);
         SetProperty("Data", json.TryGetObjectValue("data"));
@@ -167,6 +144,15 @@ public class ExtendedChatMessage : BaseResourceEntityInfo
     public string MessageType => GetCurrentProperty<string>();
 
     /// <summary>
+    /// Gets or sets the message format.
+    /// </summary>
+    public ExtendedChatMessageFormats MessageFormat
+    {
+        get => GetCurrentProperty<ExtendedChatMessageFormats>();
+        set => SetCurrentProperty(value);
+    }
+
+    /// <summary>
     /// Gets the creation date time.
     /// </summary>
     public DateTime CreationTime => GetCurrentProperty<DateTime>();
@@ -190,6 +176,11 @@ public class ExtendedChatMessage : BaseResourceEntityInfo
     }
 
     /// <summary>
+    /// Gets the priority.
+    /// </summary>
+    public BasicPriorities Priority => GetCurrentProperty<BasicPriorities>();
+
+    /// <summary>
     /// Gets the additional data.
     /// </summary>
     public JsonObjectNode Info { get; }
@@ -206,6 +197,7 @@ public class ExtendedChatMessage : BaseResourceEntityInfo
         json.SetValue("created", CreationTime);
         json.SetValue("modified", LastModificationTime);
         json.SetValue("type", MessageType);
+        json.SetValue("format", (int)MessageFormat);
         if (Info.Count > 0) json.SetValue("info", Info);
         if (!string.IsNullOrWhiteSpace(Category)) json.SetValue("category", Category);
         var data = GetProperty<object>("Data");
@@ -242,6 +234,7 @@ public class ExtendedChatMessage : BaseResourceEntityInfo
         {
         }
 
+        json.SetValueIfNotNull("priority", (int)Priority);
         return json;
     }
 
@@ -297,10 +290,11 @@ public class ExtendedChatMessage<T> : ExtendedChatMessage where T : class
     /// <param name="sender">The nickname of the sender.</param>
     /// <param name="data">The message data.</param>
     /// <param name="message">The message text.</param>
+    /// <param name="format">The message format.</param>
     /// <param name="creation">The creation date time; or null if use now.</param>
     /// <param name="info">The additional information; or null if create a new one.</param>
-    protected ExtendedChatMessage(string type, UserItemInfo sender, T data, string message, DateTime? creation = null, JsonObjectNode info = null)
-        : this(type, Guid.NewGuid(), sender, data, message, creation, info)
+    protected ExtendedChatMessage(string type, UserItemInfo sender, T data, string message, ExtendedChatMessageFormats format = ExtendedChatMessageFormats.Text, DateTime? creation = null, JsonObjectNode info = null)
+        : this(type, Guid.NewGuid(), sender, data, message, format, creation, info)
     {
     }
 
@@ -312,10 +306,11 @@ public class ExtendedChatMessage<T> : ExtendedChatMessage where T : class
     /// <param name="sender">The nickname of the sender.</param>
     /// <param name="data">The message data.</param>
     /// <param name="message">The message text.</param>
+    /// <param name="format">The message format.</param>
     /// <param name="creation">The creation date time; or null if use now.</param>
     /// <param name="info">The additional information; or null if create a new one.</param>
-    protected ExtendedChatMessage(string type, Guid id, UserItemInfo sender, T data, string message, DateTime? creation = null, JsonObjectNode info = null)
-        : this(type, ExtendedChatMessages.ToIdString(id), sender, data, message, creation, info)
+    protected ExtendedChatMessage(string type, Guid id, UserItemInfo sender, T data, string message, ExtendedChatMessageFormats format = ExtendedChatMessageFormats.Text, DateTime? creation = null, JsonObjectNode info = null)
+        : this(type, ExtendedChatMessages.ToIdString(id), sender, data, message, format, creation, info)
     {
     }
 
@@ -327,10 +322,11 @@ public class ExtendedChatMessage<T> : ExtendedChatMessage where T : class
     /// <param name="sender">The nickname of the sender.</param>
     /// <param name="data">The message data.</param>
     /// <param name="message">The message text.</param>
+    /// <param name="format">The message format.</param>
     /// <param name="creation">The creation date time; or null if use now.</param>
     /// <param name="info">The additional information; or null if create a new one.</param>
-    protected internal ExtendedChatMessage(string type, string id, UserItemInfo sender, T data, string message, DateTime? creation = null, JsonObjectNode info = null)
-        : base(id, sender, message, creation, info, type)
+    protected internal ExtendedChatMessage(string type, string id, UserItemInfo sender, T data, string message, ExtendedChatMessageFormats format = ExtendedChatMessageFormats.Text, DateTime? creation = null, JsonObjectNode info = null)
+        : base(id, sender, message, format, creation, info, type)
     {
         Data = data;
     }

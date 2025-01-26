@@ -135,11 +135,12 @@ public abstract class BaseExtendedChatMessageDataFactory<T> where T : class
     /// <param name="sender">The nickname of the sender.</param>
     /// <param name="data">The message data.</param>
     /// <param name="message">The message text.</param>
+    /// <param name="format">The message format.</param>
     /// <param name="creation">The creation date time; or null if use now.</param>
     /// <param name="info">The additional information; or null if create a new one.</param>
     /// <returns>The chat message.</returns>
-    public ExtendedChatMessage<T> CreateMessage(UserItemInfo sender, T data, string message, DateTime? creation = null, JsonObjectNode info = null)
-        => CreateMessage(Guid.NewGuid(), sender, data, message, creation, info);
+    public ExtendedChatMessage<T> CreateMessage(UserItemInfo sender, T data, string message, ExtendedChatMessageFormats format = ExtendedChatMessageFormats.Text, DateTime? creation = null, JsonObjectNode info = null)
+        => CreateMessage(Guid.NewGuid(), sender, data, message, format, creation, info);
 
     /// <summary>
     /// Creates a chat message record.
@@ -148,11 +149,12 @@ public abstract class BaseExtendedChatMessageDataFactory<T> where T : class
     /// <param name="sender">The nickname of the sender.</param>
     /// <param name="data">The message data.</param>
     /// <param name="message">The message text.</param>
+    /// <param name="format">The message format.</param>
     /// <param name="creation">The creation date time; or null if use now.</param>
     /// <param name="info">The additional information; or null if create a new one.</param>
     /// <returns>The chat message.</returns>
-    public ExtendedChatMessage<T> CreateMessage(Guid id, UserItemInfo sender, T data, string message, DateTime? creation = null, JsonObjectNode info = null)
-        => CreateMessage(ExtendedChatMessages.ToIdString(id), sender, data, message, creation, info);
+    public ExtendedChatMessage<T> CreateMessage(Guid id, UserItemInfo sender, T data, string message, ExtendedChatMessageFormats format = ExtendedChatMessageFormats.Text, DateTime? creation = null, JsonObjectNode info = null)
+        => CreateMessage(ExtendedChatMessages.ToIdString(id), sender, data, message, format, creation, info);
 
     /// <summary>
     /// Creates a chat message record.
@@ -161,13 +163,14 @@ public abstract class BaseExtendedChatMessageDataFactory<T> where T : class
     /// <param name="sender">The nickname of the sender.</param>
     /// <param name="data">The message data.</param>
     /// <param name="message">The message text.</param>
+    /// <param name="format">The message format.</param>
     /// <param name="creation">The creation date time; or null if use now.</param>
     /// <param name="info">The additional information; or null if create a new one.</param>
     /// <returns>The chat message.</returns>
-    public ExtendedChatMessage<T> CreateMessage(string id, UserItemInfo sender, T data, string message, DateTime? creation = null, JsonObjectNode info = null)
+    public ExtendedChatMessage<T> CreateMessage(string id, UserItemInfo sender, T data, string message, ExtendedChatMessageFormats format = ExtendedChatMessageFormats.Text, DateTime? creation = null, JsonObjectNode info = null)
     {
         if (string.IsNullOrWhiteSpace(MessageType)) return null;
-        var obj = new ExtendedChatMessage<T>(MessageType, id, sender, data, message, creation, info);
+        var obj = new ExtendedChatMessage<T>(MessageType, id, sender, data, message, format, creation, info);
         OnCreateMessage(obj);
         return obj;
     }

@@ -23,7 +23,7 @@ namespace Trivial.Data;
 /// <summary>
 /// The attachment link item model.
 /// </summary>
-[JsonConverter(typeof(JsonValueNodeConverter))]
+[JsonConverter(typeof(AttachmentLinkItemConverter))]
 public class AttachmentLinkItem : BaseObservableProperties, IJsonObjectHost
 {
     /// <summary>
@@ -56,7 +56,7 @@ public class AttachmentLinkItem : BaseObservableProperties, IJsonObjectHost
         mime = mime?.Trim();
         if (!string.IsNullOrEmpty(mime)) SetProperty(nameof(ContentType), mime);
         name = name?.Trim();
-        if (!string.IsNullOrEmpty(name)) SetProperty(nameof(Name), name);
+        if (!string.IsNullOrEmpty(name)) SetProperty(nameof(Title), name);
         SetProperty(nameof(Thumbnail), thumbnail);
         SetProperty("Info", new JsonObjectNode());
     }
@@ -70,8 +70,8 @@ public class AttachmentLinkItem : BaseObservableProperties, IJsonObjectHost
         if (json == null) return;
         SetProperty(nameof(Link), json.TryGetUriValue("url"));
         SetProperty(nameof(ContentType), json.TryGetStringTrimmedValue("mime", true));
-        SetProperty(nameof(Name), json.TryGetStringTrimmedValue("name", true));
-        SetProperty(nameof(Thumbnail), json.TryGetUriValue("thumbnail"));
+        SetProperty(nameof(Title), json.TryGetStringTrimmedValue("title", true) ?? json.TryGetStringTrimmedValue("name", true));
+        SetProperty(nameof(Thumbnail), json.TryGetUriValue("thumbnail") ?? json.TryGetUriValue("thumb"));
         SetProperty("Info", json.TryGetObjectValue("info") ?? new());
     }
 
@@ -86,9 +86,9 @@ public class AttachmentLinkItem : BaseObservableProperties, IJsonObjectHost
     public string ContentType => GetCurrentProperty<string>();
 
     /// <summary>
-    /// Gets the optional name of the attachment; or null, if no name.
+    /// Gets the optional title of the attachment; or null, if no title.
     /// </summary>
-    public string Name => GetCurrentProperty<string>();
+    public string Title => GetCurrentProperty<string>();
 
     /// <summary>
     /// Gets the optional thumbnail URI of the attachment; or null, if no thumbnail.
@@ -123,8 +123,8 @@ public class AttachmentLinkItem : BaseObservableProperties, IJsonObjectHost
             { "url", Link },
             { "mime", ContentType },
         };
-        var name = Name?.Trim();
-        if (!string.IsNullOrEmpty(name)) json.SetValue("name", Name);
+        var name = Title?.Trim();
+        if (!string.IsNullOrEmpty(name)) json.SetValue("title", Title);
         if (Thumbnail != null) json.SetValue("thumbnail", Thumbnail);
         var info = GetProperty<JsonObjectNode>("Info");
         if (info != null && info.Count > 0) json.SetValue("info", info);
@@ -136,11 +136,12 @@ public class AttachmentLinkItem : BaseObservableProperties, IJsonObjectHost
     /// </summary>
     /// <param name="sender">The nickname of the sender.</param>
     /// <param name="message">The message text.</param>
+    /// <param name="format">The message format.</param>
     /// <param name="creation">The creation date time; or null if use now.</param>
     /// <param name="info">The additional information; or null if create a new one.</param>
     /// <returns>The chat message.</returns>
-    public ExtendedChatMessage<AttachmentLinkItem> CreateMessage(UserItemInfo sender, string message, DateTime? creation = null, JsonObjectNode info = null)
-        => CreateMessage(Guid.NewGuid(), sender, message, creation, info);
+    public ExtendedChatMessage<AttachmentLinkItem> CreateMessage(UserItemInfo sender, string message, ExtendedChatMessageFormats format = ExtendedChatMessageFormats.Text, DateTime? creation = null, JsonObjectNode info = null)
+        => CreateMessage(Guid.NewGuid(), sender, message, format, creation, info);
 
     /// <summary>
     /// Creates a chat message record.
@@ -148,11 +149,12 @@ public class AttachmentLinkItem : BaseObservableProperties, IJsonObjectHost
     /// <param name="id">The message identifier.</param>
     /// <param name="sender">The nickname of the sender.</param>
     /// <param name="message">The message text.</param>
+    /// <param name="format">The message format.</param>
     /// <param name="creation">The creation date time; or null if use now.</param>
     /// <param name="info">The additional information; or null if create a new one.</param>
     /// <returns>The chat message.</returns>
-    public ExtendedChatMessage<AttachmentLinkItem> CreateMessage(Guid id, UserItemInfo sender, string message, DateTime? creation = null, JsonObjectNode info = null)
-        => CreateMessage(ExtendedChatMessages.ToIdString(id), sender, message, creation, info);
+    public ExtendedChatMessage<AttachmentLinkItem> CreateMessage(Guid id, UserItemInfo sender, string message, ExtendedChatMessageFormats format = ExtendedChatMessageFormats.Text, DateTime? creation = null, JsonObjectNode info = null)
+        => CreateMessage(ExtendedChatMessages.ToIdString(id), sender, message, format, creation, info);
 
     /// <summary>
     /// Creates a chat message record.
@@ -160,11 +162,12 @@ public class AttachmentLinkItem : BaseObservableProperties, IJsonObjectHost
     /// <param name="id">The message identifier.</param>
     /// <param name="sender">The nickname of the sender.</param>
     /// <param name="message">The message text.</param>
+    /// <param name="format">The message format.</param>
     /// <param name="creation">The creation date time; or null if use now.</param>
     /// <param name="info">The additional information; or null if create a new one.</param>
     /// <returns>The chat message.</returns>
-    public ExtendedChatMessage<AttachmentLinkItem> CreateMessage(string id, UserItemInfo sender, string message, DateTime? creation = null, JsonObjectNode info = null)
-        => new(ExtendedChatMessages.AttachmentLinkItemKey, id, sender, this, message, creation, info);
+    public ExtendedChatMessage<AttachmentLinkItem> CreateMessage(string id, UserItemInfo sender, string message, ExtendedChatMessageFormats format = ExtendedChatMessageFormats.Text, DateTime? creation = null, JsonObjectNode info = null)
+        => new(ExtendedChatMessages.AttachmentLinkItemKey, id, sender, this, message, format, creation, info);
 
     /// <summary>
     /// Pluses two angles.
@@ -206,375 +209,11 @@ public class AttachmentLinkItem : BaseObservableProperties, IJsonObjectHost
 }
 
 /// <summary>
-/// The attachment link item model.
+/// JSON value node converter.
 /// </summary>
-[JsonConverter(typeof(JsonValueNodeConverter))]
-public class AttachmentLinkSet : IJsonObjectHost
+internal sealed class AttachmentLinkItemConverter : JsonObjectHostConverter<AttachmentLinkItem>
 {
-    /// <summary>
-    /// Initializes a new instance of the AttachmentLinkSet class.
-    /// </summary>
-    public AttachmentLinkSet()
-    {
-        Items = new();
-        Info = new();
-    }
-
-    /// <summary>
-    /// Initializes a new instance of the AttachmentLinkSet class.
-    /// </summary>
-    /// <param name="item">The attachment item.</param>
-    public AttachmentLinkSet(AttachmentLinkItem item)
-        : this()
-    {
-        if (item.Link != null) Items.Add(item);
-    }
-
-    /// <summary>
-    /// Initializes a new instance of the AttachmentLinkSet class.
-    /// </summary>
-    /// <param name="items">The attachment items.</param>
-    public AttachmentLinkSet(IEnumerable<AttachmentLinkItem> items)
-        : this()
-    {
-        if (items == null) return;
-        foreach (var item in items)
-        {
-            if (item?.Link != null) Items.Add(item);
-        }
-    }
-
-    /// <summary>
-    /// Initializes a new instance of the AttachmentLinkSet class.
-    /// </summary>
-    /// <param name="json">The JSON input.</param>
-    public AttachmentLinkSet(JsonObjectNode json)
-    {
-        if (json == null) return;
-        var arr = json.TryGetObjectListValue("list");
-        Items = new();
-        foreach (var item in arr)
-        {
-            Items.Add(item);
-        }
-
-        Info = json.TryGetObjectValue("info") ?? new();
-    }
-
-    /// <summary>
-    /// Gets the count of attachment.
-    /// </summary>
-    public int Count => Items.Count;
-
-    /// <summary>
-    /// Gets all attachment items.
-    /// </summary>
-    public ObservableCollection<AttachmentLinkItem> Items { get; }
-
-    /// <summary>
-    /// Gets the additional information.
-    /// </summary>
-    public JsonObjectNode Info { get; }
-
-    /// <summary>
-    /// Gets or sets the item.
-    /// </summary>
-    /// <param name="index">The zero-based index.</param>
-    /// <returns>The attachment item.</returns>
-    /// <exception cref="ArgumentOutOfRangeException">index is not valid.</exception>
-    public AttachmentLinkItem this[int index]
-    {
-        get => Items[index];
-        set => Items[index] = value;
-    }
-
-    /// <summary>
-    /// Tests if contains the specific item.
-    /// </summary>
-    /// <param name="item">The attachment item.</param>
-    /// <returns>true if contains; otherwise, false.</returns>
-    public bool Contains(AttachmentLinkItem item)
-        => item != null && Items.Contains(item);
-
-    /// <summary>
-    /// Tests if contains the specific item.
-    /// </summary>
-    /// <param name="link">The attachment link.</param>
-    /// <returns>true if contains; otherwise, false.</returns>
-    public bool Contains(Uri link)
-        => link != null && Items.Any(ele => ele?.Link == link);
-
-    /// <summary>
-    /// Tries to get the specific item.
-    /// </summary>
-    /// <param name="index">The zero-base index.</param>
-    /// <returns>The attachment item; or null, if the index is not valid.</returns>
-    public AttachmentLinkItem TryGet(int index)
-    {
-        if (index < 0 || index >= Items.Count) return null;
-        try
-        {
-            return Items[index];
-        }
-        catch (ArgumentException)
-        {
-        }
-        catch (InvalidOperationException)
-        {
-        }
-
-        return null;
-    }
-
-    /// <summary>
-    /// Adds an attachment.
-    /// </summary>
-    /// <param name="item">The attachment to add.</param>
-    public void Add(AttachmentLinkItem item)
-    {
-        if (item?.Link == null) return;
-        Items.Add(item);
-    }
-
-    /// <summary>
-    /// Adds an attachment.
-    /// </summary>
-    /// <param name="link">The URI of the attachment.</param>
-    /// <param name="mime">The MIME value of the attachment.</param>
-    public AttachmentLinkItem Add(Uri link, string mime)
-    {
-        if (link == null) return null;
-        var item = new AttachmentLinkItem(link, mime);
-        Items.Add(item);
-        return item;
-    }
-
-    /// <summary>
-    /// Adds an attachment.
-    /// </summary>
-    /// <param name="link">The URI of the attachment.</param>
-    /// <param name="mime">The MIME value of the attachment.</param>
-    /// <param name="name">The name of the attachment.</param>
-    /// <param name="thumbnail">The thumbnail URI of the attachment.</param>
-    public AttachmentLinkItem Add(Uri link, string mime, string name, Uri thumbnail)
-    {
-        if (link == null) return null;
-        var item = new AttachmentLinkItem(link, mime, name, thumbnail);
-        Items.Add(item);
-        return item;
-    }
-
-    /// <summary>
-    /// Adds an attachment.
-    /// </summary>
-    /// <param name="index">The zero-based index to insert the specific item.</param>
-    /// <param name="item">The attachment to add.</param>
-    /// <exception cref="ArgumentOutOfRangeException">The index is not valid.</exception>
-    public void Insert(int index, AttachmentLinkItem item)
-    {
-        if (item?.Link == null) return;
-        Items.Insert(index, item);
-    }
-
-    /// <summary>
-    /// Adds an attachment.
-    /// </summary>
-    /// <param name="items">The attachment items to add.</param>
-    /// <returns>The count of the item added.</returns>
-    public int AddRange(IEnumerable<AttachmentLinkItem> items)
-    {
-        var i = 0;
-        if (items == null) return i;
-        foreach (var item in items)
-        {
-            if (item?.Link == null) continue;
-            i++;
-            Items.Add(item);
-        }
-
-        return i;
-    }
-
-    /// <summary>
-    /// Adds an attachment.
-    /// </summary>
-    /// <param name="index">The zero-based index to insert the specific item.</param>
-    /// <param name="link">The URI of the attachment.</param>
-    /// <param name="mime">The MIME value of the attachment.</param>
-    /// <exception cref="ArgumentOutOfRangeException">The index is not valid.</exception>
-    public AttachmentLinkItem Insert(int index, Uri link, string mime)
-    {
-        if (link == null) return null;
-        var item = new AttachmentLinkItem(link, mime);
-        Items.Insert(index, item);
-        return item;
-    }
-
-    /// <summary>
-    /// Adds an attachment.
-    /// </summary>
-    /// <param name="index">The zero-based index to insert the specific item.</param>
-    /// <param name="link">The URI of the attachment.</param>
-    /// <param name="mime">The MIME value of the attachment.</param>
-    /// <param name="name">The name of the attachment.</param>
-    /// <param name="thumbnail">The thumbnail URI of the attachment.</param>
-    /// <exception cref="ArgumentOutOfRangeException">The index is not valid.</exception>
-    public AttachmentLinkItem Insert(int index, Uri link, string mime, string name, Uri thumbnail)
-    {
-        if (link == null) return null;
-        var item = new AttachmentLinkItem(link, mime, name, thumbnail);
-        Items.Insert(index, item);
-        return item;
-    }
-
-    /// <summary>
-    /// Removes a specific attachment.
-    /// </summary>
-    /// <param name="item">The attachment to remove.</param>
-    /// <returns>true if item is found and successfully removed; otherwise, false.</returns>
-    public bool Remove(AttachmentLinkItem item)
-        => Items.Remove(item);
-
-    /// <summary>
-    /// Downloads the attachment.
-    /// </summary>
-    /// <param name="index">The zero-based index to insert the specific item.</param>
-    /// <param name="fileName">The file name.</param>
-    /// <param name="progress">The progress to report, from 0 to 1.</param>
-    /// <param name="cancellationToken">The optional cancellation token.</param>
-    /// <returns>The task object representing the asynchronous operation.</returns>
-    /// <exception cref="InvalidOperationException">The attachement does not exist.</exception>
-    /// <exception cref="ArgumentNullException">The argument is null.</exception>
-    /// <exception cref="ArgumentException">The argument is invalid.</exception>
-    /// <exception cref="SecurityException">The caller does not have the required permission.</exception>
-    /// <exception cref="IOException">An I/O error.</exception>
-    /// <exception cref="DirectoryNotFoundException">The specified path is invalid, such as being on an unmapped drive.</exception>
-    /// <exception cref="NotSupportedException">The path of the file refers to a non-file device, such as "con:", "com1:", "lpt1:".</exception>
-    public Task<FileInfo> DownloadItemAsync(int index, string fileName, IProgress<double> progress = null, CancellationToken cancellationToken = default)
-    {
-        var item = this[index];
-        if (item?.Link == null) throw new InvalidOperationException("Cannot find the attachment item.");
-        return item.DownloadAsync(fileName, progress, cancellationToken);
-    }
-
-    /// <summary>
-    /// Filters by content type.
-    /// </summary>
-    /// <param name="mime">The MIME value or suffix.</param>
-    /// <returns>The attachment collection.</returns>
-    public IEnumerable<AttachmentLinkItem> FilterContentType(string mime)
-    {
-        mime = mime?.Trim()?.ToLower();
-        if (string.IsNullOrEmpty(mime))
-        {
-            foreach (var item in Items)
-            {
-                if (item?.Link == null) continue;
-                yield return item;
-            }
-
-            yield break;
-        }
-
-        if (!mime.Contains('/')) mime += '/';
-#if NETFRAMEWORK
-        if (mime.EndsWith("/"))
-#else
-        if (mime.EndsWith('/'))
-#endif
-        {
-            foreach (var item in Items)
-            {
-                var contentType = item.ContentType?.ToLowerInvariant();
-                if (item?.Link == null || string.IsNullOrEmpty(contentType) || contentType.StartsWith(mime)) continue;
-                yield return item;
-            }
-
-            yield break;
-        }
-
-        if (mime == WebFormat.StreamMIME)
-        {
-            foreach (var item in Items)
-            {
-                if (item?.Link == null) continue;
-                if (string.IsNullOrEmpty(item.ContentType)) yield return item;
-                if (item.ContentType?.ToLowerInvariant() != mime) continue;
-                yield return item;
-            }
-
-            yield break;
-        }
-
-        foreach (var item in Items)
-        {
-            if (item?.Link == null || item.ContentType?.ToLowerInvariant() != mime) continue;
-            yield return item;
-        }
-    }
-
-    /// <summary>
-    /// Converts to JSON object.
-    /// </summary>
-    /// <returns>A JSON object.</returns>
-    public virtual JsonObjectNode ToJson()
-    {
-        var json = new JsonObjectNode
-        {
-            { "list", Items.ToJsonObjectNodes() },
-        };
-        if (Info.Count > 0) json.SetValue("info", Info);
-        return json;
-    }
-
-    /// <summary>
-    /// Creates a chat message record.
-    /// </summary>
-    /// <param name="sender">The nickname of the sender.</param>
-    /// <param name="message">The message text.</param>
-    /// <param name="creation">The creation date time; or null if use now.</param>
-    /// <param name="info">The additional information; or null if create a new one.</param>
-    /// <returns>The chat message.</returns>
-    public ExtendedChatMessage<AttachmentLinkSet> CreateMessage(UserItemInfo sender, string message, DateTime? creation = null, JsonObjectNode info = null)
-        => CreateMessage(Guid.NewGuid(), sender, message, creation, info);
-
-    /// <summary>
-    /// Creates a chat message record.
-    /// </summary>
-    /// <param name="id">The message identifier.</param>
-    /// <param name="sender">The nickname of the sender.</param>
-    /// <param name="message">The message text.</param>
-    /// <param name="creation">The creation date time; or null if use now.</param>
-    /// <param name="info">The additional information; or null if create a new one.</param>
-    /// <returns>The chat message.</returns>
-    public ExtendedChatMessage<AttachmentLinkSet> CreateMessage(Guid id, UserItemInfo sender, string message, DateTime? creation = null, JsonObjectNode info = null)
-        => CreateMessage(ExtendedChatMessages.ToIdString(id), sender, message, creation, info);
-
-    /// <summary>
-    /// Creates a chat message record.
-    /// </summary>
-    /// <param name="id">The message identifier.</param>
-    /// <param name="sender">The nickname of the sender.</param>
-    /// <param name="message">The message text.</param>
-    /// <param name="creation">The creation date time; or null if use now.</param>
-    /// <param name="info">The additional information; or null if create a new one.</param>
-    /// <returns>The chat message.</returns>
-    public ExtendedChatMessage<AttachmentLinkSet> CreateMessage(string id, UserItemInfo sender, string message, DateTime? creation = null, JsonObjectNode info = null)
-        => new(ExtendedChatMessages.AttachmentLinkSetKey, id, sender, this, message, creation, info);
-
-    /// <summary>
-    /// Converts the JSON raw back.
-    /// </summary>
-    /// <param name="value">The source value.</param>
-    /// <returns>A model of the message.</returns>
-    public static implicit operator AttachmentLinkSet(JsonObjectNode value)
-        => value is null ? null : new(value);
-
-    /// <summary>
-    /// Converts to JSON object.
-    /// </summary>
-    /// <param name="value">The JSON value.</param>
-    /// <returns>A JSON object.</returns>
-    public static explicit operator JsonObjectNode(AttachmentLinkSet value)
-        => value?.ToJson();
+    /// <inheritdoc />
+    protected override AttachmentLinkItem Create(JsonObjectNode json)
+        => new(json);
 }

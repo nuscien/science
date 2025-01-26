@@ -499,7 +499,7 @@ public class ProxyChatCommandGuidanceEngine : BaseChatCommandGuidanceEngine
     protected override async Task<ChatCommandGuidanceSourceResult> SendAsync(ChatCommandGuidanceContext context, string prompt, CancellationToken cancellationToken = default)
     {
         if (Topic == null) return null;
-        var resp = await Topic.SendAsync(context.UserMessage, context.UserMessageData, cancellationToken);
+        var resp = await Topic.SendAsync(context.UserMessage, ExtendedChatMessageFormats.Markdown, context.UserMessageData, cancellationToken);
         context.NextInfo.SetRange(resp.Info);
         foreach (var details in resp.Details)
         {
