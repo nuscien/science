@@ -179,6 +179,7 @@ internal class JsonArraySequenceLevelConfigHandler : JsonArraySequenceLevelConfi
                         if (item == null) continue;
                         for (var i = 0; i < item.Count; i++)
                         {
+                            if (obj.Length == i) obj.AddNull();
                             if (item[i] is null) continue;
                             else if (item[i].ValueKind == JsonValueKind.Null) obj.SetNullValue(i);
                             else if (item[i].ValueKind == JsonValueKind.True) obj.SetValue(i, true);
