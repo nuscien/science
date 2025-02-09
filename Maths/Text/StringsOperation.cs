@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Trivial.Collection;
 using Trivial.Text;
 
 namespace Trivial.Maths;
@@ -14,9 +15,10 @@ public static partial class CollectionOperations
     /// </summary>
     /// <param name="op">The operator.</param>
     /// <param name="input">The input collection to compute.</param>
+    /// <param name="options">The options.</param>
     /// <returns>The result.</returns>
     /// <exception cref="NotSupportedException">The operator is not supported.</exception>
-    public static string Merge(StringCollectionOperators op, IEnumerable<string> input)
+    public static string Merge(StringCollectionOperators op, IEnumerable<string> input, StringCollectionMergeOptions options)
     {
         if (input == null) return null;
         if (input is string[] arr)
@@ -34,6 +36,7 @@ public static partial class CollectionOperations
             if (col.Count < 1) return null;
         }
 
+        if (options?.SkipNullOrEmpty == true) input = input.Where(ele => !string.IsNullOrEmpty(ele));
         switch (op)
         {
             case StringCollectionOperators.Empty:
@@ -41,25 +44,29 @@ public static partial class CollectionOperations
             case StringCollectionOperators.Join:
                 return string.Join(string.Empty, input);
             case StringCollectionOperators.Lines:
-                return string.Join(Environment.NewLine, input);
+                return string.Join(options?.NewLineUseN == true ? Environment.NewLine : "\n", input);
             case StringCollectionOperators.Tabs:
                 return Join('\t', input);
             case StringCollectionOperators.Tags:
-                return Join(';', input);
+                return options?.AppendWhiteSpaceAfterComma == true ? string.Join("; ", input) : Join(';', input);
             case StringCollectionOperators.Commas:
-                return Join(',', input);
+                return options?.AppendWhiteSpaceAfterComma == true ? string.Join(", ", input) : Join(',', input);
             case StringCollectionOperators.Dots:
                 return Join('.', input);
             case StringCollectionOperators.Slashes:
                 return Join('/', input);
             case StringCollectionOperators.VerticalLines:
                 return Join('|', input);
+            case StringCollectionOperators.VerticalLineSeparators:
+                return string.Join(" | ", input);
             case StringCollectionOperators.WhiteSpaces:
                 return Join(' ', input);
             case StringCollectionOperators.DoubleWhiteSpaces:
                 return string.Join("  ", input);
             case StringCollectionOperators.TripleWhiteSpaces:
                 return string.Join("   ", input);
+            case StringCollectionOperators.QuadrupleWhiteSpaces:
+                return string.Join("    ", input);
             case StringCollectionOperators.And:
                 return string.Join(" & ", input);
             case StringCollectionOperators.SplitPoints:
@@ -72,11 +79,11 @@ public static partial class CollectionOperations
                 }
             case StringCollectionOperators.Bullet:
                 input = input.Select(ele => string.Concat("· ", ele));
-                return string.Join(Environment.NewLine, input);
+                return string.Join(options?.NewLineUseN == true ? Environment.NewLine : "\n", input);
             case StringCollectionOperators.Numbering:
                 {
                     input = input.Select((ele, i) => string.Concat(i, ' ', '\t', ele));
-                    return string.Join(Environment.NewLine, input);
+                    return string.Join(options?.NewLineUseN == true ? Environment.NewLine : "\n", input);
                 }
             case StringCollectionOperators.First:
                 return input.First();
@@ -143,6 +150,28 @@ public static partial class CollectionOperations
 
                     return s;
                 }
+            case StringCollectionOperators.AscBinaryEncode:
+                {
+                    string s = null;
+                    foreach (var item in input)
+                    {
+                        if (item == null) continue;
+                        if (s == null || item.CompareTo(s) < 0) s = item;
+                    }
+
+                    return s;
+                }
+            case StringCollectionOperators.DescBinaryEncode:
+                {
+                    string s = null;
+                    foreach (var item in input)
+                    {
+                        if (item == null) continue;
+                        if (s == null || item.CompareTo(s) > 0) s = item;
+                    }
+
+                    return s;
+                }
             default:
                 throw NotSupported(op);
         }
@@ -155,8 +184,29 @@ public static partial class CollectionOperations
     /// <param name="input">The input collection to compute.</param>
     /// <returns>The result.</returns>
     /// <exception cref="NotSupportedException">The operator is not supported.</exception>
+    public static string Merge(StringCollectionOperators op, IEnumerable<string> input)
+        => Merge(op, input, null);
+
+    /// <summary>
+    /// Gets one item by specific operator.
+    /// </summary>
+    /// <param name="op">The operator.</param>
+    /// <param name="input">The input collection to compute.</param>
+    /// <param name="options">The options.</param>
+    /// <returns>The result.</returns>
+    /// <exception cref="NotSupportedException">The operator is not supported.</exception>
+    public static string Merge(StringCollectionOperators op, StringCollectionMergeOptions options, params string[] input)
+        => Merge(op, input, options);
+
+    /// <summary>
+    /// Gets one item by specific operator.
+    /// </summary>
+    /// <param name="op">The operator.</param>
+    /// <param name="input">The input collection to compute.</param>
+    /// <returns>The result.</returns>
+    /// <exception cref="NotSupportedException">The operator is not supported.</exception>
     public static string Merge(StringCollectionOperators op, params string[] input)
-        => Merge(op, input as IEnumerable<string>);
+        => Merge(op, input, null);
 
     private static string Join(char seperator, IEnumerable<string> input)
 #if NET6_0_OR_GREATER
