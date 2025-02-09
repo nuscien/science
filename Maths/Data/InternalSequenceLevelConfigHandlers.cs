@@ -120,7 +120,7 @@ internal class JsonObjectSequenceLevelConfigHandler : JsonObjectSequenceLevelCon
                 return value.LastOrDefault() ?? defaultValue;
             case JsonObjectMergeOperators.Append:
                 {
-                    var obj = defaultValue.Clone();
+                    var obj = defaultValue?.Clone() ?? new();
                     foreach (var item in value)
                     {
                         obj.SetRange(item, true);
@@ -130,7 +130,7 @@ internal class JsonObjectSequenceLevelConfigHandler : JsonObjectSequenceLevelCon
                 }
             case JsonObjectMergeOperators.Override:
                 {
-                    var obj = defaultValue.Clone();
+                    var obj = defaultValue?.Clone() ?? new();
                     foreach (var item in value)
                     {
                         obj.SetRange(item, false);
@@ -163,7 +163,7 @@ internal class JsonArraySequenceLevelConfigHandler : JsonArraySequenceLevelConfi
                 return value.LastOrDefault() ?? defaultValue;
             case JsonObjectMergeOperators.Append:
                 {
-                    var obj = defaultValue.Clone();
+                    var obj = defaultValue?.Clone() ?? new();
                     foreach (var item in value)
                     {
                         obj.AddRange(item);
@@ -173,7 +173,7 @@ internal class JsonArraySequenceLevelConfigHandler : JsonArraySequenceLevelConfi
                 }
             case JsonObjectMergeOperators.Override:
                 {
-                    var obj = defaultValue.Clone();
+                    var obj = defaultValue?.Clone() ?? new();
                     foreach (var item in value)
                     {
                         if (item == null) continue;
@@ -190,6 +190,54 @@ internal class JsonArraySequenceLevelConfigHandler : JsonArraySequenceLevelConfi
                             else if (item[i] is IJsonValueNode<decimal> i6) obj.SetValue(i, i6.Value);
                             else if (item[i] is JsonObjectNode json) obj.SetValue(i, json);
                             else if (item[i] is JsonArrayNode arr) obj.SetValue(i, arr);
+                        }
+                    }
+
+                    return obj;
+                }
+            case JsonObjectMergeOperators.Empty:
+                return new();
+            default:
+                throw new NotSupportedException($"The op is not supported.");
+        }
+    }
+}
+
+/// <summary>
+/// The handler of sequence level configuration.
+/// </summary>
+internal class TagsSequenceLevelConfigHandler : TagsSequenceLevelConfigHandler<JsonObjectMergeOperators>
+{
+    /// <inheritdoc />
+    protected override List<string> GetResult(JsonObjectMergeOperators op, IEnumerable<List<string>> value, List<string> defaultValue)
+    {
+        if (value == null) return defaultValue;
+        switch (op)
+        {
+            case JsonObjectMergeOperators.First:
+                return value.FirstOrDefault() ?? defaultValue;
+            case JsonObjectMergeOperators.Last:
+                return value.LastOrDefault() ?? defaultValue;
+            case JsonObjectMergeOperators.Append:
+                {
+                    var obj = defaultValue is null ? new List<string>() : new(defaultValue);
+                    foreach (var item in value)
+                    {
+                        obj.AddRange(item);
+                    }
+
+                    return obj;
+                }
+            case JsonObjectMergeOperators.Override:
+                {
+                    var obj = defaultValue is null ? new List<string>() : new(defaultValue);
+                    foreach (var item in value)
+                    {
+                        if (item == null) continue;
+                        for (var i = 0; i < item.Count; i++)
+                        {
+                            if (obj.Count == i) obj.Add(item[i]);
+                            else obj[i] = item[i];
                         }
                     }
 

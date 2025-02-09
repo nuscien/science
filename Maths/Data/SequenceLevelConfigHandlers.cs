@@ -272,3 +272,21 @@ public abstract class JsonArraySequenceLevelConfigHandler<TOperator> : SequenceL
     protected override void SetValue(JsonObjectNode json, string propertyKey, JsonArrayNode value)
         => json.SetValue(propertyKey, value);
 }
+
+/// <summary>
+/// The handler of sequence level configuration.
+/// </summary>
+public abstract class TagsSequenceLevelConfigHandler<TOperator> : SequenceLevelConfigHandler<List<string>, TOperator>
+     where TOperator : struct, Enum
+{
+    /// <inheritdoc />
+    protected override bool TryGetValue(JsonObjectNode json, string propertyKey, out List<string> result)
+    {
+        result = json.TryGetStringListValue(propertyKey, true);
+        return result is not null;
+    }
+
+    /// <inheritdoc />
+    protected override void SetValue(JsonObjectNode json, string propertyKey, List<string> value)
+        => json.SetValue(propertyKey, value?.Distinct()?.Where(ele => !string.IsNullOrWhiteSpace(ele))?.ToList());
+}
