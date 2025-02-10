@@ -27,9 +27,7 @@ internal static class InternalHelper
     {
         if (left > right)
         {
-            var temp = left;
-            left = right;
-            right = temp;
+            (right, left) = (left, right);
         }
 
         if (accuracy < 0) accuracy = Math.Abs(accuracy);
@@ -59,9 +57,7 @@ internal static class InternalHelper
     {
         if (left > right)
         {
-            var temp = left;
-            left = right;
-            right = temp;
+            (right, left) = (left, right);
         }
 
         if (accuracy < 0) accuracy = Math.Abs(accuracy);
@@ -91,9 +87,7 @@ internal static class InternalHelper
     {
         if (left > right)
         {
-            var temp = left;
-            left = right;
-            right = temp;
+            (right, left) = (left, right);
         }
 
         if (accuracy < 0) accuracy = Math.Abs(accuracy);
@@ -125,9 +119,7 @@ internal static class InternalHelper
     {
         if (left > right)
         {
-            var temp = left;
-            left = right;
-            right = temp;
+            (right, left) = (left, right);
         }
 
         if (accuracy < 0) accuracy = Math.Abs(accuracy);

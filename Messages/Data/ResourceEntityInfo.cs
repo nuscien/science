@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Runtime.Serialization;
 using System.Text;
@@ -59,6 +60,9 @@ public abstract class BaseResourceEntityInfo : BaseObservableProperties, IJsonOb
     /// Gets or sets the JSON schema of the entity.
     /// </summary>
     [JsonIgnore]
+#if NETCOREAPP
+    [NotMapped]
+#endif
     public string Schema
     {
         get;

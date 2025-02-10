@@ -3,7 +3,9 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.Serialization;
 using System.Text;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using Trivial.Data;
 using Trivial.Reflection;
@@ -21,7 +23,7 @@ public abstract class BasePrincipalEntityInfo : BaseResourceEntityInfo
     /// Initializes a new instance of the BasePrincipalEntityInfo class.
     /// </summary>
     /// <param name="type">The security principal entity type.</param>
-    protected BasePrincipalEntityInfo(PrincipalEntityTypes type)
+    internal BasePrincipalEntityInfo(PrincipalEntityTypes type)
     {
         PrincipalEntityType = type;
     }
@@ -33,7 +35,7 @@ public abstract class BasePrincipalEntityInfo : BaseResourceEntityInfo
     /// <param name="id">The resource identifier.</param>
     /// <param name="nickname">The nickname or display name.</param>
     /// <param name="avatar">The avatar URI.</param>
-    protected BasePrincipalEntityInfo(PrincipalEntityTypes type, string id, string nickname, Uri avatar = null)
+    internal BasePrincipalEntityInfo(PrincipalEntityTypes type, string id, string nickname, Uri avatar = null)
         : this(type)
     {
         Id = id;
@@ -46,46 +48,30 @@ public abstract class BasePrincipalEntityInfo : BaseResourceEntityInfo
     /// </summary>
     /// <param name="type">The security principal entity type.</param>
     /// <param name="json">The JSON object to parse.</param>
-    protected BasePrincipalEntityInfo(PrincipalEntityTypes type, JsonObjectNode json)
+    internal BasePrincipalEntityInfo(PrincipalEntityTypes type, JsonObjectNode json)
         : this(type)
     {
         if (json == null) return;
         Id = json.TryGetStringTrimmedValue("id", true) ?? json.Id;
         Nickname = json.TryGetStringTrimmedValue("nickname", true);
         AvatarUri = json.TryGetUriValue("avatar");
-        if (json.TryGetBooleanValue("_raw") != false) SetProperty("_raw", json);
-    }
-
-    /// <summary>
-    /// Initializes a new instance of the BasePrincipalEntityInfo class.
-    /// </summary>
-    /// <param name="json">The JSON object to parse.</param>
-    /// <param name="typeConverter">The security principal entity type converter.</param>
-    /// <param name="defaultType">The default security principal entity type.</param>
-    protected BasePrincipalEntityInfo(JsonObjectNode json, Func<JsonObjectNode, PrincipalEntityTypes> typeConverter, PrincipalEntityTypes defaultType = PrincipalEntityTypes.Unknown)
-    {
-        if (json == null)
-        {
-            PrincipalEntityType = defaultType;
-            return;
-        }
-
-        PrincipalEntityType = typeConverter?.Invoke(json) ?? defaultType;
-        Id = json.TryGetStringTrimmedValue("id", true) ?? json.Id;
-        Nickname = json.TryGetStringTrimmedValue("nickname", true) ?? json.TryGetStringTrimmedValue("name", true);
-        AvatarUri = json.TryGetUriValue("avatar") ?? json.TryGetUriValue("icon") ?? json.TryGetUriValue("picture");
+        Bio = json.TryGetStringValue("bio");
         if (json.TryGetBooleanValue("_raw") != false) SetProperty("_raw", json);
     }
 
     /// <summary>
     /// Gets the security principal entity type.
     /// </summary>
+    [DataMember(Name = "type")]
+    [JsonPropertyName("type")]
     [Description("This kind of entity can be used as an owner of the resource. This property is to define the type of the owner, e.g. a user, a user group, a service agent, etc.")]
     public PrincipalEntityTypes PrincipalEntityType { get; }
 
     /// <summary>
     /// Gets or sets the nickname.
     /// </summary>
+    [DataMember(Name = "nickname")]
+    [JsonPropertyName("nickname")]
     [Description("The nickname.")]
     public string Nickname
     {
@@ -96,10 +82,26 @@ public abstract class BasePrincipalEntityInfo : BaseResourceEntityInfo
     /// <summary>
     /// Gets or sets the URI of avatar.
     /// </summary>
+    [DataMember(Name = "avatar")]
+    [JsonPropertyName("avatar")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
     [Description("The URI of the avatar.")]
     public Uri AvatarUri
     {
         get => GetCurrentProperty<Uri>();
+        set => SetCurrentProperty(value);
+    }
+
+    /// <summary>
+    /// Gets or sets the introduction.
+    /// </summary>
+    [DataMember(Name = "bio", EmitDefaultValue = false)]
+    [JsonPropertyName("bio")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+    [Description("The introduction.")]
+    public string Bio
+    {
+        get => GetCurrentProperty<string>();
         set => SetCurrentProperty(value);
     }
 
@@ -118,7 +120,10 @@ public abstract class BasePrincipalEntityInfo : BaseResourceEntityInfo
         var json = base.ToJson();
         json.SetValue("type", PrincipalEntityType.ToString());
         json.SetValue("nickname", Nickname);
-        json.SetValue("avatar", AvatarUri);
+        if (AvatarUri != null) json.SetValue("avatar", AvatarUri);
+        if (!string.IsNullOrEmpty(Bio)) json.SetValue("bio", Bio);
+        var raw = RawJson;
+        if (raw != null) json.SetValue("_raw", raw);
         return json;
     }
 

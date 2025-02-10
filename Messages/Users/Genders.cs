@@ -27,14 +27,14 @@ public enum Genders : byte
     Female = 2,
 
     /// <summary>
-    /// Asexual.
+    /// Genderfluid or both.
     /// </summary>
-    Asexual = 5,
+    Fluid = 5,
 
     /// <summary>
-    /// Machine.
+    /// Asexual, neutrois, machine or other kind of things without gender.
     /// </summary>
-    Machine = 6,
+    Asexual = 6,
 
     /// <summary>
     /// Other.

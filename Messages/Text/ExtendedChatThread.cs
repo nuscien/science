@@ -251,7 +251,7 @@ public class CommandGuidanceExtendedChatThread : UserExtendedChatThread
     /// <param name="nickname">The display name.</param>
     /// <param name="avatar">The avatar URI.</param>
     public CommandGuidanceExtendedChatThread(string id, BaseChatCommandGuidanceClient client, string nickname, Uri avatar)
-        : base(new(id, nickname, Genders.Machine, avatar))
+        : base(new(id, nickname, Genders.Asexual, avatar))
     {
         Client = client;
         SetTrue(nameof(IsRoundMode));

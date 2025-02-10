@@ -20,8 +20,8 @@ public static partial class CollectionOperations
     /// <exception cref="NotSupportedException">The options is not supported.</exception>
     public static void Balance<T>(ref IEnumerable<T> a, ref IEnumerable<T> b, DifferentCollectionCountOptions options)
     {
-        var aCol = a == null ? new List<T>() : new List<T>(a);
-        var bCol = b == null ? new List<T>() : new List<T>(b);
+        var aCol = a == null ? new List<T>() : new(a);
+        var bCol = b == null ? new List<T>() : new(b);
         if (aCol.Count == bCol.Count) return;
         var compare = aCol.Count > bCol.Count;
         var shorter = compare ? bCol : aCol;
@@ -76,9 +76,9 @@ public static partial class CollectionOperations
     /// <exception cref="NotSupportedException">The options is not supported.</exception>
     public static void Balance<T>(ref IEnumerable<T> a, ref IEnumerable<T> b, ref IEnumerable<T> c, DifferentCollectionCountOptions options)
     {
-        var aCol = a == null ? new List<T>() : new List<T>(a);
-        var bCol = b == null ? new List<T>() : new List<T>(b);
-        var cCol = c == null ? new List<T>() : new List<T>(c);
+        var aCol = a == null ? new List<T>() : new(a);
+        var bCol = b == null ? new List<T>() : new(b);
+        var cCol = c == null ? new List<T>() : new(c);
         if (aCol.Count == bCol.Count && aCol.Count == cCol.Count) return;
         var max = Math.Max(Math.Max(aCol.Count, bCol.Count), cCol.Count);
         var min = Math.Max(Math.Max(aCol.Count, bCol.Count), cCol.Count);
@@ -184,8 +184,8 @@ public static partial class CollectionOperations
     /// <exception cref="NotSupportedException">The options is not supported.</exception>
     public static IEnumerable<(T1, T2)> Zip<T1, T2>(IEnumerable<T1> a, IEnumerable<T2> b, DifferentCollectionCountOptions options = DifferentCollectionCountOptions.PadEnd)
     {
-        var aCol = a == null ? new List<T1>() : new List<T1>(a);
-        var bCol = b == null ? new List<T2>() : new List<T2>(b);
+        var aCol = a == null ? new List<T1>() : new(a);
+        var bCol = b == null ? new List<T2>() : new(b);
         if (aCol.Count == bCol.Count)
         {
             for (var i = 0; i < aCol.Count; i++)
@@ -262,9 +262,9 @@ public static partial class CollectionOperations
     /// <exception cref="NotSupportedException">The options is not supported.</exception>
     public static IEnumerable<(T1, T2, T3)> Zip<T1, T2, T3>(IEnumerable<T1> a, IEnumerable<T2> b, IEnumerable<T3> c, DifferentCollectionCountOptions options = DifferentCollectionCountOptions.PadEnd)
     {
-        var aCol = a == null ? new List<T1>() : new List<T1>(a);
-        var bCol = b == null ? new List<T2>() : new List<T2>(b);
-        var cCol = c == null ? new List<T3>() : new List<T3>(c);
+        var aCol = a == null ? new List<T1>() : new(a);
+        var bCol = b == null ? new List<T2>() : new(b);
+        var cCol = c == null ? new List<T3>() : new(c);
         if (aCol.Count == bCol.Count && aCol.Count == cCol.Count)
         {
             for (var i = 0; i < aCol.Count; i++)

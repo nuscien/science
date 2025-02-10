@@ -136,7 +136,7 @@ public class MolecularFormula : IEquatable<MolecularFormula>
     /// <param name="col">The items.</param>
     public MolecularFormula(IEnumerable<Item> col)
     {
-        list = new List<Item>(col);
+        list = new(col);
     }
 
     /// <summary>
@@ -146,7 +146,7 @@ public class MolecularFormula : IEquatable<MolecularFormula>
     /// <param name="chargeNumber">The ionic charge numbe.</param>
     public MolecularFormula(IEnumerable<Item> col, int chargeNumber)
     {
-        list = new List<Item>(col.Where(ele => ele?.Element != null && ele.Count > 0));
+        list = new(col.Where(ele => ele?.Element != null && ele.Count > 0));
         ChargeNumber = chargeNumber;
     }
 
@@ -158,8 +158,8 @@ public class MolecularFormula : IEquatable<MolecularFormula>
     public MolecularFormula(ChemicalElement element, int count = 1)
     {
         list = string.IsNullOrEmpty(element?.Symbol) || count < 1
-            ? new List<Item>()
-            : new List<Item> { new Item(element, count) };
+            ? new()
+            : new() { new Item(element, count) };
     }
 
     /// <summary>
@@ -181,7 +181,7 @@ public class MolecularFormula : IEquatable<MolecularFormula>
     /// <param name="countG">The count of the specific chemical element G.</param>
     public MolecularFormula(ChemicalElement elementA, int countA, ChemicalElement elementB, int countB, ChemicalElement elementC = null, int countC = 1, ChemicalElement elementD = null, int countD = 1, ChemicalElement elementE = null, int countE = 1, ChemicalElement elementF = null, int countF = 1, ChemicalElement elementG = null, int countG = 1)
     {
-        list = new List<Item>();
+        list = new();
         if (!string.IsNullOrEmpty(elementA?.Symbol) && countA > 0)
             list.Add(new Item(elementA, countA));
         if (!string.IsNullOrEmpty(elementB?.Symbol) && countB > 0)
@@ -228,6 +228,14 @@ public class MolecularFormula : IEquatable<MolecularFormula>
     /// Gets the proton numbers.
     /// </summary>
     public int ProtonNumber => list.Sum(ele => ele.Count * (ele.Element?.AtomicNumber ?? 0));
+
+    /// <summary>
+    /// Tests if contains the specific chemical element.
+    /// </summary>
+    /// <param name="element">The element.</param>
+    /// <returns>true if contains; otherwise, false.</returns>
+    public bool Contains(ChemicalElement element)
+        => list.Any(ele => ele.Element == element);
 
     /// <summary>
     /// Gets a collection of all elements and their numbers.
