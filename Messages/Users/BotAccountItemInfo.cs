@@ -38,8 +38,9 @@ public class BotAccountItemInfo : BaseUserItemInfo
     /// <param name="gender">The gender.</param>
     /// <param name="avatar">The avatar URI.</param>
     /// <param name="publisher">The publisher info.</param>
-    public BotAccountItemInfo(string id, string nickname, Genders gender, Uri avatar = null, IBasicPublisherInfo publisher = null)
-        : base(PrincipalEntityTypes.Bot, id, nickname, gender, avatar)
+    /// <param name="creation">The creation date time.</param>
+    public BotAccountItemInfo(string id, string nickname, Genders gender, Uri avatar = null, IBasicPublisherInfo publisher = null, DateTime? creation = null)
+        : base(PrincipalEntityTypes.Bot, id, nickname, gender, avatar, creation)
     {
         Publisher = publisher;
     }
@@ -50,8 +51,9 @@ public class BotAccountItemInfo : BaseUserItemInfo
     /// <param name="id">The resource identifier.</param>
     /// <param name="nickname">The nickname or display name.</param>
     /// <param name="avatar">The avatar URI.</param>
-    public BotAccountItemInfo(string id, string nickname, Uri avatar = null)
-        : base(PrincipalEntityTypes.Bot, id, nickname, Genders.Asexual, avatar)
+    /// <param name="creation">The creation date time.</param>
+    public BotAccountItemInfo(string id, string nickname, Uri avatar = null, DateTime? creation = null)
+        : base(PrincipalEntityTypes.Bot, id, nickname, Genders.Asexual, avatar, creation)
     {
     }
 
@@ -59,11 +61,9 @@ public class BotAccountItemInfo : BaseUserItemInfo
     /// Initializes a new instance of the BotAccountItemInfo class.
     /// </summary>
     /// <param name="json">The JSON object to parse.</param>
-    public BotAccountItemInfo(JsonObjectNode json)
+    protected internal BotAccountItemInfo(JsonObjectNode json)
         : base(json, PrincipalEntityTypes.Bot)
     {
-        if (json == null) return;
-        Publisher = TextHelper.ToPublisherInfo(json, "publisher");
     }
 
     /// <summary>
@@ -76,6 +76,28 @@ public class BotAccountItemInfo : BaseUserItemInfo
     {
         get => GetCurrentProperty<IBasicPublisherInfo>();
         set => SetCurrentProperty(value);
+    }
+
+    /// <inheritdoc />
+    protected override void Fill(JsonObjectNode json)
+    {
+        base.Fill(json);
+        Publisher = TextHelper.ToPublisherInfo(json, "publisher");
+    }
+
+    /// <inheritdoc />
+    protected override void ToString(StringBuilder sb)
+    {
+        var publisher = Publisher.DisplayName;
+        if (string.IsNullOrWhiteSpace(publisher)) return;
+        sb.AppendLine();
+        sb.Append("Publisher = ");
+        sb.Append(publisher);
+        var pid = Publisher?.Id?.Trim();
+        if (string.IsNullOrEmpty(pid)) return;
+        sb.Append(" (");
+        sb.Append(pid);
+        sb.Append(')');
     }
 
     /// <summary>

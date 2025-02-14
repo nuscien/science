@@ -113,13 +113,14 @@ public enum UserCredentialKeyTypes : byte
 /// The credential name of a user account item.
 /// </summary>
 [JsonConverter(typeof(UserItemCredentialNameInfoConverter))]
-public class UserItemCredentialNameInfo : BaseResourceEntityInfo
+public class UserItemCredentialNameInfo : UserItemRelatedInfo
 {
     /// <summary>
     /// Intializes a new instance of the UserItemCredentialNameInfo class.
     /// </summary>
     public UserItemCredentialNameInfo()
-    { 
+    {
+        Supertype = "logname";
     }
 
     /// <summary>
@@ -131,11 +132,11 @@ public class UserItemCredentialNameInfo : BaseResourceEntityInfo
     /// <param name="subType">The sub-type.</param>
     /// <param name="name">The value of name.</param>
     /// <param name="descripiton">The description.</param>
-    public UserItemCredentialNameInfo(string id, BasePrincipalEntityInfo owner, UserCredentialNameTypes type, string subType, string name, string descripiton = null)
-        : base(id)
+    /// <param name="creation">The creation date time.</param>
+    public UserItemCredentialNameInfo(string id, BasePrincipalEntityInfo owner, UserCredentialNameTypes type, string subType, string name, string descripiton = null, DateTime? creation = null)
+        : base(id, owner, creation)
     {
-        OwnerId = owner?.Id;
-        OwnerType = owner?.PrincipalEntityType ?? PrincipalEntityTypes.Unknown;
+        Supertype = "logname";
         CredentialType = type;
         SubType = subType;
         Name = name;
@@ -151,11 +152,11 @@ public class UserItemCredentialNameInfo : BaseResourceEntityInfo
     /// <param name="subType">The sub-type.</param>
     /// <param name="name">The value of name.</param>
     /// <param name="descripiton">The description.</param>
-    public UserItemCredentialNameInfo(Guid id, BasePrincipalEntityInfo owner, UserCredentialNameTypes type, string subType, string name, string descripiton = null)
-        : base(id)
+    /// <param name="creation">The creation date time.</param>
+    public UserItemCredentialNameInfo(Guid id, BasePrincipalEntityInfo owner, UserCredentialNameTypes type, string subType, string name, string descripiton = null, DateTime? creation = null)
+        : base(id, owner, creation)
     {
-        OwnerId = owner?.Id;
-        OwnerType = owner?.PrincipalEntityType ?? PrincipalEntityTypes.Unknown;
+        Supertype = "logname";
         CredentialType = type;
         SubType = subType;
         Name = name;
@@ -167,33 +168,9 @@ public class UserItemCredentialNameInfo : BaseResourceEntityInfo
     /// </summary>
     /// <param name="json">The JSON object to parse.</param>
     public UserItemCredentialNameInfo(JsonObjectNode json)
-        : base()
+        : base(json)
     {
-        Id = json.TryGetStringTrimmedValue("id", true) ?? json.Id;
-        OwnerId = json.TryGetStringTrimmedValue("target", true);
-        OwnerType = json.TryGetEnumValue<PrincipalEntityTypes>("target") ?? PrincipalEntityTypes.Unknown;
-        CredentialType = json.TryGetEnumValue<UserCredentialNameTypes>("kind") ?? UserCredentialNameTypes.Logname;
-        SubType = json.TryGetStringTrimmedValue("subkind", true);
-        Name = json.TryGetStringTrimmedValue("name", true);
-        Description = json.TryGetStringTrimmedValue("desc");
-    }
-
-    /// <summary>
-    /// Gets or sets the principal entity type of target or owner.
-    /// </summary>
-    public PrincipalEntityTypes OwnerType
-    {
-        get => GetCurrentProperty<PrincipalEntityTypes>();
-        set => SetCurrentProperty(value);
-    }
-
-    /// <summary>
-    /// Gets or sets the identifier of target or owner.
-    /// </summary>
-    public string OwnerId
-    {
-        get => GetCurrentProperty<string>();
-        set => SetCurrentProperty(value);
+        Supertype = "logname";
     }
 
     /// <summary>
@@ -232,6 +209,16 @@ public class UserItemCredentialNameInfo : BaseResourceEntityInfo
         set => SetCurrentProperty(value);
     }
 
+    /// <inheritdoc />
+    protected override void Fill(JsonObjectNode json)
+    {
+        base.Fill(json);
+        CredentialType = json.TryGetEnumValue<UserCredentialNameTypes>("type") ?? UserCredentialNameTypes.Logname;
+        SubType = json.TryGetStringTrimmedValue("subtype", true);
+        Name = json.TryGetStringTrimmedValue("name", true);
+        Description = json.TryGetStringTrimmedValue("desc");
+    }
+
     /// <summary>
     /// Converts to JSON object.
     /// </summary>
@@ -239,11 +226,8 @@ public class UserItemCredentialNameInfo : BaseResourceEntityInfo
     public override JsonObjectNode ToJson()
     {
         var json = base.ToJson();
-        json.SetValue("type", "logname");
-        json.SetValue("owner", OwnerId);
-        json.SetValue("target", OwnerType.ToString());
-        json.SetValue("kind", CredentialType.ToString());
-        json.SetValue("subkind", SubType);
+        json.SetValue("type", CredentialType.ToString());
+        json.SetValue("subtype", SubType);
         json.SetValue("name", Name);
         json.SetValue("desc", Description);
         return json;
@@ -254,13 +238,14 @@ public class UserItemCredentialNameInfo : BaseResourceEntityInfo
 /// The credential key of a user account item.
 /// </summary>
 [JsonConverter(typeof(UserItemCredentialKeyInfoConverter))]
-public class UserItemCredentialKeyInfo : BaseResourceEntityInfo
+public class UserItemCredentialKeyInfo : UserItemRelatedInfo
 {
     /// <summary>
     /// Intializes a new instance of the UserItemCredentialKeyInfo class.
     /// </summary>
     public UserItemCredentialKeyInfo()
     {
+        Supertype = "secret";
     }
 
     /// <summary>
@@ -275,8 +260,9 @@ public class UserItemCredentialKeyInfo : BaseResourceEntityInfo
     /// <param name="algName">The algrithm name.</param>
     /// <param name="parameter">The additional parameter</param>
     /// <param name="descripiton">The description.</param>
-    public UserItemCredentialKeyInfo(string id, BasePrincipalEntityInfo owner, UserCredentialKeyTypes type, string subType, DateTime expiration, string protectedValue, string algName, string parameter = null, string descripiton = null)
-        : this(id, owner, type, subType, protectedValue, algName, parameter, descripiton)
+    /// <param name="creation">The creation date time.</param>
+    public UserItemCredentialKeyInfo(string id, BasePrincipalEntityInfo owner, UserCredentialKeyTypes type, string subType, DateTime expiration, string protectedValue, string algName, string parameter = null, string descripiton = null, DateTime? creation = null)
+        : this(id, owner, type, subType, protectedValue, algName, parameter, descripiton, creation)
     {
         Expiration = expiration;
     }
@@ -292,11 +278,11 @@ public class UserItemCredentialKeyInfo : BaseResourceEntityInfo
     /// <param name="algName">The algrithm name.</param>
     /// <param name="parameter">The additional parameter</param>
     /// <param name="descripiton">The description.</param>
-    public UserItemCredentialKeyInfo(string id, BasePrincipalEntityInfo owner, UserCredentialKeyTypes type, string subType, string protectedValue, string algName, string parameter = null, string descripiton = null)
-        : base(id)
+    /// <param name="creation">The creation date time.</param>
+    public UserItemCredentialKeyInfo(string id, BasePrincipalEntityInfo owner, UserCredentialKeyTypes type, string subType, string protectedValue, string algName, string parameter = null, string descripiton = null, DateTime? creation = null)
+        : base(id, owner, creation)
     {
-        OwnerId = owner?.Id;
-        OwnerType = owner?.PrincipalEntityType ?? PrincipalEntityTypes.Unknown;
+        Supertype = "secret";
         CredentialType = type;
         SubType = subType;
         ProtectedValue = protectedValue;
@@ -317,8 +303,9 @@ public class UserItemCredentialKeyInfo : BaseResourceEntityInfo
     /// <param name="algName">The algrithm name.</param>
     /// <param name="parameter">The additional parameter</param>
     /// <param name="descripiton">The description.</param>
-    public UserItemCredentialKeyInfo(Guid id, BasePrincipalEntityInfo owner, UserCredentialKeyTypes type, string subType, DateTime expiration, string protectedValue, string algName, string parameter = null, string descripiton = null)
-        : this(id, owner, type, subType, protectedValue, algName, parameter, descripiton)
+    /// <param name="creation">The creation date time.</param>
+    public UserItemCredentialKeyInfo(Guid id, BasePrincipalEntityInfo owner, UserCredentialKeyTypes type, string subType, DateTime expiration, string protectedValue, string algName, string parameter = null, string descripiton = null, DateTime? creation = null)
+        : this(id, owner, type, subType, protectedValue, algName, parameter, descripiton, creation)
     {
         Expiration = expiration;
     }
@@ -334,11 +321,11 @@ public class UserItemCredentialKeyInfo : BaseResourceEntityInfo
     /// <param name="algName">The algrithm name.</param>
     /// <param name="parameter">The additional parameter</param>
     /// <param name="descripiton">The description.</param>
-    public UserItemCredentialKeyInfo(Guid id, BasePrincipalEntityInfo owner, UserCredentialKeyTypes type, string subType, string protectedValue, string algName, string parameter = null, string descripiton = null)
-        : base(id)
+    /// <param name="creation">The creation date time.</param>
+    public UserItemCredentialKeyInfo(Guid id, BasePrincipalEntityInfo owner, UserCredentialKeyTypes type, string subType, string protectedValue, string algName, string parameter = null, string descripiton = null, DateTime? creation = null)
+        : base(id, owner, creation)
     {
-        OwnerId = owner?.Id;
-        OwnerType = owner?.PrincipalEntityType ?? PrincipalEntityTypes.Unknown;
+        Supertype = "secret";
         CredentialType = type;
         SubType = subType;
         ProtectedValue = protectedValue;
@@ -352,36 +339,9 @@ public class UserItemCredentialKeyInfo : BaseResourceEntityInfo
     /// </summary>
     /// <param name="json">The JSON object to parse.</param>
     public UserItemCredentialKeyInfo(JsonObjectNode json)
-        : base()
+        : base(json)
     {
-        Id = json.TryGetStringTrimmedValue("id", true) ?? json.Id;
-        OwnerId = json.TryGetStringTrimmedValue("owner", true);
-        OwnerType = json.TryGetEnumValue<PrincipalEntityTypes>("target") ?? PrincipalEntityTypes.Unknown;
-        CredentialType = json.TryGetEnumValue<UserCredentialKeyTypes>("kind") ?? UserCredentialKeyTypes.None;
-        SubType = json.TryGetStringTrimmedValue("subkind", true);
-        Expiration = json.TryGetDateTimeValue("exp");
-        ProtectedValue = json.TryGetStringTrimmedValue("value", true);
-        AlgName = json.TryGetStringTrimmedValue("alg", true);
-        Parameter = json.TryGetStringValue("param");
-        Description = json.TryGetStringTrimmedValue("desc");
-    }
-
-    /// <summary>
-    /// Gets or sets the principal entity type of target or owner.
-    /// </summary>
-    public PrincipalEntityTypes OwnerType
-    {
-        get => GetCurrentProperty<PrincipalEntityTypes>();
-        set => SetCurrentProperty(value);
-    }
-
-    /// <summary>
-    /// Gets or sets the identifier of target or owner.
-    /// </summary>
-    public string OwnerId
-    {
-        get => GetCurrentProperty<string>();
-        set => SetCurrentProperty(value);
+        Supertype = "secret";
     }
 
     /// <summary>
@@ -447,6 +407,19 @@ public class UserItemCredentialKeyInfo : BaseResourceEntityInfo
         set => SetCurrentProperty(value);
     }
 
+    /// <inheritdoc />
+    protected override void Fill(JsonObjectNode json)
+    {
+        base.Fill(json);
+        CredentialType = json.TryGetEnumValue<UserCredentialKeyTypes>("type") ?? UserCredentialKeyTypes.None;
+        SubType = json.TryGetStringTrimmedValue("subtype", true);
+        Expiration = json.TryGetDateTimeValue("exp");
+        ProtectedValue = json.TryGetStringTrimmedValue("value", true);
+        AlgName = json.TryGetStringTrimmedValue("alg", true);
+        Parameter = json.TryGetStringValue("param");
+        Description = json.TryGetStringTrimmedValue("desc");
+    }
+
     /// <summary>
     /// Converts to JSON object.
     /// </summary>
@@ -454,11 +427,8 @@ public class UserItemCredentialKeyInfo : BaseResourceEntityInfo
     public override JsonObjectNode ToJson()
     {
         var json = base.ToJson();
-        json.SetValue("type", "secret");
-        json.SetValue("owner", OwnerId);
-        json.SetValue("target", OwnerType.ToString());
-        json.SetValue("kind", CredentialType.ToString());
-        json.SetValue("subkind", SubType);
+        json.SetValue("type", CredentialType.ToString());
+        json.SetValue("subtype", SubType);
         json.SetValue("exp", Expiration);
         json.SetValue("value", ProtectedValue);
         json.SetValue("alg", AlgName);

@@ -73,15 +73,13 @@ public class ExtendedChatMessage : BaseResourceEntityInfo
     /// <param name="info">The additional information; or null if create a new one.</param>
     /// <param name="type">The message type.</param>
     public ExtendedChatMessage(string id, UserItemInfo sender, string message, ExtendedChatMessageFormats format = ExtendedChatMessageFormats.Text, DateTime? creation = null, JsonObjectNode info = null, string type = null)
-        : base(id)
+        : base(id, creation)
     {
-        var time = creation ?? DateTime.Now;
+        Supertype = "message";
         SetProperty(nameof(Sender), sender);
         SetProperty(nameof(Message), message);
         SetProperty(nameof(MessageFormat), format);
         if (!string.IsNullOrEmpty(type)) SetProperty(nameof(MessageType), type);
-        SetProperty(nameof(CreationTime), time);
-        SetProperty(nameof(LastModificationTime), time);
         Info = info ?? new();
     }
 
@@ -90,25 +88,15 @@ public class ExtendedChatMessage : BaseResourceEntityInfo
     /// </summary>
     /// <param name="json">The JSON object to parse.</param>
     public ExtendedChatMessage(JsonObjectNode json)
+        : base(json)
     {
-        if (json is null) return;
-        Id = json.TryGetStringTrimmedValue("id", true) ?? json.Id;
-        SetProperty(nameof(Sender), (UserItemInfo)json.TryGetObjectValue("sender"));
-        SetProperty(nameof(Message), json.TryGetStringValue("text") ?? json.TryGetStringValue("message"));
-        SetProperty(nameof(MessageType), json.TryGetStringTrimmedValue("type", true));
-        SetProperty(nameof(MessageFormat), json.TryGetEnumValue<ExtendedChatMessageFormats>("format") ?? ExtendedChatMessageFormats.Text);
-        SetProperty(nameof(CreationTime), json.TryGetDateTimeValue("created") ?? DateTime.Now);
-        SetProperty(nameof(LastModificationTime), json.TryGetDateTimeValue("modified") ?? DateTime.Now);
-        SetProperty(nameof(Priority), json.TryGetEnumValue<BasicPriorities>("priority") ?? BasicPriorities.Normal);
-        Info = json.TryGetObjectValue("info") ?? new();
-        Category = json.TryGetStringTrimmedValue("category", true);
-        SetProperty("Data", json.TryGetObjectValue("data"));
+        Supertype = "message";
     }
 
     /// <summary>
     /// Gets the sender.
     /// </summary>
-    public UserItemInfo Sender => GetCurrentProperty<UserItemInfo>();
+    public BaseUserItemInfo Sender => GetCurrentProperty<BaseUserItemInfo>();
 
     /// <summary>
     /// Gets the plain text of the message.
@@ -153,20 +141,6 @@ public class ExtendedChatMessage : BaseResourceEntityInfo
     }
 
     /// <summary>
-    /// Gets the creation date time.
-    /// </summary>
-    public DateTime CreationTime => GetCurrentProperty<DateTime>();
-
-    /// <summary>
-    /// Gets the creation date time.
-    /// </summary>
-    public DateTime LastModificationTime
-    {
-        get => GetCurrentProperty<DateTime>();
-        set => SetCurrentProperty(value);
-    }
-
-    /// <summary>
     /// Gets the category.
     /// </summary>
     public string Category
@@ -183,7 +157,21 @@ public class ExtendedChatMessage : BaseResourceEntityInfo
     /// <summary>
     /// Gets the additional data.
     /// </summary>
-    public JsonObjectNode Info { get; }
+    public JsonObjectNode Info { get; private set; }
+
+    /// <inheritdoc />
+    protected override void Fill(JsonObjectNode json)
+    {
+        base.Fill(json);
+        SetProperty(nameof(Sender), PrincipalEntityInfoConverter.Convert(json.TryGetObjectValue("sender")));
+        SetProperty(nameof(Message), json.TryGetStringValue("text") ?? json.TryGetStringValue("message"));
+        SetProperty(nameof(MessageType), json.TryGetStringTrimmedValue("type", true));
+        SetProperty(nameof(MessageFormat), json.TryGetEnumValue<ExtendedChatMessageFormats>("format") ?? ExtendedChatMessageFormats.Text);
+        SetProperty(nameof(Priority), json.TryGetEnumValue<BasicPriorities>("priority") ?? BasicPriorities.Normal);
+        Info = json.TryGetObjectValue("info") ?? new();
+        Category = json.TryGetStringTrimmedValue("category", true);
+        SetProperty("Data", json.TryGetObjectValue("data"));
+    }
 
     /// <summary>
     /// Converts to JSON object.
@@ -194,8 +182,6 @@ public class ExtendedChatMessage : BaseResourceEntityInfo
         var json = base.ToJson();
         json.SetValue("sender", Sender);
         json.SetValue("text", Message);
-        json.SetValue("created", CreationTime);
-        json.SetValue("modified", LastModificationTime);
         json.SetValue("type", MessageType);
         json.SetValue("format", (int)MessageFormat);
         if (Info.Count > 0) json.SetValue("info", Info);

@@ -92,6 +92,20 @@ public class PublisherBasicInfo : IBasicPublisherInfo, IJsonObjectHost
             { "name", DisplayName },
             { "website", Website },
         };
+
+    /// <summary>
+    /// Returns a string that represents this instance.
+    /// </summary>
+    /// <returns>A string that represents this instance.</returns>
+    public override string ToString()
+    {
+        var sb = new StringBuilder();
+        sb.Append(DisplayName ?? "?");
+        sb.Append(" (Publisher ");
+        sb.Append(Id);
+        sb.Append(')');
+        return sb.ToString();
+    }
 }
 
 /// <summary>

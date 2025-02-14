@@ -177,20 +177,7 @@ internal class JsonArraySequenceLevelConfigHandler : JsonArraySequenceLevelConfi
                     foreach (var item in value)
                     {
                         if (item == null) continue;
-                        for (var i = 0; i < item.Count; i++)
-                        {
-                            if (obj.Length == i) obj.AddNull();
-                            if (item[i] is null) continue;
-                            else if (item[i].ValueKind == JsonValueKind.Null) obj.SetNullValue(i);
-                            else if (item[i].ValueKind == JsonValueKind.True) obj.SetValue(i, true);
-                            else if (item[i].ValueKind == JsonValueKind.False) obj.SetValue(i, false);
-                            else if (item[i] is IJsonValueNode<string> s) obj.SetValue(i, s.Value);
-                            else if (item[i] is IJsonValueNode<long> i2) obj.SetValue(i, i2.Value);
-                            else if (item[i] is IJsonValueNode<double> i5) obj.SetValue(i, i5.Value);
-                            else if (item[i] is IJsonValueNode<decimal> i6) obj.SetValue(i, i6.Value);
-                            else if (item[i] is JsonObjectNode json) obj.SetValue(i, json);
-                            else if (item[i] is JsonArrayNode arr) obj.SetValue(i, arr);
-                        }
+                        obj.SetRange(item);
                     }
 
                     return obj;

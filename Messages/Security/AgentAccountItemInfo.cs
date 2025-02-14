@@ -38,8 +38,9 @@ public class AgentAccountItemInfo : BaseUserItemInfo
     /// <param name="id">The resource identifier.</param>
     /// <param name="nickname">The nickname or display name.</param>
     /// <param name="avatar">The avatar URI.</param>
-    public AgentAccountItemInfo(string id, string nickname, Uri avatar = null)
-        : base(PrincipalEntityTypes.Agent, id, nickname, Genders.Asexual, avatar)
+    /// <param name="creation">The creation date time.</param>
+    public AgentAccountItemInfo(string id, string nickname, Uri avatar = null, DateTime? creation = null)
+        : base(PrincipalEntityTypes.Agent, id, nickname, Genders.Asexual, avatar, creation)
     {
         Scope = new();
     }
@@ -48,18 +49,9 @@ public class AgentAccountItemInfo : BaseUserItemInfo
     /// Initializes a new instance of the AgentAccountItemInfo class.
     /// </summary>
     /// <param name="json">The JSON object to parse.</param>
-    public AgentAccountItemInfo(JsonObjectNode json)
+    protected internal AgentAccountItemInfo(JsonObjectNode json)
         : base(json, PrincipalEntityTypes.Agent)
     {
-        if (json == null) return;
-        var subject = json.TryGetObjectValue("subject");
-        if (subject != null)
-        {
-            SubjectType = subject.TryGetStringTrimmedValue("type", true);
-            SubjectId = subject.TryGetStringTrimmedValue("id", true) ?? subject.Id;
-        }
-
-        Scope = (json.TryGetStringListValue("scope", true) ?? new()).Where(ele => !string.IsNullOrWhiteSpace(ele)).Distinct().ToList();
     }
 
     /// <summary>
@@ -143,6 +135,32 @@ public class AgentAccountItemInfo : BaseUserItemInfo
 
         SubjectType = entity.PrincipalEntityType.ToString();
         SubjectId = entity.Id;
+    }
+
+    /// <inheritdoc />
+    protected override void Fill(JsonObjectNode json)
+    {
+        base.Fill(json);
+        var subject = json.TryGetObjectValue("subject");
+        if (subject != null)
+        {
+            SubjectType = subject.TryGetStringTrimmedValue("type", true);
+            SubjectId = subject.TryGetStringTrimmedValue("id", true) ?? subject.Id;
+        }
+
+        Scope = (json.TryGetStringListValue("scope", true) ?? new()).Where(ele => !string.IsNullOrWhiteSpace(ele)).Distinct().ToList();
+    }
+
+    /// <inheritdoc />
+    protected override void ToString(StringBuilder sb)
+    {
+        sb.AppendLine();
+        sb.Append("Subject = ");
+        var subjectType = SubjectType?.Trim();
+        if (string.IsNullOrEmpty(subjectType)) sb.Append('?');
+        else sb.Append(subjectType);
+        sb.Append(' ');
+        sb.Append(SubjectId ?? "?");
     }
 
     /// <summary>

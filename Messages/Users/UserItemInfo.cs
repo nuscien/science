@@ -37,8 +37,9 @@ public abstract class BaseUserItemInfo : BasePrincipalEntityInfo
     /// <param name="nickname">The nickname or display name.</param>
     /// <param name="gender">The gender.</param>
     /// <param name="avatar">The avatar URI.</param>
-    internal BaseUserItemInfo(PrincipalEntityTypes type, string id, string nickname, Genders gender, Uri avatar = null)
-        : base(type, id, nickname, avatar)
+    /// <param name="creation">The creation date time.</param>
+    internal BaseUserItemInfo(PrincipalEntityTypes type, string id, string nickname, Genders gender, Uri avatar = null, DateTime? creation = null)
+        : base(type, id, nickname, avatar, creation)
     {
         Gender = gender;
     }
@@ -49,7 +50,7 @@ public abstract class BaseUserItemInfo : BasePrincipalEntityInfo
     /// <param name="json">The JSON object to parse.</param>
     /// <param name="defaultType">The default security principal entity type.</param>
     internal BaseUserItemInfo(JsonObjectNode json, PrincipalEntityTypes defaultType)
-        : base(GetPrincipalEntityType(json, defaultType), json)
+        : base(defaultType, json, true)
     {
     }
 
@@ -66,6 +67,13 @@ public abstract class BaseUserItemInfo : BasePrincipalEntityInfo
         set => SetCurrentProperty(value);
     }
 
+    /// <inheritdoc />
+    protected override void Fill(JsonObjectNode json)
+    {
+        base.Fill(json);
+        Gender = json.TryGetEnumValue<Genders>("gender") ?? Genders.Unknown;
+    }
+
     /// <summary>
     /// Converts to JSON object.
     /// </summary>
@@ -75,23 +83,6 @@ public abstract class BaseUserItemInfo : BasePrincipalEntityInfo
         var json = base.ToJson();
         json.SetValue("gender", Gender.ToString());
         return json;
-    }
-
-    private static PrincipalEntityTypes GetPrincipalEntityType(JsonObjectNode json, PrincipalEntityTypes defaultType)
-    {
-        var type = json?.TryGetStringTrimmedValue("gender", true)?.ToLowerInvariant();
-        if (type == null) return defaultType;
-        return type switch
-        {
-            "u" or "user" or "account" or "用户" or "1" => PrincipalEntityTypes.User,
-            "g" or "group" or "role" or "container" or "list" or "组" or "角色" or "2" => PrincipalEntityTypes.Group,
-            "app" or "service" or "服务" or "3" => PrincipalEntityTypes.Service,
-            "b" or "bot" or "robot" or "ai" or "assistance" or "machine" or "机器人" or "4" => PrincipalEntityTypes.Bot,
-            "d" or "device" or "iot" or "client" or "设备" or "5" => PrincipalEntityTypes.Device,
-            "agent" or "代理" or "6" => PrincipalEntityTypes.Agent,
-            "default" or "-" => defaultType,
-            _ => PrincipalEntityTypes.Other
-        };
     }
 }
 
@@ -116,8 +107,9 @@ public class UserItemInfo : BaseUserItemInfo
     /// <param name="nickname">The nickname or display name.</param>
     /// <param name="gender">The gender.</param>
     /// <param name="avatar">The avatar URI.</param>
-    public UserItemInfo(string id, string nickname, Genders gender = Genders.Unknown, Uri avatar = null)
-        : base(gender == Genders.Asexual ? PrincipalEntityTypes.Bot : PrincipalEntityTypes.User, id, nickname, gender, avatar)
+    /// <param name="creation">The creation date time.</param>
+    public UserItemInfo(string id, string nickname, Genders gender = Genders.Unknown, Uri avatar = null, DateTime? creation = null)
+        : base(gender == Genders.Asexual ? PrincipalEntityTypes.Bot : PrincipalEntityTypes.User, id, nickname, gender, avatar, creation)
     {
     }
 
@@ -125,14 +117,9 @@ public class UserItemInfo : BaseUserItemInfo
     /// Initializes a new instance of the UserItemInfo class.
     /// </summary>
     /// <param name="json">The JSON object to parse.</param>
-    public UserItemInfo(JsonObjectNode json)
+    protected internal UserItemInfo(JsonObjectNode json)
         : base(json, PrincipalEntityTypes.User)
     {
-        if (json == null) return;
-        LoginName = json.TryGetStringTrimmedValue("logname");
-        Birthday = json.TryGetDateTimeValue("birth");
-        Email = json.TryGetStringTrimmedValue("email");
-        PhoneNumber = json.TryGetStringTrimmedValue("phone");
     }
 
     /// <summary>
@@ -144,7 +131,7 @@ public class UserItemInfo : BaseUserItemInfo
     public string LoginName
     {
         get => GetCurrentProperty<string>();
-        set => SetCurrentProperty(value);
+        set => SetCurrentProperty(value?.Trim());
     }
 
     /// <summary>
@@ -156,7 +143,7 @@ public class UserItemInfo : BaseUserItemInfo
     public string Email
     {
         get => GetCurrentProperty<string>();
-        set => SetCurrentProperty(value);
+        set => SetCurrentProperty(value?.Trim());
     }
 
     /// <summary>
@@ -168,7 +155,7 @@ public class UserItemInfo : BaseUserItemInfo
     public string PhoneNumber
     {
         get => GetCurrentProperty<string>();
-        set => SetCurrentProperty(value);
+        set => SetCurrentProperty(value?.Trim());
     }
 
     /// <summary>
@@ -182,6 +169,39 @@ public class UserItemInfo : BaseUserItemInfo
     {
         get => GetCurrentProperty<DateTime?>();
         set => SetCurrentProperty(value);
+    }
+
+    /// <inheritdoc />
+    protected override void Fill(JsonObjectNode json)
+    {
+        base.Fill(json);
+        LoginName = json.TryGetStringTrimmedValue("logname");
+        Birthday = json.TryGetDateTimeValue("birth");
+        Email = json.TryGetStringTrimmedValue("email");
+        PhoneNumber = json.TryGetStringTrimmedValue("phone");
+    }
+
+    /// <inheritdoc />
+    protected override void ToString(StringBuilder sb)
+    {
+        sb.AppendLine();
+        sb.Append("Logname = ");
+        sb.Append(LoginName);
+        sb.Append(" & Gender = ");
+        sb.Append(Gender);
+        if (!string.IsNullOrWhiteSpace(Email) && Email != LoginName)
+        {
+            sb.Append(" & ");
+            sb.Append("Email = ");
+            sb.Append(Email);
+        }
+
+        if (!string.IsNullOrWhiteSpace(PhoneNumber) && PhoneNumber != LoginName)
+        {
+            sb.Append(" & ");
+            sb.Append("Phone = ");
+            sb.Append(PhoneNumber);
+        }
     }
 
     /// <summary>

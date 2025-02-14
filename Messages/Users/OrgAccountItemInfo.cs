@@ -35,8 +35,9 @@ public class OrgAccountItemInfo : BaseUserItemInfo, IBasicPublisherInfo
     /// <param name="id">The resource identifier.</param>
     /// <param name="nickname">The nickname or display name.</param>
     /// <param name="avatar">The avatar URI.</param>
-    public OrgAccountItemInfo(string id, string nickname, Uri avatar = null)
-        : base(PrincipalEntityTypes.Organization, id, nickname, Genders.Asexual, avatar)
+    /// <param name="creation">The creation date time.</param>
+    public OrgAccountItemInfo(string id, string nickname, Uri avatar = null, DateTime? creation = null)
+        : base(PrincipalEntityTypes.Organization, id, nickname, Genders.Asexual, avatar, creation)
     {
     }
 
@@ -44,11 +45,9 @@ public class OrgAccountItemInfo : BaseUserItemInfo, IBasicPublisherInfo
     /// Initializes a new instance of the OrgAccountItemInfo class.
     /// </summary>
     /// <param name="json">The JSON object to parse.</param>
-    public OrgAccountItemInfo(JsonObjectNode json)
+    protected internal OrgAccountItemInfo(JsonObjectNode json)
         : base(json, PrincipalEntityTypes.Organization)
     {
-        if (json == null) return;
-        Website = json.TryGetUriValue("website");
     }
 
     /// <summary>
@@ -69,6 +68,13 @@ public class OrgAccountItemInfo : BaseUserItemInfo, IBasicPublisherInfo
     {
         get => GetCurrentProperty<Uri>();
         set => SetCurrentProperty(value);
+    }
+
+    /// <inheritdoc />
+    protected override void Fill(JsonObjectNode json)
+    {
+        base.Fill(json);
+        Website = json.TryGetUriValue("website");
     }
 
     /// <summary>

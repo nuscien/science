@@ -37,8 +37,9 @@ public class ServiceAccountItemInfo : BaseUserItemInfo
     /// <param name="nickname">The nickname or display name.</param>
     /// <param name="avatar">The avatar URI.</param>
     /// <param name="publisher">The publisher info.</param>
-    public ServiceAccountItemInfo(string id, string nickname, Uri avatar = null, IBasicPublisherInfo publisher = null)
-        : base(PrincipalEntityTypes.Service, id, nickname, Genders.Asexual, avatar)
+    /// <param name="creation">The creation date time.</param>
+    public ServiceAccountItemInfo(string id, string nickname, Uri avatar = null, IBasicPublisherInfo publisher = null, DateTime? creation = null)
+        : base(PrincipalEntityTypes.Service, id, nickname, Genders.Asexual, avatar, creation)
     {
         Publisher = publisher;
     }
@@ -47,11 +48,9 @@ public class ServiceAccountItemInfo : BaseUserItemInfo
     /// Initializes a new instance of the ServiceAccountItemInfo class.
     /// </summary>
     /// <param name="json">The JSON object to parse.</param>
-    public ServiceAccountItemInfo(JsonObjectNode json)
+    protected internal ServiceAccountItemInfo(JsonObjectNode json)
         : base(json, PrincipalEntityTypes.Service)
     {
-        if (json == null) return;
-        Publisher = TextHelper.ToPublisherInfo(json, "publisher");
     }
 
     /// <summary>
@@ -64,6 +63,28 @@ public class ServiceAccountItemInfo : BaseUserItemInfo
     {
         get => GetCurrentProperty<IBasicPublisherInfo>();
         set => SetCurrentProperty(value);
+    }
+
+    /// <inheritdoc />
+    protected override void Fill(JsonObjectNode json)
+    {
+        base.Fill(json);
+        Publisher = TextHelper.ToPublisherInfo(json, "publisher");
+    }
+
+    /// <inheritdoc />
+    protected override void ToString(StringBuilder sb)
+    {
+        var publisher = Publisher.DisplayName;
+        if (string.IsNullOrWhiteSpace(publisher)) return;
+        sb.AppendLine();
+        sb.Append("Publisher = ");
+        sb.Append(publisher);
+        var pid = Publisher?.Id?.Trim();
+        if (string.IsNullOrEmpty(pid)) return;
+        sb.Append(" (");
+        sb.Append(pid);
+        sb.Append(')');
     }
 
     /// <summary>

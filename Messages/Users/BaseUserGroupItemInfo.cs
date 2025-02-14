@@ -33,8 +33,12 @@ public class BaseUserGroupItemInfo : BasePrincipalEntityInfo
     /// <summary>
     /// Initializes a new instance of the BaseUserGroupItemInfo class.
     /// </summary>
-    public BaseUserGroupItemInfo(string id, string nickname, Uri avatar = null)
-        : base(PrincipalEntityTypes.Group, id, nickname, avatar)
+    /// <param name="id">The resource identifier.</param>
+    /// <param name="nickname">The nickname or display name.</param>
+    /// <param name="avatar">The avatar URI.</param>
+    /// <param name="creation">The creation date time.</param>
+    public BaseUserGroupItemInfo(string id, string nickname, Uri avatar = null, DateTime? creation = null)
+        : base(PrincipalEntityTypes.Group, id, nickname, avatar, creation)
     {
     }
 
@@ -42,11 +46,9 @@ public class BaseUserGroupItemInfo : BasePrincipalEntityInfo
     /// Initializes a new instance of the BaseUserGroupItemInfo class.
     /// </summary>
     /// <param name="json">The JSON object to parse.</param>
-    public BaseUserGroupItemInfo(JsonObjectNode json)
+    protected internal BaseUserGroupItemInfo(JsonObjectNode json)
         : base(PrincipalEntityTypes.Group, json)
     {
-        if (json == null) return;
-        DefaultMembershipPolicy = json.TryGetEnumValue<UserGroupMembershipPolicies>("memberPolicy") ?? UserGroupMembershipPolicies.Forbidden;
     }
 
     /// <summary>
@@ -62,6 +64,35 @@ public class BaseUserGroupItemInfo : BasePrincipalEntityInfo
     }
 
     /// <summary>
+    /// Gets or sets the optional email address.
+    /// </summary>
+    [DataMember(Name = "email")]
+    [JsonPropertyName("email")]
+    [Description("The optional email address.")]
+    public string Email
+    {
+        get => GetCurrentProperty<string>();
+        set => SetCurrentProperty(value?.Trim());
+    }
+
+    /// <inheritdoc />
+    protected override void Fill(JsonObjectNode json)
+    {
+        base.Fill(json);
+        DefaultMembershipPolicy = json.TryGetEnumValue<UserGroupMembershipPolicies>("memberPolicy") ?? UserGroupMembershipPolicies.Forbidden;
+        Email = json.TryGetStringTrimmedValue("email");
+    }
+
+    /// <inheritdoc />
+    protected override void ToString(StringBuilder sb)
+    {
+        if (string.IsNullOrWhiteSpace(Email)) return;
+        sb.AppendLine();
+        sb.Append("Email = ");
+        sb.Append(Email);
+    }
+
+    /// <summary>
     /// Converts to JSON object.
     /// </summary>
     /// <returns>A JSON object.</returns>
@@ -69,6 +100,7 @@ public class BaseUserGroupItemInfo : BasePrincipalEntityInfo
     {
         var json = base.ToJson();
         if (DefaultMembershipPolicy != 0) json.SetValue("memberPolicy", DefaultMembershipPolicy.ToString());
+        json.SetValue("email", Email);
         return json;
     }
 
