@@ -21,7 +21,7 @@ namespace Trivial.Security;
 /// The resource permission settings item information.
 /// </summary>
 [JsonConverter(typeof(ResourcePermissionItemInfoConverter))]
-public class ResourcePermissionItemInfo<TOwner> : RelatedResourceEntityInfo<TOwner, BasePrincipalEntityInfo>
+public class ResourcePermissionItemInfo<TOwner> : RelatedResourceEntityInfo<TOwner, BaseAccountEntityInfo>
     where TOwner : BaseResourceEntityInfo
 {
     /// <summary>
@@ -41,7 +41,7 @@ public class ResourcePermissionItemInfo<TOwner> : RelatedResourceEntityInfo<TOwn
     /// <param name="user">The target user, device or group to add permission.</param>
     /// <param name="permissions">The permission items.</param>
     /// <param name="creation">The creation date time.</param>
-    public ResourcePermissionItemInfo(string id, TOwner owner, BasePrincipalEntityInfo user, IEnumerable<string> permissions, DateTime? creation = null)
+    public ResourcePermissionItemInfo(string id, TOwner owner, BaseAccountEntityInfo user, IEnumerable<string> permissions, DateTime? creation = null)
         : base(id, owner, user, creation)
     {
         Supertype = "permission";
@@ -56,7 +56,7 @@ public class ResourcePermissionItemInfo<TOwner> : RelatedResourceEntityInfo<TOwn
     /// <param name="user">The target user, device or group to add permission.</param>
     /// <param name="permission">The permission item.</param>
     /// <param name="creation">The creation date time.</param>
-    public ResourcePermissionItemInfo(string id, TOwner owner, BasePrincipalEntityInfo user, string permission, DateTime? creation = null)
+    public ResourcePermissionItemInfo(string id, TOwner owner, BaseAccountEntityInfo user, string permission, DateTime? creation = null)
         : this(id, owner, user, new List<string>
         {
             permission
@@ -72,7 +72,7 @@ public class ResourcePermissionItemInfo<TOwner> : RelatedResourceEntityInfo<TOwn
     /// <param name="user">The target user, device or group to add permission.</param>
     /// <param name="permissions">The permission items.</param>
     /// <param name="creation">The creation date time.</param>
-    public ResourcePermissionItemInfo(Guid id, TOwner owner, BasePrincipalEntityInfo user, IEnumerable<string> permissions, DateTime? creation = null)
+    public ResourcePermissionItemInfo(Guid id, TOwner owner, BaseAccountEntityInfo user, IEnumerable<string> permissions, DateTime? creation = null)
         : base(id, owner, user, creation)
     {
         Supertype = "permission";
@@ -87,7 +87,7 @@ public class ResourcePermissionItemInfo<TOwner> : RelatedResourceEntityInfo<TOwn
     /// <param name="user">The target user, device or group to add permission.</param>
     /// <param name="permission">The permission item.</param>
     /// <param name="creation">The creation date time.</param>
-    public ResourcePermissionItemInfo(Guid id, TOwner owner, BasePrincipalEntityInfo user, string permission, DateTime? creation = null)
+    public ResourcePermissionItemInfo(Guid id, TOwner owner, BaseAccountEntityInfo user, string permission, DateTime? creation = null)
         : this(id, owner, user, new List<string>
         {
             permission

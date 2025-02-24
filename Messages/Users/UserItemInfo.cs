@@ -4,6 +4,8 @@ using System.ComponentModel;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Runtime.Serialization;
+using System.Security.Claims;
+using System.Security.Principal;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -12,19 +14,20 @@ using Trivial.Data;
 using Trivial.Reflection;
 using Trivial.Tasks;
 using Trivial.Text;
+using Trivial.Web;
 
 namespace Trivial.Users;
 
 /// <summary>
 /// The user item information.
 /// </summary>
-public abstract class BaseUserItemInfo : BasePrincipalEntityInfo
+public abstract class BaseUserItemInfo : BaseAccountEntityInfo
 {
     /// <summary>
     /// Initializes a new instance of the BaseUserItemInfo class.
     /// </summary>
-    /// <param name="type">The security principal entity type.</param>
-    internal BaseUserItemInfo(PrincipalEntityTypes type)
+    /// <param name="type">The account entity type.</param>
+    internal BaseUserItemInfo(AccountEntityTypes type)
         : base(type)
     {
     }
@@ -32,13 +35,13 @@ public abstract class BaseUserItemInfo : BasePrincipalEntityInfo
     /// <summary>
     /// Initializes a new instance of the BaseUserItemInfo class.
     /// </summary>
-    /// <param name="type">The security principal entity type.</param>
+    /// <param name="type">The account entity type.</param>
     /// <param name="id">The resource identifier.</param>
     /// <param name="nickname">The nickname or display name.</param>
     /// <param name="gender">The gender.</param>
     /// <param name="avatar">The avatar URI.</param>
     /// <param name="creation">The creation date time.</param>
-    internal BaseUserItemInfo(PrincipalEntityTypes type, string id, string nickname, Genders gender, Uri avatar = null, DateTime? creation = null)
+    internal BaseUserItemInfo(AccountEntityTypes type, string id, string nickname, Genders gender, Uri avatar = null, DateTime? creation = null)
         : base(type, id, nickname, avatar, creation)
     {
         Gender = gender;
@@ -48,8 +51,8 @@ public abstract class BaseUserItemInfo : BasePrincipalEntityInfo
     /// Initializes a new instance of the BaseUserItemInfo class.
     /// </summary>
     /// <param name="json">The JSON object to parse.</param>
-    /// <param name="defaultType">The default security principal entity type.</param>
-    internal BaseUserItemInfo(JsonObjectNode json, PrincipalEntityTypes defaultType)
+    /// <param name="defaultType">The default account entity type.</param>
+    internal BaseUserItemInfo(JsonObjectNode json, AccountEntityTypes defaultType)
         : base(defaultType, json, true)
     {
     }
@@ -75,6 +78,26 @@ public abstract class BaseUserItemInfo : BasePrincipalEntityInfo
     }
 
     /// <summary>
+    /// Gets the claim of name identifier.
+    /// </summary>
+    /// <param name="issuer">The optional claim issuer.</param>
+    /// <returns>The claim of name identifier of this entity.</returns>
+    protected virtual Claim GetIdClaim(string issuer = null)
+        => ResourceEntityUtils.ToClaim(ClaimTypes.NameIdentifier, Id, issuer);
+
+    /// <summary>
+    /// Generates claims of this entity.
+    /// </summary>
+    /// <param name="issuer">The optional claim issuer.</param>
+    /// <returns>A collection of claim.</returns>
+    public virtual IEnumerable<Claim> ToClaims(string issuer = null)
+    {
+        yield return GetIdClaim(issuer);
+        yield return ResourceEntityUtils.ToClaim(ClaimTypes.Name, Nickname, issuer);
+        yield return ResourceEntityUtils.ToClaim(ClaimTypes.Gender, Gender.ToString(), issuer);
+    }
+
+    /// <summary>
     /// Converts to JSON object.
     /// </summary>
     /// <returns>A JSON object.</returns>
@@ -96,7 +119,7 @@ public class UserItemInfo : BaseUserItemInfo
     /// Initializes a new instance of the UserItemInfo class.
     /// </summary>
     public UserItemInfo()
-        : base(PrincipalEntityTypes.User)
+        : base(AccountEntityTypes.User)
     {
     }
 
@@ -109,7 +132,7 @@ public class UserItemInfo : BaseUserItemInfo
     /// <param name="avatar">The avatar URI.</param>
     /// <param name="creation">The creation date time.</param>
     public UserItemInfo(string id, string nickname, Genders gender = Genders.Unknown, Uri avatar = null, DateTime? creation = null)
-        : base(gender == Genders.Asexual ? PrincipalEntityTypes.Bot : PrincipalEntityTypes.User, id, nickname, gender, avatar, creation)
+        : base(gender == Genders.Asexual ? AccountEntityTypes.Bot : AccountEntityTypes.User, id, nickname, gender, avatar, creation)
     {
     }
 
@@ -118,7 +141,7 @@ public class UserItemInfo : BaseUserItemInfo
     /// </summary>
     /// <param name="json">The JSON object to parse.</param>
     protected internal UserItemInfo(JsonObjectNode json)
-        : base(json, PrincipalEntityTypes.User)
+        : base(json, AccountEntityTypes.User)
     {
     }
 
@@ -202,6 +225,31 @@ public class UserItemInfo : BaseUserItemInfo
             sb.Append("Phone = ");
             sb.Append(PhoneNumber);
         }
+    }
+
+    /// <summary>
+    /// Gets the claim of name identifier.
+    /// </summary>
+    /// <param name="issuer">The optional claim issuer.</param>
+    /// <returns>The claim of name identifier of this entity.</returns>
+    protected override Claim GetIdClaim(string issuer = null)
+        => ResourceEntityUtils.ToClaim(ClaimTypes.NameIdentifier, LoginName ?? Id, issuer);
+
+    /// <summary>
+    /// Generates claims of this entity.
+    /// </summary>
+    /// <param name="issuer">The optional claim issuer.</param>
+    /// <returns>A collection of claim.</returns>
+    public override IEnumerable<Claim> ToClaims(string issuer = null)
+    {
+        foreach (var claim in base.ToClaims(issuer))
+        {
+            yield return claim;
+        }
+
+        if (!string.IsNullOrWhiteSpace(Email)) yield return ResourceEntityUtils.ToClaim(ClaimTypes.Email, Email, issuer);
+        if (!string.IsNullOrWhiteSpace(PhoneNumber)) yield return ResourceEntityUtils.ToClaim(ClaimTypes.MobilePhone, PhoneNumber, issuer);
+        if (Birthday.HasValue) yield return ResourceEntityUtils.ToClaim(ClaimTypes.DateOfBirth, Birthday.Value, true, issuer);
     }
 
     /// <summary>

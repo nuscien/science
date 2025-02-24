@@ -26,7 +26,7 @@ public class ServiceAccountItemInfo : BaseUserItemInfo
     /// Initializes a new instance of the ServiceAccountItemInfo class.
     /// </summary>
     public ServiceAccountItemInfo()
-        : base(PrincipalEntityTypes.Service)
+        : base(AccountEntityTypes.Service)
     {
     }
 
@@ -39,7 +39,7 @@ public class ServiceAccountItemInfo : BaseUserItemInfo
     /// <param name="publisher">The publisher info.</param>
     /// <param name="creation">The creation date time.</param>
     public ServiceAccountItemInfo(string id, string nickname, Uri avatar = null, IBasicPublisherInfo publisher = null, DateTime? creation = null)
-        : base(PrincipalEntityTypes.Service, id, nickname, Genders.Asexual, avatar, creation)
+        : base(AccountEntityTypes.Service, id, nickname, Genders.Asexual, avatar, creation)
     {
         Publisher = publisher;
     }
@@ -49,7 +49,7 @@ public class ServiceAccountItemInfo : BaseUserItemInfo
     /// </summary>
     /// <param name="json">The JSON object to parse.</param>
     protected internal ServiceAccountItemInfo(JsonObjectNode json)
-        : base(json, PrincipalEntityTypes.Service)
+        : base(json, AccountEntityTypes.Service)
     {
     }
 

@@ -14,6 +14,7 @@ using Trivial.Tasks;
 using Trivial.Text;
 using Trivial.Web;
 using Trivial.Users;
+using System.Security.Claims;
 
 namespace Trivial.Devices;
 
@@ -27,7 +28,7 @@ public class AuthDeviceItemInfo : BaseUserItemInfo
     /// Initializes a new instance of the AuthDeviceItemInfo class.
     /// </summary>
     public AuthDeviceItemInfo()
-        : base(PrincipalEntityTypes.Device)
+        : base(AccountEntityTypes.Device)
     {
     }
 
@@ -39,7 +40,7 @@ public class AuthDeviceItemInfo : BaseUserItemInfo
     /// <param name="avatar">The avatar URI.</param>
     /// <param name="creation">The creation date time.</param>
     public AuthDeviceItemInfo(string id, string nickname, Uri avatar = null, DateTime? creation = null)
-        : base(PrincipalEntityTypes.Device, id, nickname, Genders.Asexual, avatar, creation)
+        : base(AccountEntityTypes.Device, id, nickname, Genders.Asexual, avatar, creation)
     {
     }
 
@@ -48,7 +49,7 @@ public class AuthDeviceItemInfo : BaseUserItemInfo
     /// </summary>
     /// <param name="json">The JSON object to parse.</param>
     protected internal AuthDeviceItemInfo(JsonObjectNode json)
-        : base(json, PrincipalEntityTypes.Device)
+        : base(json, AccountEntityTypes.Device)
     {
     }
 
@@ -88,6 +89,18 @@ public class AuthDeviceItemInfo : BaseUserItemInfo
         set => SetCurrentProperty(value);
     }
 
+    /// <summary>
+    /// Gets or sets the thumbprint.
+    /// </summary>
+    [DataMember(Name = "thumbprint")]
+    [JsonPropertyName("thumbprint")]
+    [Description("The thumbprint of the device.")]
+    public string Thumbprint
+    {
+        get => GetCurrentProperty<string>();
+        set => SetCurrentProperty(value);
+    }
+
     /// <inheritdoc />
     protected override void Fill(JsonObjectNode json)
     {
@@ -95,6 +108,21 @@ public class AuthDeviceItemInfo : BaseUserItemInfo
         Manufacturer = json.TryGetStringTrimmedValue("manufacturer", true);
         ModelName = json.TryGetStringTrimmedValue("model", true);
         DeviceForm = json.TryGetStringTrimmedValue("form", true);
+    }
+
+    /// <summary>
+    /// Generates claims of this entity.
+    /// </summary>
+    /// <param name="issuer">The optional claim issuer.</param>
+    /// <returns>A collection of claim.</returns>
+    public override IEnumerable<Claim> ToClaims(string issuer = null)
+    {
+        foreach (var claim in base.ToClaims(issuer))
+        {
+            yield return claim;
+        }
+
+        if (!string.IsNullOrWhiteSpace(Thumbprint)) yield return ResourceEntityUtils.ToClaim(ClaimTypes.Thumbprint, Thumbprint, issuer);
     }
 
     /// <summary>

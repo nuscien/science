@@ -163,7 +163,7 @@ public class ExtendedChatMessage : BaseResourceEntityInfo
     protected override void Fill(JsonObjectNode json)
     {
         base.Fill(json);
-        SetProperty(nameof(Sender), PrincipalEntityInfoConverter.Convert(json.TryGetObjectValue("sender")));
+        SetProperty(nameof(Sender), AccountEntityInfoConverter.Convert(json.TryGetObjectValue("sender")));
         SetProperty(nameof(Message), json.TryGetStringValue("text") ?? json.TryGetStringValue("message"));
         SetProperty(nameof(MessageType), json.TryGetStringTrimmedValue("type", true));
         SetProperty(nameof(MessageFormat), json.TryGetEnumValue<ExtendedChatMessageFormats>("format") ?? ExtendedChatMessageFormats.Text);

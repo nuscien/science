@@ -1,11 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.ComponentModel.Design;
 using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.Serialization;
+using System.Security.Claims;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -21,32 +23,32 @@ using Trivial.Text;
 namespace Trivial.Users;
 
 /// <summary>
-/// The principal entity information.
+/// The account entity information.
 /// </summary>
-[JsonConverter(typeof(PrincipalEntityInfoConverter))]
-public abstract class BasePrincipalEntityInfo : BaseResourceEntityInfo
+[JsonConverter(typeof(AccountEntityInfoConverter))]
+public abstract class BaseAccountEntityInfo : BaseResourceEntityInfo
 {
     /// <summary>
-    /// Initializes a new instance of the BasePrincipalEntityInfo class.
+    /// Initializes a new instance of the BaseAccountEntityInfo class.
     /// </summary>
-    /// <param name="type">The security principal entity type.</param>
+    /// <param name="type">The account entity type.</param>
     /// <param name="creation">The creation date time.</param>
-    internal BasePrincipalEntityInfo(PrincipalEntityTypes type, DateTime? creation = null)
+    internal BaseAccountEntityInfo(AccountEntityTypes type, DateTime? creation = null)
         : base(null, creation)
     {
-        PrincipalEntityType = type;
-        Supertype = "principal";
+        AccountEntityType = type;
+        Supertype = "account";
     }
 
     /// <summary>
-    /// Initializes a new instance of the BasePrincipalEntityInfo class.
+    /// Initializes a new instance of the BaseAccountEntityInfo class.
     /// </summary>
-    /// <param name="type">The security principal entity type.</param>
+    /// <param name="type">The account entity type.</param>
     /// <param name="id">The resource identifier.</param>
     /// <param name="nickname">The nickname or display name.</param>
     /// <param name="avatar">The avatar URI.</param>
     /// <param name="creation">The creation date time.</param>
-    internal BasePrincipalEntityInfo(PrincipalEntityTypes type, string id, string nickname, Uri avatar = null, DateTime? creation = null)
+    internal BaseAccountEntityInfo(AccountEntityTypes type, string id, string nickname, Uri avatar = null, DateTime? creation = null)
         : this(type, creation)
     {
         Id = id;
@@ -55,25 +57,25 @@ public abstract class BasePrincipalEntityInfo : BaseResourceEntityInfo
     }
 
     /// <summary>
-    /// Initializes a new instance of the BasePrincipalEntityInfo class.
+    /// Initializes a new instance of the BaseAccountEntityInfo class.
     /// </summary>
-    /// <param name="type">The security principal entity type.</param>
+    /// <param name="type">The account entity type.</param>
     /// <param name="json">The JSON object to parse.</param>
     /// <param name="autoTypeSelect">true if use type from JSON; otherwise, false.</param>
-    internal BasePrincipalEntityInfo(PrincipalEntityTypes type, JsonObjectNode json, bool autoTypeSelect = false)
+    internal BaseAccountEntityInfo(AccountEntityTypes type, JsonObjectNode json, bool autoTypeSelect = false)
         : base(json)
     {
-        Supertype = "principal";
-        PrincipalEntityType = json != null && autoTypeSelect ? PrincipalEntityInfoConverter.GetPrincipalEntityType(json, type) : type;
+        Supertype = "account";
+        AccountEntityType = json != null && autoTypeSelect ? AccountEntityInfoConverter.GetAccountEntityType(json, type) : type;
     }
 
     /// <summary>
-    /// Gets the security principal entity type.
+    /// Gets the account entity type.
     /// </summary>
     [DataMember(Name = "type")]
     [JsonPropertyName("type")]
     [Description("This kind of entity can be used as an owner of the resource. This property is to define the type of the owner, e.g. a user, a user group, a service agent, etc.")]
-    public PrincipalEntityTypes PrincipalEntityType { get; }
+    public AccountEntityTypes AccountEntityType { get; }
 
     /// <summary>
     /// Gets or sets the nickname.
@@ -128,7 +130,7 @@ public abstract class BasePrincipalEntityInfo : BaseResourceEntityInfo
     {
         sb.Append(Nickname ?? "?");
         sb.Append(" (");
-        sb.Append(PrincipalEntityType.ToString());
+        sb.Append(AccountEntityType.ToString());
         sb.Append(' ');
         sb.Append(Id ?? "-");
         sb.AppendLine(")");
@@ -156,8 +158,8 @@ public abstract class BasePrincipalEntityInfo : BaseResourceEntityInfo
         if (id != null && !string.IsNullOrWhiteSpace(Id) && id != Id) return false;
         var supertype = json.TryGetStringTrimmedValue("supertype", true);
         if (supertype != Supertype) return false;
-        var type = json.TryGetEnumValue<PrincipalEntityTypes>("type", true);
-        if (type != PrincipalEntityType) return false;
+        var type = json.TryGetEnumValue<AccountEntityTypes>("type", true);
+        if (type != AccountEntityType) return false;
         Fill(json);
         return true;
     }
@@ -169,7 +171,7 @@ public abstract class BasePrincipalEntityInfo : BaseResourceEntityInfo
     public override JsonObjectNode ToJson()
     {
         var json = base.ToJson();
-        json.SetValue("type", PrincipalEntityType.ToString());
+        json.SetValue("type", AccountEntityType.ToString());
         json.SetValue("nickname", Nickname);
         if (AvatarUri != null) json.SetValue("avatar", AvatarUri);
         if (!string.IsNullOrEmpty(Bio)) json.SetValue("bio", Bio);
@@ -214,14 +216,14 @@ public abstract class BasePrincipalEntityInfo : BaseResourceEntityInfo
     /// </summary>
     /// <param name="value">The JSON value.</param>
     /// <returns>A JSON object.</returns>
-    public static explicit operator JsonObjectNode(BasePrincipalEntityInfo value)
+    public static explicit operator JsonObjectNode(BaseAccountEntityInfo value)
         => value?.ToJson();
 }
 
 /// <summary>
-/// The JSON serializer of principal entity info.
+/// The JSON serializer of account entity info.
 /// </summary>
-public abstract class BasePrincipalEntityInfoSerializer
+public abstract class BaseAccountEntityInfoSerializer
 {
     /// <summary>
     /// Serializes a JSON to entity.
@@ -233,7 +235,7 @@ public abstract class BasePrincipalEntityInfoSerializer
     /// <exception cref="TaskCanceledException">The task is cancelled.</exception>
     /// <exception cref="JsonException">json does not represent a valid single JSON object.</exception>
     /// <exception cref="ArgumentException">options contains unsupported options.</exception>
-    public async Task<BasePrincipalEntityInfo> SerializeAsync(Stream utf8Json, JsonDocumentOptions options, CancellationToken cancellationToken = default)
+    public async Task<BaseAccountEntityInfo> SerializeAsync(Stream utf8Json, JsonDocumentOptions options, CancellationToken cancellationToken = default)
     {
         var obj = await JsonObjectNode.ParseAsync(utf8Json, cancellationToken);
         return Serialize(obj);
@@ -248,7 +250,7 @@ public abstract class BasePrincipalEntityInfoSerializer
     /// <exception cref="TaskCanceledException">The task is cancelled.</exception>
     /// <exception cref="JsonException">json does not represent a valid single JSON object.</exception>
     /// <exception cref="ArgumentException">options contains unsupported options.</exception>
-    public async Task<BasePrincipalEntityInfo> SerializeAsync(Stream utf8Json, CancellationToken cancellationToken = default)
+    public async Task<BaseAccountEntityInfo> SerializeAsync(Stream utf8Json, CancellationToken cancellationToken = default)
     {
         var obj = await JsonObjectNode.ParseAsync(utf8Json, cancellationToken);
         return Serialize(obj);
@@ -267,7 +269,7 @@ public abstract class BasePrincipalEntityInfoSerializer
     /// <exception cref="ObjectDisposedException">The zip archive has been disposed.</exception>
     /// <exception cref="NotSupportedException">The zip archive does not support reading.</exception>
     /// <exception cref="InvalidDataException">The zip archive is corrupt, and the entry cannot be retrieved.</exception>
-    public async Task<BasePrincipalEntityInfo> SerializeAsync(FileInfo file, JsonDocumentOptions options = default, CancellationToken cancellationToken = default)
+    public async Task<BaseAccountEntityInfo> SerializeAsync(FileInfo file, JsonDocumentOptions options = default, CancellationToken cancellationToken = default)
     {
         var obj = await JsonObjectNode.ParseAsync(file, options, cancellationToken);
         return Serialize(obj);
@@ -284,7 +286,7 @@ public abstract class BasePrincipalEntityInfoSerializer
     /// <exception cref="TaskCanceledException">The task is cancelled.</exception>
     /// <exception cref="JsonException">json does not represent a valid single JSON object.</exception>
     /// <exception cref="ArgumentException">options contains unsupported options.</exception>
-    public async Task<BasePrincipalEntityInfo> SerializeAsync(BasePrincipalEntityInfo source, Stream utf8Json, JsonDocumentOptions options, CancellationToken cancellationToken = default)
+    public async Task<BaseAccountEntityInfo> SerializeAsync(BaseAccountEntityInfo source, Stream utf8Json, JsonDocumentOptions options, CancellationToken cancellationToken = default)
     {
         var obj = await JsonObjectNode.ParseAsync(utf8Json, cancellationToken);
         return Serialize(source, obj);
@@ -300,7 +302,7 @@ public abstract class BasePrincipalEntityInfoSerializer
     /// <exception cref="TaskCanceledException">The task is cancelled.</exception>
     /// <exception cref="JsonException">json does not represent a valid single JSON object.</exception>
     /// <exception cref="ArgumentException">options contains unsupported options.</exception>
-    public async Task<BasePrincipalEntityInfo> SerializeAsync(BasePrincipalEntityInfo source, Stream utf8Json, CancellationToken cancellationToken = default)
+    public async Task<BaseAccountEntityInfo> SerializeAsync(BaseAccountEntityInfo source, Stream utf8Json, CancellationToken cancellationToken = default)
     {
         var obj = await JsonObjectNode.ParseAsync(utf8Json, cancellationToken);
         return Serialize(source, obj);
@@ -320,7 +322,7 @@ public abstract class BasePrincipalEntityInfoSerializer
     /// <exception cref="ObjectDisposedException">The zip archive has been disposed.</exception>
     /// <exception cref="NotSupportedException">The zip archive does not support reading.</exception>
     /// <exception cref="InvalidDataException">The zip archive is corrupt, and the entry cannot be retrieved.</exception>
-    public async Task<BasePrincipalEntityInfo> SerializeAsync(BasePrincipalEntityInfo source, FileInfo file, JsonDocumentOptions options = default, CancellationToken cancellationToken = default)
+    public async Task<BaseAccountEntityInfo> SerializeAsync(BaseAccountEntityInfo source, FileInfo file, JsonDocumentOptions options = default, CancellationToken cancellationToken = default)
     {
         var obj = await JsonObjectNode.ParseAsync(file, options, cancellationToken);
         return Serialize(source, obj);
@@ -334,7 +336,7 @@ public abstract class BasePrincipalEntityInfoSerializer
     /// <returns>The entity serialized from the given JSON.</returns>
     /// <exception cref="JsonException">json does not represent a valid single JSON object.</exception>
     /// <exception cref="ArgumentException">options contains unsupported options.</exception>
-    public BasePrincipalEntityInfo Serialize(string json, JsonDocumentOptions options = default)
+    public BaseAccountEntityInfo Serialize(string json, JsonDocumentOptions options = default)
     {
         var obj = JsonObjectNode.Parse(json, options);
         return Serialize(obj);
@@ -349,7 +351,7 @@ public abstract class BasePrincipalEntityInfoSerializer
     /// <returns>The entity serialized from the given JSON.</returns>
     /// <exception cref="JsonException">json does not represent a valid single JSON object.</exception>
     /// <exception cref="ArgumentException">options contains unsupported options.</exception>
-    public BasePrincipalEntityInfo Serialize(BasePrincipalEntityInfo source, string json, JsonDocumentOptions options = default)
+    public BaseAccountEntityInfo Serialize(BaseAccountEntityInfo source, string json, JsonDocumentOptions options = default)
     {
         var obj = JsonObjectNode.Parse(json, options);
         return Serialize(source, obj);
@@ -360,19 +362,19 @@ public abstract class BasePrincipalEntityInfoSerializer
     /// </summary>
     /// <param name="json">The JSON to serialize.</param>
     /// <returns>The entity serialized from the given JSON; or null, if not supported.</returns>
-    public BasePrincipalEntityInfo Serialize(JsonObjectNode json)
+    public BaseAccountEntityInfo Serialize(JsonObjectNode json)
     {
         if (json is null) return null;
-        var type = PrincipalEntityInfoConverter.GetPrincipalEntityType(json, PrincipalEntityTypes.Unknown);
+        var type = AccountEntityInfoConverter.GetAccountEntityType(json, AccountEntityTypes.Unknown);
         return type switch
         {
-            PrincipalEntityTypes.User => ToUser(json),
-            PrincipalEntityTypes.Group => ToGroup(json),
-            PrincipalEntityTypes.Service => ToServiceAccount(json),
-            PrincipalEntityTypes.Bot => ToBotAccount(json),
-            PrincipalEntityTypes.Device => ToAuthDevice(json),
-            PrincipalEntityTypes.Agent => ToAgentAccount(json),
-            PrincipalEntityTypes.Organization => ToOrganization(json),
+            AccountEntityTypes.User => ToUser(json),
+            AccountEntityTypes.Group => ToGroup(json),
+            AccountEntityTypes.Service => ToServiceAccount(json),
+            AccountEntityTypes.Bot => ToBotAccount(json),
+            AccountEntityTypes.Device => ToAuthDevice(json),
+            AccountEntityTypes.Agent => ToAgentAccount(json),
+            AccountEntityTypes.Organization => ToOrganization(json),
             _ => ToUnknown(json)
         };
     }
@@ -383,12 +385,57 @@ public abstract class BasePrincipalEntityInfoSerializer
     /// <param name="source">The source entity to fill when matches.</param>
     /// <param name="json">The JSON to serialize.</param>
     /// <returns>The entity serialized from the given JSON; or null, if not supported.</returns>
-    public virtual BasePrincipalEntityInfo Serialize(BasePrincipalEntityInfo source, JsonObjectNode json)
+    public virtual BaseAccountEntityInfo Serialize(BaseAccountEntityInfo source, JsonObjectNode json)
     {
         if (source == null) return Serialize(json);
         if (json == null) return null;
         if (source.TryFill(json)) return source;
         return Serialize(json);
+    }
+
+    /// <summary>
+    /// Serializes a set of JSON to entity collection.
+    /// </summary>
+    /// <param name="arr">The JSON collection to serialize.</param>
+    /// <returns>The entity collection serialized.</returns>
+    public IEnumerable<BaseAccountEntityInfo> Serialize(IEnumerable<JsonObjectNode> arr)
+    {
+        if (arr == null) yield break;
+        foreach (var json in arr)
+        {
+            yield return Serialize(json);
+        }
+    }
+
+    /// <summary>
+    /// Serializes a set of JSON to entity collection.
+    /// </summary>
+    /// <param name="resources">The resources.</param>
+    /// <param name="arr">The JSON collection to serialize.</param>
+    /// <returns>The entity collection serialized.</returns>
+    public int Serialize(IAccountEntityResources resources, IEnumerable<JsonObjectNode> arr)
+    {
+        var i = 0;
+        if (arr == null || resources == null) return i;
+        var col = resources.Accounts;
+        if (col == null)
+        {
+            var prop = resources.GetType().GetProperty(nameof(resources.Accounts));
+            if (!prop.CanWrite) return 0;
+            if (prop.PropertyType.IsInterface) col = new ObservableCollection<BaseAccountEntityInfo>();
+            else col = Activator.CreateInstance(prop.PropertyType) as IList<BaseAccountEntityInfo>;
+            prop.SetValue(resources, col, null);
+        }
+
+        foreach (var json in arr)
+        {
+            var instance = Serialize(json);
+            if (instance == null) continue;
+            col.Add(instance);
+            i++;
+        }
+
+        return i;
     }
 
     /// <summary>
@@ -452,39 +499,39 @@ public abstract class BasePrincipalEntityInfoSerializer
     /// </summary>
     /// <param name="json">The JSON node with information of the entity.</param>
     /// <returns>The entity converted; or null, if not supported.</returns>
-    protected virtual BasePrincipalEntityInfo ToUnknown(JsonObjectNode json)
-        => new UnknownPrincipalEntityInfo(json);
+    protected virtual BaseAccountEntityInfo ToUnknown(JsonObjectNode json)
+        => new UnknownAccountEntityInfo(json);
 }
 
 /// <summary>
-/// Unknown principal entity information.
+/// Unknown account entity information.
 /// </summary>
-internal sealed class UnknownPrincipalEntityInfo : BasePrincipalEntityInfo
+internal sealed class UnknownAccountEntityInfo : BaseAccountEntityInfo
 {
     /// <summary>
-    /// Initializes a new instance of the UnknownPrincipalEntityInfo class.
+    /// Initializes a new instance of the UnknownAccountEntityInfo class.
     /// </summary>
     /// <param name="id">The resource identifier.</param>
     /// <param name="creation">The creation date time.</param>
-    public UnknownPrincipalEntityInfo(string id, DateTime? creation = null)
-        : base(PrincipalEntityTypes.Unknown, creation)
+    public UnknownAccountEntityInfo(string id, DateTime? creation = null)
+        : base(AccountEntityTypes.Unknown, creation)
     {
         Id = id;
         IsUnknownType = true;
     }
 
     /// <summary>
-    /// Initializes a new instance of the UnknownPrincipalEntityInfo class.
+    /// Initializes a new instance of the UnknownAccountEntityInfo class.
     /// </summary>
     /// <param name="json">The JSON object to parse.</param>
-    public UnknownPrincipalEntityInfo(JsonObjectNode json)
-        : base(PrincipalEntityTypes.Unknown, json, true)
+    public UnknownAccountEntityInfo(JsonObjectNode json)
+        : base(AccountEntityTypes.Unknown, json, true)
     {
         IsUnknownType = true;
     }
 
     /// <summary>
-    /// Gets a value indicating whether the principal entity type is unknown.
+    /// Gets a value indicating whether the account entity type is unknown.
     /// </summary>
     [JsonIgnore]
     public bool IsUnknownType { get; }
@@ -493,54 +540,54 @@ internal sealed class UnknownPrincipalEntityInfo : BasePrincipalEntityInfo
 /// <summary>
 /// JSON value node converter.
 /// </summary>
-internal sealed class PrincipalEntityInfoConverter : JsonObjectHostConverter<BasePrincipalEntityInfo>
+internal sealed class AccountEntityInfoConverter : JsonObjectHostConverter<BaseAccountEntityInfo>
 {
     /// <inheritdoc />
-    protected override BasePrincipalEntityInfo Create(JsonObjectNode json)
+    protected override BaseAccountEntityInfo Create(JsonObjectNode json)
         => Convert(json);
 
     /// <summary>
-    /// Converts the JSON to the principal entity.
+    /// Converts the JSON to the account entity.
     /// </summary>
     /// <param name="json">The JSON to parse.</param>
-    /// <returns>The principal entity.</returns>
-    public static BasePrincipalEntityInfo Convert(JsonObjectNode json)
+    /// <returns>The account entity.</returns>
+    public static BaseAccountEntityInfo Convert(JsonObjectNode json)
     {
-        var type = GetPrincipalEntityType(json, PrincipalEntityTypes.Unknown);
+        var type = GetAccountEntityType(json, AccountEntityTypes.Unknown);
         return type switch
         {
-            PrincipalEntityTypes.User => new UserItemInfo(json),
-            PrincipalEntityTypes.Group => new BaseUserGroupItemInfo(json),
-            PrincipalEntityTypes.Service => new ServiceAccountItemInfo(json),
-            PrincipalEntityTypes.Bot => new BotAccountItemInfo(json),
-            PrincipalEntityTypes.Device => new AuthDeviceItemInfo(json),
-            PrincipalEntityTypes.Agent => new AgentAccountItemInfo(json),
-            PrincipalEntityTypes.Organization => new OrgAccountItemInfo(json),
+            AccountEntityTypes.User => new UserItemInfo(json),
+            AccountEntityTypes.Group => new BaseUserGroupItemInfo(json),
+            AccountEntityTypes.Service => new ServiceAccountItemInfo(json),
+            AccountEntityTypes.Bot => new BotAccountItemInfo(json),
+            AccountEntityTypes.Device => new AuthDeviceItemInfo(json),
+            AccountEntityTypes.Agent => new AgentAccountItemInfo(json),
+            AccountEntityTypes.Organization => new OrgAccountItemInfo(json),
             _ => null
         };
     }
 
     /// <summary>
-    /// Gets the principal entity type from the given JSON.
+    /// Gets the account entity type from the given JSON.
     /// </summary>
     /// <param name="json">The JSON input.</param>
     /// <param name="defaultType">The default type.</param>
-    /// <returns>The principal entity type.</returns>
-    public static PrincipalEntityTypes GetPrincipalEntityType(JsonObjectNode json, PrincipalEntityTypes defaultType)
+    /// <returns>The account entity type.</returns>
+    public static AccountEntityTypes GetAccountEntityType(JsonObjectNode json, AccountEntityTypes defaultType)
     {
         var type = json?.TryGetStringTrimmedValue("gender", true)?.ToLowerInvariant();
         if (type == null) return defaultType;
         return type switch
         {
-            "u" or "user" or "account" or "用户" or "1" => PrincipalEntityTypes.User,
-            "g" or "group" or "role" or "container" or "list" or "组" or "角色" or "2" => PrincipalEntityTypes.Group,
-            "app" or "service" or "服务" or "3" => PrincipalEntityTypes.Service,
-            "bot" or "robot" or "ai" or "assistance" or "machine" or "机器人" or "4" => PrincipalEntityTypes.Bot,
-            "d" or "device" or "iot" or "client" or "设备" or "5" => PrincipalEntityTypes.Device,
-            "agent" or "代理" or "6" => PrincipalEntityTypes.Agent,
-            "org" or "organization" or "company" or "tenant" or "组织" or "7" => PrincipalEntityTypes.Organization,
+            "u" or "user" or "account" or "用户" or "1" => AccountEntityTypes.User,
+            "g" or "group" or "role" or "container" or "list" or "组" or "角色" or "2" => AccountEntityTypes.Group,
+            "app" or "service" or "服务" or "3" => AccountEntityTypes.Service,
+            "bot" or "robot" or "ai" or "assistance" or "machine" or "机器人" or "4" => AccountEntityTypes.Bot,
+            "d" or "device" or "iot" or "client" or "设备" or "5" => AccountEntityTypes.Device,
+            "agent" or "代理" or "6" => AccountEntityTypes.Agent,
+            "org" or "organization" or "company" or "tenant" or "组织" or "7" => AccountEntityTypes.Organization,
             "default" or "-" => defaultType,
-            _ => PrincipalEntityTypes.Other
+            _ => AccountEntityTypes.Other
         };
     }
 }

@@ -133,7 +133,7 @@ public class UserItemCredentialNameInfo : UserItemRelatedInfo
     /// <param name="name">The value of name.</param>
     /// <param name="descripiton">The description.</param>
     /// <param name="creation">The creation date time.</param>
-    public UserItemCredentialNameInfo(string id, BasePrincipalEntityInfo owner, UserCredentialNameTypes type, string subType, string name, string descripiton = null, DateTime? creation = null)
+    public UserItemCredentialNameInfo(string id, BaseAccountEntityInfo owner, UserCredentialNameTypes type, string subType, string name, string descripiton = null, DateTime? creation = null)
         : base(id, owner, creation)
     {
         Supertype = "logname";
@@ -153,7 +153,7 @@ public class UserItemCredentialNameInfo : UserItemRelatedInfo
     /// <param name="name">The value of name.</param>
     /// <param name="descripiton">The description.</param>
     /// <param name="creation">The creation date time.</param>
-    public UserItemCredentialNameInfo(Guid id, BasePrincipalEntityInfo owner, UserCredentialNameTypes type, string subType, string name, string descripiton = null, DateTime? creation = null)
+    public UserItemCredentialNameInfo(Guid id, BaseAccountEntityInfo owner, UserCredentialNameTypes type, string subType, string name, string descripiton = null, DateTime? creation = null)
         : base(id, owner, creation)
     {
         Supertype = "logname";
@@ -261,7 +261,7 @@ public class UserItemCredentialKeyInfo : UserItemRelatedInfo
     /// <param name="parameter">The additional parameter</param>
     /// <param name="descripiton">The description.</param>
     /// <param name="creation">The creation date time.</param>
-    public UserItemCredentialKeyInfo(string id, BasePrincipalEntityInfo owner, UserCredentialKeyTypes type, string subType, DateTime expiration, string protectedValue, string algName, string parameter = null, string descripiton = null, DateTime? creation = null)
+    public UserItemCredentialKeyInfo(string id, BaseAccountEntityInfo owner, UserCredentialKeyTypes type, string subType, DateTime expiration, string protectedValue, string algName, string parameter = null, string descripiton = null, DateTime? creation = null)
         : this(id, owner, type, subType, protectedValue, algName, parameter, descripiton, creation)
     {
         Expiration = expiration;
@@ -279,7 +279,7 @@ public class UserItemCredentialKeyInfo : UserItemRelatedInfo
     /// <param name="parameter">The additional parameter</param>
     /// <param name="descripiton">The description.</param>
     /// <param name="creation">The creation date time.</param>
-    public UserItemCredentialKeyInfo(string id, BasePrincipalEntityInfo owner, UserCredentialKeyTypes type, string subType, string protectedValue, string algName, string parameter = null, string descripiton = null, DateTime? creation = null)
+    public UserItemCredentialKeyInfo(string id, BaseAccountEntityInfo owner, UserCredentialKeyTypes type, string subType, string protectedValue, string algName, string parameter = null, string descripiton = null, DateTime? creation = null)
         : base(id, owner, creation)
     {
         Supertype = "secret";
@@ -304,7 +304,7 @@ public class UserItemCredentialKeyInfo : UserItemRelatedInfo
     /// <param name="parameter">The additional parameter</param>
     /// <param name="descripiton">The description.</param>
     /// <param name="creation">The creation date time.</param>
-    public UserItemCredentialKeyInfo(Guid id, BasePrincipalEntityInfo owner, UserCredentialKeyTypes type, string subType, DateTime expiration, string protectedValue, string algName, string parameter = null, string descripiton = null, DateTime? creation = null)
+    public UserItemCredentialKeyInfo(Guid id, BaseAccountEntityInfo owner, UserCredentialKeyTypes type, string subType, DateTime expiration, string protectedValue, string algName, string parameter = null, string descripiton = null, DateTime? creation = null)
         : this(id, owner, type, subType, protectedValue, algName, parameter, descripiton, creation)
     {
         Expiration = expiration;
@@ -322,7 +322,7 @@ public class UserItemCredentialKeyInfo : UserItemRelatedInfo
     /// <param name="parameter">The additional parameter</param>
     /// <param name="descripiton">The description.</param>
     /// <param name="creation">The creation date time.</param>
-    public UserItemCredentialKeyInfo(Guid id, BasePrincipalEntityInfo owner, UserCredentialKeyTypes type, string subType, string protectedValue, string algName, string parameter = null, string descripiton = null, DateTime? creation = null)
+    public UserItemCredentialKeyInfo(Guid id, BaseAccountEntityInfo owner, UserCredentialKeyTypes type, string subType, string protectedValue, string algName, string parameter = null, string descripiton = null, DateTime? creation = null)
         : base(id, owner, creation)
     {
         Supertype = "secret";

@@ -98,7 +98,7 @@ public abstract class RelatedResourceEntityInfo<TOwner> : BaseResourceEntityInfo
             return GetProperty<TOwner>(nameof(Owner));
         }
 
-        protected set
+        protected internal set
         {
             SetProperty(nameof(Owner), value);
             SetProperty(nameof(OwnerId), value?.Id);
@@ -232,7 +232,7 @@ public abstract class RelatedResourceEntityInfo<TOwner, TTarget> : RelatedResour
             return GetProperty<TTarget>(nameof(Target));
         }
 
-        protected set
+        protected internal set
         {
             SetProperty(nameof(Target), value);
             SetProperty(nameof(TargetId), value?.Id);

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
 using System.Runtime.InteropServices;
+using System.Security.Claims;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -25,7 +26,7 @@ public class OrgAccountItemInfo : BaseUserItemInfo, IBasicPublisherInfo
     /// Initializes a new instance of the OrgAccountItemInfo class.
     /// </summary>
     public OrgAccountItemInfo()
-        : base(PrincipalEntityTypes.Organization)
+        : base(AccountEntityTypes.Organization)
     {
     }
 
@@ -37,7 +38,7 @@ public class OrgAccountItemInfo : BaseUserItemInfo, IBasicPublisherInfo
     /// <param name="avatar">The avatar URI.</param>
     /// <param name="creation">The creation date time.</param>
     public OrgAccountItemInfo(string id, string nickname, Uri avatar = null, DateTime? creation = null)
-        : base(PrincipalEntityTypes.Organization, id, nickname, Genders.Asexual, avatar, creation)
+        : base(AccountEntityTypes.Organization, id, nickname, Genders.Asexual, avatar, creation)
     {
     }
 
@@ -46,7 +47,7 @@ public class OrgAccountItemInfo : BaseUserItemInfo, IBasicPublisherInfo
     /// </summary>
     /// <param name="json">The JSON object to parse.</param>
     protected internal OrgAccountItemInfo(JsonObjectNode json)
-        : base(json, PrincipalEntityTypes.Organization)
+        : base(json, AccountEntityTypes.Organization)
     {
     }
 
@@ -75,6 +76,21 @@ public class OrgAccountItemInfo : BaseUserItemInfo, IBasicPublisherInfo
     {
         base.Fill(json);
         Website = json.TryGetUriValue("website");
+    }
+
+    /// <summary>
+    /// Generates claims of this entity.
+    /// </summary>
+    /// <param name="issuer">The optional claim issuer.</param>
+    /// <returns>A collection of claim.</returns>
+    public override IEnumerable<Claim> ToClaims(string issuer = null)
+    {
+        foreach (var claim in base.ToClaims(issuer))
+        {
+            yield return claim;
+        }
+
+        if (Website != null) yield return ResourceEntityUtils.ToClaim(ClaimTypes.Webpage, Website.OriginalString);
     }
 
     /// <summary>

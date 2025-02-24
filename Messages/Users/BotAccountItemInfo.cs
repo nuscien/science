@@ -4,6 +4,7 @@ using System.ComponentModel;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Runtime.Serialization;
+using System.Security.Claims;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -26,7 +27,7 @@ public class BotAccountItemInfo : BaseUserItemInfo
     /// Initializes a new instance of the BotAccountItemInfo class.
     /// </summary>
     public BotAccountItemInfo()
-        : base(PrincipalEntityTypes.Bot)
+        : base(AccountEntityTypes.Bot)
     {
     }
 
@@ -40,7 +41,7 @@ public class BotAccountItemInfo : BaseUserItemInfo
     /// <param name="publisher">The publisher info.</param>
     /// <param name="creation">The creation date time.</param>
     public BotAccountItemInfo(string id, string nickname, Genders gender, Uri avatar = null, IBasicPublisherInfo publisher = null, DateTime? creation = null)
-        : base(PrincipalEntityTypes.Bot, id, nickname, gender, avatar, creation)
+        : base(AccountEntityTypes.Bot, id, nickname, gender, avatar, creation)
     {
         Publisher = publisher;
     }
@@ -53,7 +54,7 @@ public class BotAccountItemInfo : BaseUserItemInfo
     /// <param name="avatar">The avatar URI.</param>
     /// <param name="creation">The creation date time.</param>
     public BotAccountItemInfo(string id, string nickname, Uri avatar = null, DateTime? creation = null)
-        : base(PrincipalEntityTypes.Bot, id, nickname, Genders.Asexual, avatar, creation)
+        : base(AccountEntityTypes.Bot, id, nickname, Genders.Asexual, avatar, creation)
     {
     }
 
@@ -62,7 +63,7 @@ public class BotAccountItemInfo : BaseUserItemInfo
     /// </summary>
     /// <param name="json">The JSON object to parse.</param>
     protected internal BotAccountItemInfo(JsonObjectNode json)
-        : base(json, PrincipalEntityTypes.Bot)
+        : base(json, AccountEntityTypes.Bot)
     {
     }
 

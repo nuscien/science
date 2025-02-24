@@ -27,7 +27,7 @@ public class AgentAccountItemInfo : BaseUserItemInfo
     /// Initializes a new instance of the AgentAccountItemInfo class.
     /// </summary>
     public AgentAccountItemInfo()
-        : base(PrincipalEntityTypes.Agent)
+        : base(AccountEntityTypes.Agent)
     {
         Scope = new();
     }
@@ -40,7 +40,7 @@ public class AgentAccountItemInfo : BaseUserItemInfo
     /// <param name="avatar">The avatar URI.</param>
     /// <param name="creation">The creation date time.</param>
     public AgentAccountItemInfo(string id, string nickname, Uri avatar = null, DateTime? creation = null)
-        : base(PrincipalEntityTypes.Agent, id, nickname, Genders.Asexual, avatar, creation)
+        : base(AccountEntityTypes.Agent, id, nickname, Genders.Asexual, avatar, creation)
     {
         Scope = new();
     }
@@ -50,7 +50,7 @@ public class AgentAccountItemInfo : BaseUserItemInfo
     /// </summary>
     /// <param name="json">The JSON object to parse.</param>
     protected internal AgentAccountItemInfo(JsonObjectNode json)
-        : base(json, PrincipalEntityTypes.Agent)
+        : base(json, AccountEntityTypes.Agent)
     {
     }
 
@@ -124,7 +124,7 @@ public class AgentAccountItemInfo : BaseUserItemInfo
     /// Sets the subject.
     /// </summary>
     /// <param name="entity">The subject entity.</param>
-    public void SetSubject(BasePrincipalEntityInfo entity)
+    public void SetSubject(BaseAccountEntityInfo entity)
     {
         if (entity == null)
         {
@@ -133,7 +133,7 @@ public class AgentAccountItemInfo : BaseUserItemInfo
             return;
         }
 
-        SubjectType = entity.PrincipalEntityType.ToString();
+        SubjectType = entity.AccountEntityType.ToString();
         SubjectId = entity.Id;
     }
 

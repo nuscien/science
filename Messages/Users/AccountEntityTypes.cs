@@ -13,9 +13,9 @@ using Trivial.Text;
 namespace Trivial.Users;
 
 /// <summary>
-/// Security principal entity types.
+/// Security account entity types.
 /// </summary>
-public enum PrincipalEntityTypes : byte
+public enum AccountEntityTypes : byte
 {
     /// <summary>
     /// Unknown.

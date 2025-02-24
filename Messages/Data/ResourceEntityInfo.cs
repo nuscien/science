@@ -191,7 +191,7 @@ public abstract class BaseResourceEntityInfo : BaseObservableProperties, IJsonOb
 #if NETCOREAPP
     [NotMapped]
 #endif
-    protected string Supertype { get; set; }
+    protected internal string Supertype { get; set; }
 
     /// <summary>
     /// Gets or sets the identifier.

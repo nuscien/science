@@ -164,7 +164,7 @@ public class UserExtendedChatThread : IExtendedChatThread, INotifyPropertyChange
     /// <summary>
     /// Gets the security entity type.
     /// </summary>
-    public virtual PrincipalEntityTypes SecurityEntityType => User.PrincipalEntityType;
+    public virtual AccountEntityTypes SecurityEntityType => User.AccountEntityType;
 
     /// <summary>
     /// Gets a value indicating whether the thread is read-only for current user.

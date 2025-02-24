@@ -15,7 +15,7 @@ namespace Trivial.Users;
 /// <summary>
 /// The user item related info.
 /// </summary>
-public abstract class UserItemRelatedInfo : RelatedResourceEntityInfo<BasePrincipalEntityInfo>
+public abstract class UserItemRelatedInfo : RelatedResourceEntityInfo<BaseAccountEntityInfo>
 {
     /// <summary>
     /// Intializes a new instance of the UserItemRelatedInfo class.
@@ -30,10 +30,10 @@ public abstract class UserItemRelatedInfo : RelatedResourceEntityInfo<BasePrinci
     /// <param name="id">The entity identifer.</param>
     /// <param name="owner">The owner.</param>
     /// <param name="creation">The creation date time.</param>
-    protected UserItemRelatedInfo(string id, BasePrincipalEntityInfo owner, DateTime? creation = null)
+    protected UserItemRelatedInfo(string id, BaseAccountEntityInfo owner, DateTime? creation = null)
         : base(id, owner, creation)
     {
-        OwnerType = owner?.PrincipalEntityType ?? PrincipalEntityTypes.Unknown;
+        OwnerType = owner?.AccountEntityType ?? AccountEntityTypes.Unknown;
     }
 
     /// <summary>
@@ -42,10 +42,10 @@ public abstract class UserItemRelatedInfo : RelatedResourceEntityInfo<BasePrinci
     /// <param name="id">The entity identifer.</param>
     /// <param name="owner">The owner.</param>
     /// <param name="creation">The creation date time.</param>
-    protected UserItemRelatedInfo(Guid id, BasePrincipalEntityInfo owner, DateTime? creation = null)
+    protected UserItemRelatedInfo(Guid id, BaseAccountEntityInfo owner, DateTime? creation = null)
         : base(id, owner, creation)
     {
-        OwnerType = owner?.PrincipalEntityType ?? PrincipalEntityTypes.Unknown;
+        OwnerType = owner?.AccountEntityType ?? AccountEntityTypes.Unknown;
     }
 
     /// <summary>
@@ -58,14 +58,14 @@ public abstract class UserItemRelatedInfo : RelatedResourceEntityInfo<BasePrinci
     }
 
     /// <summary>
-    /// Gets or sets the principal entity type of or owner.
+    /// Gets or sets the account entity type of or owner.
     /// </summary>
     [DataMember(Name = "ownertype")]
     [JsonPropertyName("ownertype")]
-    [Description("The principal entity type of owner.")]
-    public PrincipalEntityTypes OwnerType
+    [Description("The account entity type of owner.")]
+    public AccountEntityTypes OwnerType
     {
-        get => GetCurrentProperty<PrincipalEntityTypes>();
+        get => GetCurrentProperty<AccountEntityTypes>();
         protected set => SetCurrentProperty(value);
     }
 
@@ -73,7 +73,7 @@ public abstract class UserItemRelatedInfo : RelatedResourceEntityInfo<BasePrinci
     protected override void Fill(JsonObjectNode json)
     {
         base.Fill(json);
-        OwnerType = json.TryGetEnumValue<PrincipalEntityTypes>("ownertype") ?? PrincipalEntityTypes.Unknown;
+        OwnerType = json.TryGetEnumValue<AccountEntityTypes>("ownertype") ?? AccountEntityTypes.Unknown;
     }
 
     /// <summary>

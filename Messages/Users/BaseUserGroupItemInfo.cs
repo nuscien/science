@@ -20,13 +20,13 @@ namespace Trivial.Users;
 /// The user group item information.
 /// </summary>
 [JsonConverter(typeof(BaseUserGroupItemInfoConverter))]
-public class BaseUserGroupItemInfo : BasePrincipalEntityInfo
+public class BaseUserGroupItemInfo : BaseAccountEntityInfo
 {
     /// <summary>
     /// Initializes a new instance of the BaseUserGroupItemInfo class.
     /// </summary>
     public BaseUserGroupItemInfo()
-        : base(PrincipalEntityTypes.Group)
+        : base(AccountEntityTypes.Group)
     {
     }
 
@@ -38,7 +38,7 @@ public class BaseUserGroupItemInfo : BasePrincipalEntityInfo
     /// <param name="avatar">The avatar URI.</param>
     /// <param name="creation">The creation date time.</param>
     public BaseUserGroupItemInfo(string id, string nickname, Uri avatar = null, DateTime? creation = null)
-        : base(PrincipalEntityTypes.Group, id, nickname, avatar, creation)
+        : base(AccountEntityTypes.Group, id, nickname, avatar, creation)
     {
     }
 
@@ -47,7 +47,7 @@ public class BaseUserGroupItemInfo : BasePrincipalEntityInfo
     /// </summary>
     /// <param name="json">The JSON object to parse.</param>
     protected internal BaseUserGroupItemInfo(JsonObjectNode json)
-        : base(PrincipalEntityTypes.Group, json)
+        : base(AccountEntityTypes.Group, json)
     {
     }
 
