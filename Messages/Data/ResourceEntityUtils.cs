@@ -85,7 +85,7 @@ public static class ResourceEntityUtils
     {
         foreach (var entity in entities)
         {
-            if (entity.Id == id && entity.Supertype == supertype) return entity;
+            if (entity.IsSameId(id, supertype)) return entity;
         }
 
         return null;

@@ -185,13 +185,22 @@ public abstract class BaseResourceEntityInfo : BaseObservableProperties, IJsonOb
     }
 
     /// <summary>
-    /// Gets or sets the supertype.
+    /// Gets the supertype.
     /// </summary>
     [JsonIgnore]
 #if NETCOREAPP
     [NotMapped]
 #endif
-    protected internal string Supertype { get; set; }
+    protected virtual string Supertype { get; }
+
+    /// <summary>
+    /// Gets the resource entity type.
+    /// </summary>
+    [JsonIgnore]
+#if NETCOREAPP
+    [NotMapped]
+#endif
+    protected virtual string ResourceType { get; }
 
     /// <summary>
     /// Gets or sets the identifier.
@@ -213,12 +222,13 @@ public abstract class BaseResourceEntityInfo : BaseObservableProperties, IJsonOb
     {
         var json = new JsonObjectNode
         {
+            TypeDiscriminator = Supertype,
             Schema = Schema,
             Id = Id,
         };
+        json.SetValueIfNotEmpty("type", ResourceType ?? GetType().FullName);
         var name = base.GetProperty<string>("Name")?.Trim();
         json.SetValueIfNotEmpty("name", name);
-        json.SetValueIfNotEmpty("supertype", Supertype);
         json.SetValueIfNotNull("config", configInfo);
         json.SetValue("state", State.ToString());
         json.SetValue("created", CreationTime);
@@ -246,6 +256,15 @@ public abstract class BaseResourceEntityInfo : BaseObservableProperties, IJsonOb
     /// <returns>true if contains; otherwise, false.</returns>
     public new bool GetProperty<T>(string key, out T result)
         => base.GetProperty(key, out result);
+
+    /// <summary>
+    /// Tests if the specific identifier and supertype are same as this entity.
+    /// </summary>
+    /// <param name="id">The entity identifier to compare.</param>
+    /// <param name="supertype">The supertype to compare.</param>
+    /// <returns>true if it is the same; otherwise, false.</returns>
+    public bool IsSameId(string id, string supertype)
+        => Id == id && Supertype == supertype;
 
     /// <summary>
     /// Sets the configuration information.

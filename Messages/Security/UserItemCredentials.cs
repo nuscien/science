@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Data;
 using System.Linq;
 using System.Text;
@@ -120,7 +121,6 @@ public class UserItemCredentialNameInfo : UserItemRelatedInfo
     /// </summary>
     public UserItemCredentialNameInfo()
     {
-        Supertype = "logname";
     }
 
     /// <summary>
@@ -136,7 +136,6 @@ public class UserItemCredentialNameInfo : UserItemRelatedInfo
     public UserItemCredentialNameInfo(string id, BaseAccountEntityInfo owner, UserCredentialNameTypes type, string subType, string name, string descripiton = null, DateTime? creation = null)
         : base(id, owner, creation)
     {
-        Supertype = "logname";
         CredentialType = type;
         SubType = subType;
         Name = name;
@@ -156,7 +155,6 @@ public class UserItemCredentialNameInfo : UserItemRelatedInfo
     public UserItemCredentialNameInfo(Guid id, BaseAccountEntityInfo owner, UserCredentialNameTypes type, string subType, string name, string descripiton = null, DateTime? creation = null)
         : base(id, owner, creation)
     {
-        Supertype = "logname";
         CredentialType = type;
         SubType = subType;
         Name = name;
@@ -170,7 +168,6 @@ public class UserItemCredentialNameInfo : UserItemRelatedInfo
     public UserItemCredentialNameInfo(JsonObjectNode json)
         : base(json)
     {
-        Supertype = "logname";
     }
 
     /// <summary>
@@ -210,6 +207,20 @@ public class UserItemCredentialNameInfo : UserItemRelatedInfo
     }
 
     /// <inheritdoc />
+    [JsonIgnore]
+#if NETCOREAPP
+    [NotMapped]
+#endif
+    protected override string Supertype => "logname";
+
+    /// <inheritdoc />
+    [JsonIgnore]
+#if NETCOREAPP
+    [NotMapped]
+#endif
+    protected override string ResourceType => CredentialType.ToString();
+
+    /// <inheritdoc />
     protected override void Fill(JsonObjectNode json)
     {
         base.Fill(json);
@@ -226,7 +237,6 @@ public class UserItemCredentialNameInfo : UserItemRelatedInfo
     public override JsonObjectNode ToJson()
     {
         var json = base.ToJson();
-        json.SetValue("type", CredentialType.ToString());
         json.SetValue("subtype", SubType);
         json.SetValue("name", Name);
         json.SetValue("desc", Description);
@@ -245,7 +255,6 @@ public class UserItemCredentialKeyInfo : UserItemRelatedInfo
     /// </summary>
     public UserItemCredentialKeyInfo()
     {
-        Supertype = "secret";
     }
 
     /// <summary>
@@ -282,7 +291,6 @@ public class UserItemCredentialKeyInfo : UserItemRelatedInfo
     public UserItemCredentialKeyInfo(string id, BaseAccountEntityInfo owner, UserCredentialKeyTypes type, string subType, string protectedValue, string algName, string parameter = null, string descripiton = null, DateTime? creation = null)
         : base(id, owner, creation)
     {
-        Supertype = "secret";
         CredentialType = type;
         SubType = subType;
         ProtectedValue = protectedValue;
@@ -325,7 +333,6 @@ public class UserItemCredentialKeyInfo : UserItemRelatedInfo
     public UserItemCredentialKeyInfo(Guid id, BaseAccountEntityInfo owner, UserCredentialKeyTypes type, string subType, string protectedValue, string algName, string parameter = null, string descripiton = null, DateTime? creation = null)
         : base(id, owner, creation)
     {
-        Supertype = "secret";
         CredentialType = type;
         SubType = subType;
         ProtectedValue = protectedValue;
@@ -341,7 +348,6 @@ public class UserItemCredentialKeyInfo : UserItemRelatedInfo
     public UserItemCredentialKeyInfo(JsonObjectNode json)
         : base(json)
     {
-        Supertype = "secret";
     }
 
     /// <summary>
@@ -408,6 +414,20 @@ public class UserItemCredentialKeyInfo : UserItemRelatedInfo
     }
 
     /// <inheritdoc />
+    [JsonIgnore]
+#if NETCOREAPP
+    [NotMapped]
+#endif
+    protected override string Supertype => "secret";
+
+    /// <inheritdoc />
+    [JsonIgnore]
+#if NETCOREAPP
+    [NotMapped]
+#endif
+    protected override string ResourceType => CredentialType.ToString();
+
+    /// <inheritdoc />
     protected override void Fill(JsonObjectNode json)
     {
         base.Fill(json);
@@ -427,7 +447,6 @@ public class UserItemCredentialKeyInfo : UserItemRelatedInfo
     public override JsonObjectNode ToJson()
     {
         var json = base.ToJson();
-        json.SetValue("type", CredentialType.ToString());
         json.SetValue("subtype", SubType);
         json.SetValue("exp", Expiration);
         json.SetValue("value", ProtectedValue);

@@ -14,6 +14,7 @@ using Trivial.Tasks;
 using Trivial.Text;
 using Trivial.Web;
 using Trivial.Users;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Trivial.Security;
 
@@ -29,7 +30,6 @@ public class ResourcePermissionItemInfo<TOwner> : RelatedResourceEntityInfo<TOwn
     /// </summary>
     public ResourcePermissionItemInfo()
     {
-        Supertype = "permission";
         Permissions = new();
     }
 
@@ -44,7 +44,6 @@ public class ResourcePermissionItemInfo<TOwner> : RelatedResourceEntityInfo<TOwn
     public ResourcePermissionItemInfo(string id, TOwner owner, BaseAccountEntityInfo user, IEnumerable<string> permissions, DateTime? creation = null)
         : base(id, owner, user, creation)
     {
-        Supertype = "permission";
         Permissions = permissions?.ToList() ?? new();
     }
 
@@ -75,7 +74,6 @@ public class ResourcePermissionItemInfo<TOwner> : RelatedResourceEntityInfo<TOwn
     public ResourcePermissionItemInfo(Guid id, TOwner owner, BaseAccountEntityInfo user, IEnumerable<string> permissions, DateTime? creation = null)
         : base(id, owner, user, creation)
     {
-        Supertype = "permission";
         Permissions = permissions?.ToList() ?? new();
     }
 
@@ -102,7 +100,6 @@ public class ResourcePermissionItemInfo<TOwner> : RelatedResourceEntityInfo<TOwn
     protected internal ResourcePermissionItemInfo(JsonObjectNode json)
         : base(json)
     {
-        Supertype = "permission";
     }
 
     /// <summary>
@@ -128,6 +125,20 @@ public class ResourcePermissionItemInfo<TOwner> : RelatedResourceEntityInfo<TOwn
         get => GetCurrentProperty<string>();
         private set => SetCurrentProperty(value);
     }
+
+    /// <inheritdoc />
+    [JsonIgnore]
+#if NETCOREAPP
+    [NotMapped]
+#endif
+    protected override string Supertype => "permission";
+
+    /// <inheritdoc />
+    [JsonIgnore]
+#if NETCOREAPP
+    [NotMapped]
+#endif
+    protected override string ResourceType => "acl";
 
     /// <summary>
     /// Adds a permission item.

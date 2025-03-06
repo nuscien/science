@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Reflection;
 using System.Text;
@@ -75,7 +76,6 @@ public class ExtendedChatMessage : BaseResourceEntityInfo
     public ExtendedChatMessage(string id, UserItemInfo sender, string message, ExtendedChatMessageFormats format = ExtendedChatMessageFormats.Text, DateTime? creation = null, JsonObjectNode info = null, string type = null)
         : base(id, creation)
     {
-        Supertype = "message";
         SetProperty(nameof(Sender), sender);
         SetProperty(nameof(Message), message);
         SetProperty(nameof(MessageFormat), format);
@@ -90,7 +90,6 @@ public class ExtendedChatMessage : BaseResourceEntityInfo
     public ExtendedChatMessage(JsonObjectNode json)
         : base(json)
     {
-        Supertype = "message";
     }
 
     /// <summary>
@@ -160,6 +159,20 @@ public class ExtendedChatMessage : BaseResourceEntityInfo
     public JsonObjectNode Info { get; private set; }
 
     /// <inheritdoc />
+    [JsonIgnore]
+#if NETCOREAPP
+    [NotMapped]
+#endif
+    protected override string Supertype => "message";
+
+    /// <inheritdoc />
+    [JsonIgnore]
+#if NETCOREAPP
+    [NotMapped]
+#endif
+    protected override string ResourceType => MessageType;
+
+    /// <inheritdoc />
     protected override void Fill(JsonObjectNode json)
     {
         base.Fill(json);
@@ -182,7 +195,6 @@ public class ExtendedChatMessage : BaseResourceEntityInfo
         var json = base.ToJson();
         json.SetValue("sender", Sender);
         json.SetValue("text", Message);
-        json.SetValue("type", MessageType);
         json.SetValue("format", (int)MessageFormat);
         if (Info.Count > 0) json.SetValue("info", Info);
         if (!string.IsNullOrWhiteSpace(Category)) json.SetValue("category", Category);
