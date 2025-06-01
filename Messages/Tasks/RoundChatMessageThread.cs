@@ -323,6 +323,7 @@ public class RoundChatMessageThread : IJsonObjectHost
     {
         if (history.Contains(item)) return;
         history.Add(item);
+        Added?.Invoke(this, new(item));
     }
 
     /// <summary>

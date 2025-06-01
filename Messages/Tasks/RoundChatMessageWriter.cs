@@ -21,7 +21,7 @@ public class RoundChatMessageWriter
     /// <summary>
     /// The store of the current text value.
     /// </summary>
-    private StringBuilder current;
+    private StringBuilder current = new();
 
     /// <summary>
     /// Adds or removes the handler occurred on the text is changed.
@@ -115,7 +115,7 @@ public class RoundChatMessageWriter
     {
         IsEnd = true;
         ErrorMessage = message;
-        if (Model != null) Model.UpdateState(RoundChatMessageStates.ResponseError, message);
+        Model?.UpdateState(RoundChatMessageStates.ResponseError, message);
         Updated?.Invoke(this, current.ToString());
     }
 
