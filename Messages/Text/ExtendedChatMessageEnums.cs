@@ -22,7 +22,7 @@ namespace Trivial.Text;
 public enum ChatMessageModificationKinds : byte
 {
     /// <summary>
-    /// The message is neve modified.
+    /// The message is never modified.
     /// </summary>
     Original = 0,
 

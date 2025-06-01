@@ -68,7 +68,7 @@ public class BaseUserGroupItemInfo : BaseAccountEntityInfo
     /// </summary>
     [DataMember(Name = "email")]
     [JsonPropertyName("email")]
-    [Description("The optional email address.")]
+    [Description("The optional email address of the group.")]
     public string Email
     {
         get => GetCurrentProperty<string>();

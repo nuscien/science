@@ -68,11 +68,11 @@ public class BotAccountItemInfo : BaseUserItemInfo
     }
 
     /// <summary>
-    /// Gets or sets the basic information of publisher or developer.
+    /// Gets or sets the basic information of publisher, manufacturer or developer.
     /// </summary>
     [DataMember(Name = "publisher")]
     [JsonPropertyName("publisher")]
-    [Description("The basic information of publisher or developer.")]
+    [Description("The basic information of publisher, manufacturer or developer.")]
     public IBasicPublisherInfo Publisher
     {
         get => GetCurrentProperty<IBasicPublisherInfo>();

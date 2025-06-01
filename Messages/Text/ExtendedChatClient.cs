@@ -81,7 +81,7 @@ public interface IExtendedChatClientProvider
     /// </summary>
     /// <param name="to">The thread to send message.</param>
     /// <param name="message">The message to send.</param>
-    /// <param name="cancellationToken">The optional cancellation token.</param>
+    /// <param name="cancellationToken">A cancellation token to observe while waiting for the task to complete.</param>
     /// <returns>The result state and other information.</returns>
     Task<ExtendedChatMessageSendResult> SendAsync(IExtendedChatThread to, ExtendedChatMessage message, CancellationToken cancellationToken = default);
 
@@ -89,14 +89,14 @@ public interface IExtendedChatClientProvider
     /// Tries to get the user.
     /// </summary>
     /// <param name="id">The user identifier.</param>
-    /// <param name="cancellationToken">The optional cancellation token.</param>
+    /// <param name="cancellationToken">A cancellation token to observe while waiting for the task to complete.</param>
     /// <returns>The user information instance; or null, if not exists.</returns>
     Task<UserItemInfo> TryGetUserAsync(string id, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Gets latest threads.
     /// </summary>
-    /// <param name="cancellationToken">The optional cancellation token.</param>
+    /// <param name="cancellationToken">A cancellation token to observe while waiting for the task to complete.</param>
     /// <returns>The thread list.</returns>
     Task<List<BaseExtendedChatThread>> ListThreadAsync(CancellationToken cancellationToken = default);
 
@@ -104,7 +104,7 @@ public interface IExtendedChatClientProvider
     /// Searches threads.
     /// </summary>
     /// <param name="q">The search query.</param>
-    /// <param name="cancellationToken">The optional cancellation token.</param>
+    /// <param name="cancellationToken">A cancellation token to observe while waiting for the task to complete.</param>
     /// <returns>The thread list.</returns>
     Task<List<BaseExtendedChatThread>> ListThreadAsync(string q, CancellationToken cancellationToken = default);
 }
@@ -139,7 +139,7 @@ public class ExtendedChatClient
     /// <param name="to">The thread to send message.</param>
     /// <param name="message">The message text to send.</param>
     /// <param name="info">The additional data to send.</param>
-    /// <param name="cancellationToken">The optional cancellation token.</param>
+    /// <param name="cancellationToken">A cancellation token to observe while waiting for the task to complete.</param>
     /// <returns>The message request.</returns>
     public ExtendedChatMessageRequest Send(IExtendedChatThread to, string message, JsonObjectNode info, CancellationToken cancellationToken = default)
     {
@@ -152,7 +152,7 @@ public class ExtendedChatClient
     /// Tries to get the user.
     /// </summary>
     /// <param name="id">The user identifier.</param>
-    /// <param name="cancellationToken">The optional cancellation token.</param>
+    /// <param name="cancellationToken">A cancellation token to observe while waiting for the task to complete.</param>
     /// <returns>The user information instance; or null, if not exists.</returns>
     public Task<UserItemInfo> TryGetUserAsync(string id, CancellationToken cancellationToken = default)
         => Provider?.TryGetUserAsync(id, cancellationToken) ?? Task.FromResult<UserItemInfo>(null);
@@ -160,7 +160,7 @@ public class ExtendedChatClient
     /// <summary>
     /// Gets latest threads.
     /// </summary>
-    /// <param name="cancellationToken">The optional cancellation token.</param>
+    /// <param name="cancellationToken">A cancellation token to observe while waiting for the task to complete.</param>
     /// <returns>The thread list.</returns>
     public async Task<List<BaseExtendedChatThread>> ListThreadAsync(CancellationToken cancellationToken = default)
     {
@@ -172,7 +172,7 @@ public class ExtendedChatClient
     /// Searches threads.
     /// </summary>
     /// <param name="q">The search query.</param>
-    /// <param name="cancellationToken">The optional cancellation token.</param>
+    /// <param name="cancellationToken">A cancellation token to observe while waiting for the task to complete.</param>
     /// <returns>The thread list.</returns>
     public async Task<List<BaseExtendedChatThread>> ListThreadAsync(string q, CancellationToken cancellationToken = default)
     {
@@ -309,7 +309,7 @@ public class ExtendedChatMessageRequest
     /// <summary>
     /// Gets the result.
     /// </summary>
-    /// <param name="cancellationToken">The optional cancellation token.</param>
+    /// <param name="cancellationToken">A cancellation token to observe while waiting for the task to complete.</param>
     /// <returns>The result state and other information.</returns>
     internal async Task<ExtendedChatMessageSendResult> GetResultAsync(CancellationToken cancellationToken)
     {
