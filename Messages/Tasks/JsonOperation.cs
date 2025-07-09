@@ -116,7 +116,7 @@ public abstract class BaseJsonOperation<TIn, TOut> : BaseJsonOperation, IJsonTyp
     /// <param name="cancellationToken">The optional cancellation token.</param>
     /// <returns>The result.</returns>
     /// <exception cref="ArgumentException">arguments was not valid.</exception>
-    /// <exception cref="InvalidOperationException">Serialize result to JSON failed.</exception>
+    /// <exception cref="InvalidOperationException">Deserialize result to JSON failed.</exception>
     /// <exception cref="JsonException">JSON serialize or deserialize failed.</exception>
     /// <exception cref="NotSupportedException">Not supported.</exception>
     public override async Task<string> ProcessAsync(string arguments, object contextValue, CancellationToken cancellationToken = default)
@@ -173,7 +173,7 @@ public abstract class BaseJsonOperation<TIn, TOut> : BaseJsonOperation, IJsonTyp
     /// <param name="result">The result.</param>
     /// <param name="contextValue">The context value.</param>
     /// <returns>The JSON format string.</returns>
-    /// <exception cref="InvalidOperationException">Serialize result to JSON failed.</exception>
+    /// <exception cref="InvalidOperationException">Deserialize result to JSON failed.</exception>
     /// <exception cref="NotSupportedException">There is no compatible JSON converter for the typeor its serializable members.</exception>
     /// <exception cref="JsonException">JSON serialize failed.</exception>
     protected virtual string Serialize(TOut result, object contextValue)

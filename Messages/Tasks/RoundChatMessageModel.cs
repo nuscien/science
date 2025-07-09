@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
+using System.Net;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Text.Json.Serialization;
@@ -329,4 +330,116 @@ public sealed class RoundChatMessageModel : IJsonObjectHost
         StateUpdated?.Invoke(this, State);
         return record;
     }
+}
+
+/// <summary>
+/// The intent info of the round chat message.
+/// </summary>
+public class RoundChatMessageIntentInfo
+{
+    /// <summary>
+    /// Initializes an instance of the RoundChatMessageIntentInfo class.
+    /// </summary>
+    /// <param name="info">The intent info.</param>
+    public RoundChatMessageIntentInfo(JsonObjectNode info)
+    {
+        Info = info;
+    }
+
+    /// <summary>
+    /// Initializes an instance of the RoundChatMessageIntentInfo class.
+    /// </summary>
+    /// <param name="message">The message to return to user.</param>
+    public RoundChatMessageIntentInfo(string message)
+        : this(true, message)
+    {
+    }
+
+    /// <summary>
+    /// Initializes an instance of the RoundChatMessageIntentInfo class.
+    /// </summary>
+    /// <param name="skipIntent">true if skip intent; otherwise, false.</param>
+    /// <param name="message">The message to return to user.</param>
+    public RoundChatMessageIntentInfo(bool skipIntent, string message)
+    {
+        SkipIntent = skipIntent;
+        Message = message;
+    }
+
+    /// <summary>
+    /// Gets a value indicating whether the intent should be skipped.
+    /// </summary>
+    public bool SkipIntent { get; }
+
+    /// <summary>
+    /// Gets the message instead of the intent request info.
+    /// </summary>
+    public string Message { get; }
+
+    /// <summary>
+    /// Gets the intent info.
+    /// </summary>
+    public JsonObjectNode Info { get; }
+
+    /// <summary>
+    /// Creates an instance with the info.
+    /// </summary>
+    /// <param name="json">The intent info.</param>
+    public static implicit operator RoundChatMessageIntentInfo(JsonObjectNode json)
+    {
+        if (json == null) return null;
+        return new RoundChatMessageIntentInfo(json);
+    }
+}
+
+/// <summary>
+/// The error during the round chat message sending.
+/// </summary>
+public class RoundChatMessageException : Exception
+{
+    /// <summary>
+    /// Initializes an instance of the RoundChatMessageException class.
+    /// </summary>
+    public RoundChatMessageException()
+    {
+    }
+
+    /// <summary>
+    /// Initializes an instance of the RoundChatMessageException class.
+    /// </summary>
+    /// <param name="model">The model of the round chat message.</param>
+    /// <param name="message">The message that describes the error.</param>
+    /// <param name="innerException">The inner exception.</param>
+    public RoundChatMessageException(RoundChatMessageModel model, string message, Exception innerException = null)
+        : base(message, innerException)
+    {
+        Model = model;
+        if (innerException is FailedHttpException httpEx)
+            HttpStatusCode = httpEx.StatusCode;
+    }
+
+    /// <summary>
+    /// Initializes an instance of the RoundChatMessageException class.
+    /// </summary>
+    /// <param name="model">The model of the round chat message.</param>
+    /// <param name="innerException">The inner exception.</param>
+    public RoundChatMessageException(RoundChatMessageModel model, Exception innerException = null)
+        : this(model, model?.ErrorMessage ?? innerException?.Message ?? (model?.State != null ? $"Send message failed on state {model.State}." : "Send message failed."), innerException)
+    {
+    }
+
+    /// <summary>
+    /// Gets the model of the round chat message.
+    /// </summary>
+    public RoundChatMessageModel Model { get; }
+
+    /// <summary>
+    /// Gets the state of the round chat message.
+    /// </summary>
+    public RoundChatMessageStates State => Model?.State ?? RoundChatMessageStates.Unknown;
+
+    /// <summary>
+    /// Gets the status code of the HTTP response; or null, if it is not an HTTP networking error.
+    /// </summary>
+    public HttpStatusCode? HttpStatusCode { get; }
 }

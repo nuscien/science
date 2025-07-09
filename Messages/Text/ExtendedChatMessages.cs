@@ -1,14 +1,18 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Security;
 using System.Text;
 using System.Text.Json;
+using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using Trivial.Collection;
 using Trivial.Data;
+using Trivial.IO;
 using Trivial.Reflection;
 using Trivial.Tasks;
 using Trivial.Users;
@@ -375,6 +379,117 @@ public static class ExtendedChatMessages
     /// <returns>true if item is found and successfully removed; otherwise, false.</returns>
     public static bool RemoveItem(this ExtendedChatMessage<AttachmentLinkSet> message, AttachmentLinkItem item)
         => message != null && message.Data.Remove(item);
+
+    /// <summary>
+    /// Gets the sender from the message.
+    /// </summary>
+    /// <param name="message">The message in JSON object.</param>
+    /// <param name="profiles">The profile collection.</param>
+    /// <returns>The profile info.</returns>
+    public static BaseAccountEntityInfo GetSender(JsonObjectNode message, IEnumerable<BaseAccountEntityInfo> profiles)
+        => GetSender(message, profiles, out _);
+
+    /// <summary>
+    /// Gets the sender from the message.
+    /// </summary>
+    /// <param name="message">The message in JSON object.</param>
+    /// <param name="profiles">The profile collection.</param>
+    /// <param name="found">true if found in the profiles; otherwise, false.</param>
+    /// <returns>The profile info.</returns>
+    public static BaseAccountEntityInfo GetSender(JsonObjectNode message, IEnumerable<BaseAccountEntityInfo> profiles, out bool found)
+    {
+        if (message == null)
+        {
+            found = false;
+            return null;
+        }
+
+        var kind = message.GetValueKind("sender");
+        if (kind == JsonValueKind.Null || kind == JsonValueKind.Undefined)
+        {
+            found = false;
+            return null;
+        }
+
+        if (kind == JsonValueKind.Array)
+        {
+            var first = message.TryGetObjectValue("sender", 0);
+            if (first == null || first == message)
+            {
+                found = false;
+                return null;
+            }
+
+            return GetSender(first, profiles, out found);
+        }
+
+        var info = kind == JsonValueKind.Object ? message.TryGetObjectValue("sender") : null;
+        var id = info?.Id ?? message.TryGetStringValue("sender");
+        if (string.IsNullOrWhiteSpace(id))
+        {
+            found = false;
+            return null;
+        }
+
+        var user = profiles.FirstOrDefault(ele => ele.Id == id);
+        if (user != null)
+        {
+            found = true;
+            return user;
+        }
+
+        found = false;
+        return info == null ? null : AccountEntityInfoConverter.Convert(info);
+    }
+
+    /// <summary>
+    /// Converts the messages to a JSON object.
+    /// </summary>
+    /// <param name="to">The JSON object to set properties.</param>
+    /// <param name="messages">The messages.</param>
+    /// <param name="includeSaveInfo">true if include information about this saving action; otherwise, false.</param>
+    public static void ToJson(JsonObjectNode to, IEnumerable<ExtendedChatMessage> messages, bool includeSaveInfo = false)
+    {
+        if (to == null) return;
+        if (includeSaveInfo) to.SetValue("info", new JsonObjectNode
+        {
+            { "save", DateTime.Now },
+            { "r", Guid.NewGuid() }
+        });
+        var arr = new JsonArrayNode();
+        var profiles = new List<BaseAccountEntityInfo>();
+        foreach (var message in messages)
+        {
+            var senderId = message?.Sender?.Id;
+            if (string.IsNullOrWhiteSpace(senderId)) continue;
+            if (!profiles.Any(p => p.Id == senderId))
+                profiles.Add(message.Sender);
+            var obj = message.ToJson();
+            obj.SetValue("sender", senderId);
+            arr.Add(obj);
+        }
+
+        var profileArr = new JsonArrayNode();
+        foreach (var profile in profiles)
+        {
+            profileArr.Add(profile.ToJson());
+        }
+
+        to.SetValue("profiles", profileArr);
+        to.SetValue("messages", arr);
+    }
+
+    /// <summary>
+    /// Converts the messages to a JSON object.
+    /// </summary>
+    /// <param name="messages">The messages.</param>
+    /// <returns>A JSON with all message history.</returns>
+    public static JsonObjectNode ToJson(this IEnumerable<ExtendedChatMessage> messages)
+    {
+        var json = new JsonObjectNode();
+        ToJson(json, messages);
+        return json;
+    }
 
     internal static string ToIdString(Guid id)
         => id.ToString("N");

@@ -1045,7 +1045,7 @@ public class BaseRoutedJsonOperation<T> : BaseJsonOperation, IJsonTypeOperationD
     /// <param name="result">The result.</param>
     /// <param name="context">The context object.</param>
     /// <returns>The JSON format string.</returns>
-    /// <exception cref="InvalidOperationException">Serialize result to JSON failed.</exception>
+    /// <exception cref="InvalidOperationException">Deserialize result to JSON failed.</exception>
     /// <exception cref="NotSupportedException">There is no compatible JSON converter for the typeor its serializable members.</exception>
     /// <exception cref="JsonException">JSON serialize failed.</exception>
     protected virtual string Serialize(T result, RoutedJsonOperationContext context)

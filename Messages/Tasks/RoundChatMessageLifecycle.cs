@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Linq;
 using System.Security.Cryptography.X509Certificates;
@@ -23,7 +24,7 @@ public abstract class RoundChatMessageLifecycle
     /// </summary>
     /// <param name="model">The current chat message model.</param>
     /// <param name="thread">The chat message thread.</param>
-    public virtual void OnInit(RoundChatMessageModel model, RoundChatMessageThread thread)
+    public virtual void OnInit(RoundChatMessageModel model, RoundChatMessageTopic thread)
     {
     }
 
@@ -33,7 +34,7 @@ public abstract class RoundChatMessageLifecycle
     /// <param name="model">The current chat message model.</param>
     /// <param name="isStreaming"></param>
     /// <param name="thread">The chat message thread.</param>
-    public virtual void OnSend(RoundChatMessageModel model, bool isStreaming, RoundChatMessageThread thread)
+    public virtual void OnSend(RoundChatMessageModel model, bool isStreaming, RoundChatMessageTopic thread)
     {
     }
 
@@ -42,7 +43,7 @@ public abstract class RoundChatMessageLifecycle
     /// </summary>
     /// <param name="model">The current chat message model.</param>
     /// <param name="thread">The chat message thread.</param>
-    public virtual void OnReceive(RoundChatMessageModel model, RoundChatMessageThread thread)
+    public virtual void OnReceive(RoundChatMessageModel model, RoundChatMessageTopic thread)
     {
     }
 
@@ -52,7 +53,7 @@ public abstract class RoundChatMessageLifecycle
     /// <param name="ex">The exception catched.</param>
     /// <param name="model">The current chat message model.</param>
     /// <param name="thread">The chat message thread.</param>
-    public virtual void OnError(Exception ex, RoundChatMessageModel model, RoundChatMessageThread thread)
+    public virtual void OnError(Exception ex, RoundChatMessageModel model, RoundChatMessageTopic thread)
     {
     }
 
@@ -62,7 +63,7 @@ public abstract class RoundChatMessageLifecycle
     /// <param name="value">The message value text upddted.</param>
     /// <param name="model">The current chat message model.</param>
     /// <param name="thread">The chat message thread.</param>
-    public virtual void OnTextChange(string value, RoundChatMessageModel model, RoundChatMessageThread thread)
+    public virtual void OnTextChange(string value, RoundChatMessageModel model, RoundChatMessageTopic thread)
     {
     }
 
@@ -72,7 +73,7 @@ public abstract class RoundChatMessageLifecycle
     /// <param name="value">The new state.</param>
     /// <param name="model">The current chat message model.</param>
     /// <param name="thread">The chat message thread.</param>
-    public virtual void OnStateChange(RoundChatMessageStates value, RoundChatMessageModel model, RoundChatMessageThread thread)
+    public virtual void OnStateChange(RoundChatMessageStates value, RoundChatMessageModel model, RoundChatMessageTopic thread)
     {
     }
 }
@@ -88,7 +89,7 @@ public abstract class RoundChatMessageLifecycle<T>
     /// </summary>
     /// <param name="thread">The chat message thread.</param>
     /// <returns>A context used by sub-sequent step of the flow.</returns>
-    public virtual T Init(RoundChatMessageThread thread)
+    public virtual T Init(RoundChatMessageTopic thread)
         => default;
 
     /// <summary>
@@ -97,7 +98,7 @@ public abstract class RoundChatMessageLifecycle<T>
     /// <param name="model">The current chat message model.</param>
     /// <param name="thread">The chat message thread.</param>
     /// <param name="context">The context of this flow lifecycle of turn-based chat message transferring.</param>
-    public virtual void OnInit(RoundChatMessageModel model, RoundChatMessageThread thread, T context)
+    public virtual void OnInit(RoundChatMessageModel model, RoundChatMessageTopic thread, T context)
     {
     }
 
@@ -108,7 +109,7 @@ public abstract class RoundChatMessageLifecycle<T>
     /// <param name="isStreaming"></param>
     /// <param name="thread">The chat message thread.</param>
     /// <param name="context">The context of this flow lifecycle of turn-based chat message transferring.</param>
-    public virtual void OnSend(RoundChatMessageModel model, bool isStreaming, RoundChatMessageThread thread, T context)
+    public virtual void OnSend(RoundChatMessageModel model, bool isStreaming, RoundChatMessageTopic thread, T context)
     {
     }
 
@@ -118,7 +119,7 @@ public abstract class RoundChatMessageLifecycle<T>
     /// <param name="model">The current chat message model.</param>
     /// <param name="thread">The chat message thread.</param>
     /// <param name="context">The context of this flow lifecycle of turn-based chat message transferring.</param>
-    public virtual void OnReceive(RoundChatMessageModel model, RoundChatMessageThread thread, T context)
+    public virtual void OnReceive(RoundChatMessageModel model, RoundChatMessageTopic thread, T context)
     {
     }
 
@@ -129,7 +130,7 @@ public abstract class RoundChatMessageLifecycle<T>
     /// <param name="model">The current chat message model.</param>
     /// <param name="thread">The chat message thread.</param>
     /// <param name="context">The context of this flow lifecycle of turn-based chat message transferring.</param>
-    public virtual void OnError(Exception ex, RoundChatMessageModel model, RoundChatMessageThread thread, T context)
+    public virtual void OnError(Exception ex, RoundChatMessageModel model, RoundChatMessageTopic thread, T context)
     {
     }
 
@@ -140,7 +141,7 @@ public abstract class RoundChatMessageLifecycle<T>
     /// <param name="model">The current chat message model.</param>
     /// <param name="thread">The chat message thread.</param>
     /// <param name="context">The context of this flow lifecycle of turn-based chat message transferring.</param>
-    public virtual void OnTextChange(string value, RoundChatMessageModel model, RoundChatMessageThread thread, T context)
+    public virtual void OnTextChange(string value, RoundChatMessageModel model, RoundChatMessageTopic thread, T context)
     {
     }
 
@@ -151,7 +152,7 @@ public abstract class RoundChatMessageLifecycle<T>
     /// <param name="model">The current chat message model.</param>
     /// <param name="thread">The chat message thread.</param>
     /// <param name="context">The context of this flow lifecycle of turn-based chat message transferring.</param>
-    public virtual void OnStateChange(RoundChatMessageStates value, RoundChatMessageModel model, RoundChatMessageThread thread, T context)
+    public virtual void OnStateChange(RoundChatMessageStates value, RoundChatMessageModel model, RoundChatMessageTopic thread, T context)
     {
     }
 }
@@ -164,31 +165,31 @@ internal class InternalRoundChatMessageLifecycle : RoundChatMessageLifecycle<obj
     public RoundChatMessageLifecycle Parent { get; set; }
 
     /// <inheritdoc />
-    public override object Init(RoundChatMessageThread thread)
+    public override object Init(RoundChatMessageTopic thread)
         => null;
 
     /// <inheritdoc />
-    public override void OnInit(RoundChatMessageModel model, RoundChatMessageThread thread, object context)
+    public override void OnInit(RoundChatMessageModel model, RoundChatMessageTopic thread, object context)
         => Parent?.OnInit(model, thread);
 
     /// <inheritdoc />
-    public override void OnSend(RoundChatMessageModel model, bool isStreaming, RoundChatMessageThread thread, object context)
+    public override void OnSend(RoundChatMessageModel model, bool isStreaming, RoundChatMessageTopic thread, object context)
         => Parent?.OnSend(model, isStreaming, thread);
 
     /// <inheritdoc />
-    public override void OnReceive(RoundChatMessageModel model, RoundChatMessageThread thread, object context)
+    public override void OnReceive(RoundChatMessageModel model, RoundChatMessageTopic thread, object context)
         => Parent?.OnReceive(model, thread);
 
     /// <inheritdoc />
-    public override void OnError(Exception ex, RoundChatMessageModel model, RoundChatMessageThread thread, object context)
+    public override void OnError(Exception ex, RoundChatMessageModel model, RoundChatMessageTopic thread, object context)
         => Parent?.OnError(ex, model, thread);
 
     /// <inheritdoc />
-    public override void OnTextChange(string value, RoundChatMessageModel model, RoundChatMessageThread thread, object context)
+    public override void OnTextChange(string value, RoundChatMessageModel model, RoundChatMessageTopic thread, object context)
         => Parent?.OnTextChange(value, model, thread);
 
     /// <inheritdoc />
-    public override void OnStateChange(RoundChatMessageStates value, RoundChatMessageModel model, RoundChatMessageThread thread, object context)
+    public override void OnStateChange(RoundChatMessageStates value, RoundChatMessageModel model, RoundChatMessageTopic thread, object context)
         => Parent?.OnStateChange(value, model, thread);
 }
 
@@ -200,7 +201,7 @@ internal class EmptyRoundChatMessageLifecycle : RoundChatMessageLifecycle<object
     public static EmptyRoundChatMessageLifecycle Instance { get; } = new();
 
     /// <inheritdoc />
-    public override object Init(RoundChatMessageThread thread)
+    public override object Init(RoundChatMessageTopic thread)
         => null;
 }
 
@@ -228,45 +229,50 @@ internal class ExtendedRoundChatMessageLifecycle<T> : RoundChatMessageLifecycle<
     /// </summary>
     public RoundChatMessageLifecycle<T> Parent { get; set; }
 
+    /// <summary>
+    /// Gets the history of chat messages.
+    /// </summary>
+    public ObservableCollection<ExtendedChatMessage> History { get; set; }
+
     /// <inheritdoc />
-    public override T Init(RoundChatMessageThread thread)
+    public override T Init(RoundChatMessageTopic thread)
         => Parent is not null ? (Parent.Init(thread) ?? default) : default;
 
     /// <inheritdoc />
-    public override void OnInit(RoundChatMessageModel model, RoundChatMessageThread thread, T context)
+    public override void OnInit(RoundChatMessageModel model, RoundChatMessageTopic thread, T context)
     {
         Parent?.OnInit(model, thread, context);
     }
 
     /// <inheritdoc />
-    public override void OnSend(RoundChatMessageModel model, bool isStreaming, RoundChatMessageThread thread, T context)
+    public override void OnSend(RoundChatMessageModel model, bool isStreaming, RoundChatMessageTopic thread, T context)
     {
         this.isStreaming = isStreaming;
         Parent?.OnSend(model, isStreaming, thread, context);
     }
 
     /// <inheritdoc />
-    public override void OnReceive(RoundChatMessageModel model, RoundChatMessageThread thread, T context)
+    public override void OnReceive(RoundChatMessageModel model, RoundChatMessageTopic thread, T context)
     {
-        if (Message == null) UpdateMessage(model.Answer);
+        UpdateMessage(model.Answer);
         Parent?.OnReceive(model, thread, context);
     }
 
     /// <inheritdoc />
-    public override void OnError(Exception ex, RoundChatMessageModel model, RoundChatMessageThread thread, T context)
+    public override void OnError(Exception ex, RoundChatMessageModel model, RoundChatMessageTopic thread, T context)
     {
         Parent?.OnError(ex, model, thread, context);
     }
 
     /// <inheritdoc />
-    public override void OnTextChange(string value, RoundChatMessageModel model, RoundChatMessageThread thread, T context)
+    public override void OnTextChange(string value, RoundChatMessageModel model, RoundChatMessageTopic thread, T context)
     {
         Parent?.OnTextChange(value, model, thread, context);
         UpdateMessage(model.Answer);
     }
 
     /// <inheritdoc />
-    public override void OnStateChange(RoundChatMessageStates value, RoundChatMessageModel model, RoundChatMessageThread thread, T context)
+    public override void OnStateChange(RoundChatMessageStates value, RoundChatMessageModel model, RoundChatMessageTopic thread, T context)
     {
         Parent?.OnStateChange(value, model, thread, context);
     }
@@ -284,6 +290,7 @@ internal class ExtendedRoundChatMessageLifecycle<T> : RoundChatMessageLifecycle<
                 ModificationKind = isStreaming ? ChatMessageModificationKinds.Streaming : ChatMessageModificationKinds.Original,
                 MessageFormat = ExtendedChatMessageFormats.Markdown,
             };
+            History.Add(Message);
             Callback?.Invoke(Message);
         }
         else

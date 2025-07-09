@@ -21,7 +21,7 @@ namespace Trivial.Users;
 public abstract class BaseAccountEntityInfoSerializer
 {
     /// <summary>
-    /// Serializes a JSON to entity.
+    /// Deserializes a JSON to entity.
     /// </summary>
     /// <param name="utf8Json">The JSON in UTF8 stream.</param>
     /// <param name="options">Options to control the reader behavior during parsing.</param>
@@ -30,14 +30,14 @@ public abstract class BaseAccountEntityInfoSerializer
     /// <exception cref="TaskCanceledException">The task is cancelled.</exception>
     /// <exception cref="JsonException">json does not represent a valid single JSON object.</exception>
     /// <exception cref="ArgumentException">options contains unsupported options.</exception>
-    public async Task<BaseAccountEntityInfo> SerializeAsync(Stream utf8Json, JsonDocumentOptions options, CancellationToken cancellationToken = default)
+    public async Task<BaseAccountEntityInfo> DeserializeAsync(Stream utf8Json, JsonDocumentOptions options, CancellationToken cancellationToken = default)
     {
         var obj = await JsonObjectNode.ParseAsync(utf8Json, options, cancellationToken);
-        return Serialize(obj);
+        return Deserialize(obj);
     }
 
     /// <summary>
-    /// Serializes a JSON to entity.
+    /// Deserializes a JSON to entity.
     /// </summary>
     /// <param name="utf8Json">The JSON in UTF8 stream.</param>
     /// <param name="cancellationToken">The token to monitor for cancellation requests.</param>
@@ -45,14 +45,14 @@ public abstract class BaseAccountEntityInfoSerializer
     /// <exception cref="TaskCanceledException">The task is cancelled.</exception>
     /// <exception cref="JsonException">json does not represent a valid single JSON object.</exception>
     /// <exception cref="ArgumentException">options contains unsupported options.</exception>
-    public async Task<BaseAccountEntityInfo> SerializeAsync(Stream utf8Json, CancellationToken cancellationToken = default)
+    public async Task<BaseAccountEntityInfo> DeserializeAsync(Stream utf8Json, CancellationToken cancellationToken = default)
     {
         var obj = await JsonObjectNode.ParseAsync(utf8Json, cancellationToken);
-        return Serialize(obj);
+        return Deserialize(obj);
     }
 
     /// <summary>
-    /// Serializes a JSON to entity.
+    /// Deserializes a JSON to entity.
     /// </summary>
     /// <param name="file">A file with JSON object string content to parse.</param>
     /// <param name="options">Options to control the reader behavior during parsing.</param>
@@ -64,14 +64,14 @@ public abstract class BaseAccountEntityInfoSerializer
     /// <exception cref="ObjectDisposedException">The zip archive has been disposed.</exception>
     /// <exception cref="NotSupportedException">The zip archive does not support reading.</exception>
     /// <exception cref="InvalidDataException">The zip archive is corrupt, and the entry cannot be retrieved.</exception>
-    public async Task<BaseAccountEntityInfo> SerializeAsync(FileInfo file, JsonDocumentOptions options = default, CancellationToken cancellationToken = default)
+    public async Task<BaseAccountEntityInfo> DeserializeAsync(FileInfo file, JsonDocumentOptions options = default, CancellationToken cancellationToken = default)
     {
         var obj = await JsonObjectNode.ParseAsync(file, options, cancellationToken);
-        return Serialize(obj);
+        return Deserialize(obj);
     }
 
     /// <summary>
-    /// Serializes a JSON to entity.
+    /// Deserializes a JSON to entity.
     /// </summary>
     /// <param name="httpContent">The http response content.</param>
     /// <param name="options">The options for serialization.</param>
@@ -83,14 +83,14 @@ public abstract class BaseAccountEntityInfoSerializer
     /// <exception cref="ObjectDisposedException">The zip archive has been disposed.</exception>
     /// <exception cref="NotSupportedException">The zip archive does not support reading.</exception>
     /// <exception cref="InvalidDataException">The zip archive is corrupt, and the entry cannot be retrieved.</exception>
-    public async Task<BaseAccountEntityInfo> SerializeAsync(HttpContent httpContent, JsonSerializerOptions options, CancellationToken cancellationToken = default)
+    public async Task<BaseAccountEntityInfo> DeserializeAsync(HttpContent httpContent, JsonSerializerOptions options, CancellationToken cancellationToken = default)
     {
         var json = await HttpClientExtensions.DeserializeJsonAsync<JsonObjectNode>(httpContent, options, cancellationToken);
-        return Serialize(json);
+        return Deserialize(json);
     }
 
     /// <summary>
-    /// Serializes a JSON to entity.
+    /// Deserializes a JSON to entity.
     /// </summary>
     /// <param name="httpContent">The http response content.</param>
     /// <param name="cancellationToken">A cancellation token that can be used to cancel the work if it has not yet started.</param>
@@ -101,14 +101,14 @@ public abstract class BaseAccountEntityInfoSerializer
     /// <exception cref="ObjectDisposedException">The zip archive has been disposed.</exception>
     /// <exception cref="NotSupportedException">The zip archive does not support reading.</exception>
     /// <exception cref="InvalidDataException">The zip archive is corrupt, and the entry cannot be retrieved.</exception>
-    public async Task<BaseAccountEntityInfo> SerializeAsync(HttpContent httpContent, CancellationToken cancellationToken = default)
+    public async Task<BaseAccountEntityInfo> DeserializeAsync(HttpContent httpContent, CancellationToken cancellationToken = default)
     {
         var json = await HttpClientExtensions.DeserializeJsonAsync<JsonObjectNode>(httpContent, cancellationToken);
-        return Serialize(json);
+        return Deserialize(json);
     }
 
     /// <summary>
-    /// Serializes a JSON to entity.
+    /// Deserializes a JSON to entity.
     /// </summary>
     /// <param name="source">The source entity to fill when matches.</param>
     /// <param name="utf8Json">The JSON in UTF8 stream.</param>
@@ -118,14 +118,14 @@ public abstract class BaseAccountEntityInfoSerializer
     /// <exception cref="TaskCanceledException">The task is cancelled.</exception>
     /// <exception cref="JsonException">json does not represent a valid single JSON object.</exception>
     /// <exception cref="ArgumentException">options contains unsupported options.</exception>
-    public async Task<BaseAccountEntityInfo> SerializeAsync(BaseAccountEntityInfo source, Stream utf8Json, JsonDocumentOptions options, CancellationToken cancellationToken = default)
+    public async Task<BaseAccountEntityInfo> DeserializeAsync(BaseAccountEntityInfo source, Stream utf8Json, JsonDocumentOptions options, CancellationToken cancellationToken = default)
     {
         var obj = await JsonObjectNode.ParseAsync(utf8Json, cancellationToken);
-        return Serialize(source, obj);
+        return Deserialize(source, obj);
     }
 
     /// <summary>
-    /// Serializes a JSON to entity.
+    /// Deserializes a JSON to entity.
     /// </summary>
     /// <param name="source">The source entity to fill when matches.</param>
     /// <param name="utf8Json">The JSON in UTF8 stream.</param>
@@ -134,14 +134,14 @@ public abstract class BaseAccountEntityInfoSerializer
     /// <exception cref="TaskCanceledException">The task is cancelled.</exception>
     /// <exception cref="JsonException">json does not represent a valid single JSON object.</exception>
     /// <exception cref="ArgumentException">options contains unsupported options.</exception>
-    public async Task<BaseAccountEntityInfo> SerializeAsync(BaseAccountEntityInfo source, Stream utf8Json, CancellationToken cancellationToken = default)
+    public async Task<BaseAccountEntityInfo> DeserializeAsync(BaseAccountEntityInfo source, Stream utf8Json, CancellationToken cancellationToken = default)
     {
         var obj = await JsonObjectNode.ParseAsync(utf8Json, cancellationToken);
-        return Serialize(source, obj);
+        return Deserialize(source, obj);
     }
 
     /// <summary>
-    /// Serializes a JSON to entity.
+    /// Deserializes a JSON to entity.
     /// </summary>
     /// <param name="source">The source entity to fill when matches.</param>
     /// <param name="file">A file with JSON object string content to parse.</param>
@@ -154,14 +154,14 @@ public abstract class BaseAccountEntityInfoSerializer
     /// <exception cref="ObjectDisposedException">The zip archive has been disposed.</exception>
     /// <exception cref="NotSupportedException">The zip archive does not support reading.</exception>
     /// <exception cref="InvalidDataException">The zip archive is corrupt, and the entry cannot be retrieved.</exception>
-    public async Task<BaseAccountEntityInfo> SerializeAsync(BaseAccountEntityInfo source, FileInfo file, JsonDocumentOptions options = default, CancellationToken cancellationToken = default)
+    public async Task<BaseAccountEntityInfo> DeserializeAsync(BaseAccountEntityInfo source, FileInfo file, JsonDocumentOptions options = default, CancellationToken cancellationToken = default)
     {
         var obj = await JsonObjectNode.ParseAsync(file, options, cancellationToken);
-        return Serialize(source, obj);
+        return Deserialize(source, obj);
     }
 
     /// <summary>
-    /// Serializes a JSON to entity.
+    /// Deserializes a JSON to entity.
     /// </summary>
     /// <param name="source">The source entity to fill when matches.</param>
     /// <param name="httpContent">The http response content.</param>
@@ -174,14 +174,14 @@ public abstract class BaseAccountEntityInfoSerializer
     /// <exception cref="ObjectDisposedException">The zip archive has been disposed.</exception>
     /// <exception cref="NotSupportedException">The zip archive does not support reading.</exception>
     /// <exception cref="InvalidDataException">The zip archive is corrupt, and the entry cannot be retrieved.</exception>
-    public async Task<BaseAccountEntityInfo> SerializeAsync(BaseAccountEntityInfo source, HttpContent httpContent, JsonSerializerOptions options, CancellationToken cancellationToken = default)
+    public async Task<BaseAccountEntityInfo> DeserializeAsync(BaseAccountEntityInfo source, HttpContent httpContent, JsonSerializerOptions options, CancellationToken cancellationToken = default)
     {
         var json = await HttpClientExtensions.DeserializeJsonAsync<JsonObjectNode>(httpContent, options, cancellationToken);
-        return Serialize(source, json);
+        return Deserialize(source, json);
     }
 
     /// <summary>
-    /// Serializes a JSON to entity.
+    /// Deserializes a JSON to entity.
     /// </summary>
     /// <param name="source">The source entity to fill when matches.</param>
     /// <param name="httpContent">The http response content.</param>
@@ -193,28 +193,28 @@ public abstract class BaseAccountEntityInfoSerializer
     /// <exception cref="ObjectDisposedException">The zip archive has been disposed.</exception>
     /// <exception cref="NotSupportedException">The zip archive does not support reading.</exception>
     /// <exception cref="InvalidDataException">The zip archive is corrupt, and the entry cannot be retrieved.</exception>
-    public async Task<BaseAccountEntityInfo> SerializeAsync(BaseAccountEntityInfo source, HttpContent httpContent, CancellationToken cancellationToken = default)
+    public async Task<BaseAccountEntityInfo> DeserializeAsync(BaseAccountEntityInfo source, HttpContent httpContent, CancellationToken cancellationToken = default)
     {
         var json = await HttpClientExtensions.DeserializeJsonAsync<JsonObjectNode>(httpContent, cancellationToken);
-        return Serialize(source, json);
+        return Deserialize(source, json);
     }
 
     /// <summary>
-    /// Serializes a JSON to entity.
+    /// Deserializes a JSON to entity.
     /// </summary>
     /// <param name="json">The JSON to serialize.</param>
     /// <param name="options">Options to control the reader behavior during parsing.</param>
     /// <returns>The entity serialized from the given JSON.</returns>
     /// <exception cref="JsonException">json does not represent a valid single JSON object.</exception>
     /// <exception cref="ArgumentException">options contains unsupported options.</exception>
-    public BaseAccountEntityInfo Serialize(string json, JsonDocumentOptions options = default)
+    public BaseAccountEntityInfo Deserialize(string json, JsonDocumentOptions options = default)
     {
         var obj = JsonObjectNode.Parse(json, options);
-        return Serialize(obj);
+        return Deserialize(obj);
     }
 
     /// <summary>
-    /// Serializes a JSON to entity.
+    /// Deserializes a JSON to entity.
     /// </summary>
     /// <param name="source">The source entity to fill when matches.</param>
     /// <param name="json">The JSON to serialize.</param>
@@ -222,18 +222,18 @@ public abstract class BaseAccountEntityInfoSerializer
     /// <returns>The entity serialized from the given JSON.</returns>
     /// <exception cref="JsonException">json does not represent a valid single JSON object.</exception>
     /// <exception cref="ArgumentException">options contains unsupported options.</exception>
-    public BaseAccountEntityInfo Serialize(BaseAccountEntityInfo source, string json, JsonDocumentOptions options = default)
+    public BaseAccountEntityInfo Deserialize(BaseAccountEntityInfo source, string json, JsonDocumentOptions options = default)
     {
         var obj = JsonObjectNode.Parse(json, options);
-        return Serialize(source, obj);
+        return Deserialize(source, obj);
     }
 
     /// <summary>
-    /// Serializes a JSON to entity.
+    /// Deserializes a JSON to entity.
     /// </summary>
     /// <param name="json">The JSON to serialize.</param>
     /// <returns>The entity serialized from the given JSON; or null, if not supported.</returns>
-    public BaseAccountEntityInfo Serialize(JsonObjectNode json)
+    public BaseAccountEntityInfo Deserialize(JsonObjectNode json)
     {
         if (json is null) return null;
         var type = AccountEntityInfoConverter.GetAccountEntityType(json, AccountEntityTypes.Unknown);
@@ -251,40 +251,40 @@ public abstract class BaseAccountEntityInfoSerializer
     }
 
     /// <summary>
-    /// Serializes a JSON to entity.
+    /// Deserializes a JSON to entity.
     /// </summary>
     /// <param name="source">The source entity to fill when matches.</param>
     /// <param name="json">The JSON to serialize.</param>
     /// <returns>The entity serialized from the given JSON; or null, if not supported.</returns>
-    public virtual BaseAccountEntityInfo Serialize(BaseAccountEntityInfo source, JsonObjectNode json)
+    public virtual BaseAccountEntityInfo Deserialize(BaseAccountEntityInfo source, JsonObjectNode json)
     {
-        if (source == null) return Serialize(json);
+        if (source == null) return Deserialize(json);
         if (json == null) return null;
         if (source.TryFill(json)) return source;
-        return Serialize(json);
+        return Deserialize(json);
     }
 
     /// <summary>
-    /// Serializes a set of JSON to entity collection.
+    /// Deserializes a set of JSON to entity collection.
     /// </summary>
     /// <param name="arr">The JSON collection to serialize.</param>
     /// <returns>The entity collection serialized.</returns>
-    public IEnumerable<BaseAccountEntityInfo> Serialize(IEnumerable<JsonObjectNode> arr)
+    public IEnumerable<BaseAccountEntityInfo> Deserialize(IEnumerable<JsonObjectNode> arr)
     {
         if (arr == null) yield break;
         foreach (var json in arr)
         {
-            yield return Serialize(json);
+            yield return Deserialize(json);
         }
     }
 
     /// <summary>
-    /// Serializes a set of JSON to entity collection.
+    /// Deserializes a set of JSON to entity collection.
     /// </summary>
     /// <param name="resources">The resources.</param>
     /// <param name="arr">The JSON collection to serialize.</param>
     /// <returns>The entity collection serialized.</returns>
-    public int Serialize(IAccountEntityResources resources, IEnumerable<JsonObjectNode> arr)
+    public int Deserialize(IAccountEntityResources resources, IEnumerable<JsonObjectNode> arr)
     {
         var i = 0;
         if (arr == null || resources == null) return i;
@@ -300,7 +300,7 @@ public abstract class BaseAccountEntityInfoSerializer
 
         foreach (var json in arr)
         {
-            var instance = Serialize(json);
+            var instance = Deserialize(json);
             if (instance == null) continue;
             col.Add(instance);
             i++;

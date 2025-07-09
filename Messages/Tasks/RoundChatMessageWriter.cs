@@ -21,7 +21,7 @@ public class RoundChatMessageWriter
     /// <summary>
     /// The store of the current text value.
     /// </summary>
-    private StringBuilder current = new();
+    private readonly StringBuilder current = new();
 
     /// <summary>
     /// Adds or removes the handler occurred on the text is changed.
@@ -65,6 +65,7 @@ public class RoundChatMessageWriter
     {
         current.Clear();
         current.Append(value);
+        Update();
     }
 
     /// <summary>

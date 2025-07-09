@@ -13,9 +13,9 @@ using Trivial.Users;
 namespace Trivial.Text;
 
 /// <summary>
-/// The chat message thread, may be a user, group, bot or topic.
+/// The chat message topic, may be a user, group, bot or topic.
 /// </summary>
-public interface IExtendedChatThread
+public interface IExtendedChatTopic
 {
     /// <summary>
     /// Gets the identifier.
@@ -33,36 +33,36 @@ public interface IExtendedChatThread
     Uri AvatarUri { get; }
 
     /// <summary>
-    /// Gets a value indicating whether the thread is read only for current user.
+    /// Gets a value indicating whether the topic is read only for current user.
     /// </summary>
     bool IsReadOnly { get; }
 
     /// <summary>
-    /// Gets a value indicating whether the thread can contain multiple participators (the current user and more than 1 other participators).
+    /// Gets a value indicating whether the topic can contain multiple participators (the current user and more than 1 other participators).
     /// </summary>
     bool IsMultipleParticipatorsMode { get; }
 
     /// <summary>
-    /// Gets a value indicating whether the thread is round mode to send message.
+    /// Gets a value indicating whether the topic is round mode to send message.
     /// </summary>
     bool IsRoundMode { get; }
 }
 
 /// <summary>
-/// The chat message thread, may be a user, group, bot or topic.
+/// The chat message topic, may be a user, group, bot or topic.
 /// </summary>
-public abstract class BaseExtendedChatThread : BaseObservableProperties, IExtendedChatThread
+public abstract class BaseExtendedChatTopic : BaseObservableProperties, IExtendedChatTopic
 {
     /// <summary>
-    /// Initializes a new instance of the BaseExtendedChatThread class.
+    /// Initializes a new instance of the BaseExtendedChatTopic class.
     /// </summary>
     /// <param name="id">The identifier.</param>
     /// <param name="nickname">The nickname.</param>
     /// <param name="avatar">The avatar.</param>
-    /// <param name="isReadOnly">true if the thread is read-only for the current user; otherwise, false.</param>
-    /// <param name="isMultipleParticipatorsMode">true if the thread can contain multiple participators (the current user and more than 1 other participators); otherwise, false.</param>
+    /// <param name="isReadOnly">true if the topic is read-only for the current user; otherwise, false.</param>
+    /// <param name="isMultipleParticipatorsMode">true if the topic can contain multiple participators (the current user and more than 1 other participators); otherwise, false.</param>
     /// <param name="isRoundMode">true if the current user can only send message one by one when the participator is available to receive; otherwise, false.</param>
-    public BaseExtendedChatThread(string id, string nickname, Uri avatar, bool isReadOnly = false, bool isMultipleParticipatorsMode = false, bool isRoundMode = false)
+    public BaseExtendedChatTopic(string id, string nickname, Uri avatar, bool isReadOnly = false, bool isMultipleParticipatorsMode = false, bool isRoundMode = false)
     {
         SetProperty(nameof(Id), id);
         SetProperty(nameof(Nickname), nickname);
@@ -88,12 +88,12 @@ public abstract class BaseExtendedChatThread : BaseObservableProperties, IExtend
     public virtual Uri AvatarUri => GetCurrentProperty<Uri>();
 
     /// <summary>
-    /// Gets a value indicating whether the thread is read-only for current user.
+    /// Gets a value indicating whether the topic is read-only for current user.
     /// </summary>
     public virtual bool IsReadOnly => GetCurrentProperty<bool>();
 
     /// <summary>
-    /// Gets a value indicating whether the thread can contain multiple participators (the current user and more than 1 other participators).
+    /// Gets a value indicating whether the topic can contain multiple participators (the current user and more than 1 other participators).
     /// </summary>
     public virtual bool IsMultipleParticipatorsMode => GetCurrentProperty<bool>();
 
@@ -104,18 +104,18 @@ public abstract class BaseExtendedChatThread : BaseObservableProperties, IExtend
 }
 
 /// <summary>
-/// The chat message thread, may be a user, group, bot or topic.
+/// The chat message topic, may be a user, group, bot or topic.
 /// </summary>
-public class UserExtendedChatThread : IExtendedChatThread, INotifyPropertyChanged
+public class UserExtendedChatTopic : IExtendedChatTopic, INotifyPropertyChanged
 {
     private readonly Dictionary<string, bool> toggles = new();
     private readonly Dictionary<string, string> flags = new();
 
     /// <summary>
-    /// Initializes a new instance of the UserExtendedChatThread class.
+    /// Initializes a new instance of the UserExtendedChatTopic class.
     /// </summary>
     /// <param name="user"></param>
-    public UserExtendedChatThread(UserItemInfo user)
+    public UserExtendedChatTopic(UserItemInfo user)
     {
         User = user ?? new();
         (User as INotifyPropertyChanged).PropertyChanged += OnUserPropertyChanged;
@@ -124,7 +124,7 @@ public class UserExtendedChatThread : IExtendedChatThread, INotifyPropertyChange
     /// <summary>
     /// Deconstructor.
     /// </summary>
-    ~UserExtendedChatThread()
+    ~UserExtendedChatTopic()
     {
         var user = User;
         if (user == null) return;
@@ -167,12 +167,12 @@ public class UserExtendedChatThread : IExtendedChatThread, INotifyPropertyChange
     public virtual AccountEntityTypes SecurityEntityType => User.AccountEntityType;
 
     /// <summary>
-    /// Gets a value indicating whether the thread is read-only for current user.
+    /// Gets a value indicating whether the topic is read-only for current user.
     /// </summary>
     public virtual bool IsReadOnly => GetBooleanFlag(nameof(IsReadOnly)) ?? false;
 
     /// <summary>
-    /// Gets a value indicating whether the thread can contain multiple participators (the current user and more than 1 other participators).
+    /// Gets a value indicating whether the topic can contain multiple participators (the current user and more than 1 other participators).
     /// </summary>
     public virtual bool IsMultipleParticipatorsMode => GetBooleanFlag(nameof(IsMultipleParticipatorsMode)) ?? false;
 
@@ -239,18 +239,18 @@ public class UserExtendedChatThread : IExtendedChatThread, INotifyPropertyChange
 }
 
 /// <summary>
-/// The chat message thread, may be a user, group, bot or topic.
+/// The chat message topic, may be a user, group, bot or topic.
 /// </summary>
-public class CommandGuidanceExtendedChatThread : UserExtendedChatThread
+public class CommandGuidanceExtendedChatTopic : UserExtendedChatTopic
 {
     /// <summary>
-    /// Initializes a new instance of the CommandGuidanceExtendedChatThread class.
+    /// Initializes a new instance of the CommandGuidanceExtendedChatTopic class.
     /// </summary>
     /// <param name="id">The identifier.</param>
     /// <param name="client">The chat command guidance client.</param>
     /// <param name="nickname">The display name.</param>
     /// <param name="avatar">The avatar URI.</param>
-    public CommandGuidanceExtendedChatThread(string id, BaseChatCommandGuidanceClient client, string nickname, Uri avatar)
+    public CommandGuidanceExtendedChatTopic(string id, BaseChatCommandGuidanceClient client, string nickname, Uri avatar)
         : base(new(id, nickname, Genders.Asexual, avatar))
     {
         Client = client;

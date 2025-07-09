@@ -93,12 +93,23 @@ public class ExtendedChatMessage : BaseResourceEntityInfo
     }
 
     /// <summary>
+    /// Initializes a new instance of the ExtendedChatMessage class.
+    /// </summary>
+    /// <param name="json">The JSON object to parse.</param>
+    /// <param name="profiles">All profiles to find the sender.</param>
+    public ExtendedChatMessage(JsonObjectNode json, IEnumerable<BaseAccountEntityInfo> profiles)
+        : base(json)
+    {
+        FillSender(json, profiles);
+    }
+
+    /// <summary>
     /// Gets the sender.
     /// </summary>
     public BaseUserItemInfo Sender => GetCurrentProperty<BaseUserItemInfo>();
 
     /// <summary>
-    /// Gets the plain text of the message.
+    /// Gets the markdown text of the message.
     /// </summary>
     public string Message
     {
@@ -184,6 +195,24 @@ public class ExtendedChatMessage : BaseResourceEntityInfo
         Info = json.TryGetObjectValue("info") ?? new();
         Category = json.TryGetStringTrimmedValue("category", true);
         SetProperty("Data", json.TryGetObjectValue("data"));
+    }
+
+    /// <summary>
+    /// Fills sender from the profile collection.
+    /// </summary>
+    /// <param name="json">The message in JSON.</param>
+    /// <param name="profiles">All profiles to find the sender.</param>
+    /// <returns>true if found; otherwise, false.</returns>
+    protected bool FillSender(JsonObjectNode json, IEnumerable<BaseAccountEntityInfo> profiles)
+    {
+        if (profiles == null) return false;
+        var senderId = ExtendedChatMessages.GetSender(json, profiles)?.Id
+            ?? json.TryGetStringTrimmedValue("sender", true);
+        if (string.IsNullOrEmpty(senderId)) return false;
+        var user = profiles.FirstOrDefault(ele => ele.Id == senderId);
+        if (user == null) return false;
+        SetProperty(nameof(Sender), user);
+        return true;
     }
 
     /// <summary>
@@ -278,6 +307,7 @@ public class ExtendedChatMessage : BaseResourceEntityInfo
 /// <summary>
 /// The chat message record.
 /// </summary>
+/// <typeparam name="T">The type of data.</typeparam>
 [JsonConverter(typeof(ExtendedChatMessageConverter))]
 public class ExtendedChatMessage<T> : ExtendedChatMessage where T : class
 {
@@ -370,6 +400,32 @@ public class ExtendedChatMessage<T> : ExtendedChatMessage where T : class
 
         if (data == null) return;
         Data = dataConverter == null ? data.Deserialize<T>() : dataConverter(data);
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the ExtendedChatMessage class.
+    /// </summary>
+    /// <param name="json">The JSON object to parse.</param>
+    /// <param name="profiles">All profiles to find the sender.</param>
+    /// <param name="ignoreDataDeserialize">true if skip to deserialize the data; otherwise, false.</param>
+    /// <param name="type">The message type to override; or null, if use the one in JSON input.</param>
+    protected ExtendedChatMessage(JsonObjectNode json, IEnumerable<BaseAccountEntityInfo> profiles, bool ignoreDataDeserialize = false, string type = null)
+        : this(json, ignoreDataDeserialize, type)
+    {
+        FillSender(json, profiles);
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the ExtendedChatMessage class.
+    /// </summary>
+    /// <param name="json">The JSON object to parse.</param>
+    /// <param name="profiles">All profiles to find the sender.</param>
+    /// <param name="dataConverter">The data converter.</param>
+    /// <param name="type">The message type to override; or null, if use the one in JSON input.</param>
+    protected internal ExtendedChatMessage(JsonObjectNode json, IEnumerable<BaseAccountEntityInfo> profiles, Func<JsonObjectNode, T> dataConverter, string type = null)
+        : this(json, dataConverter, type)
+    {
+        FillSender(json, profiles);
     }
 
     /// <summary>

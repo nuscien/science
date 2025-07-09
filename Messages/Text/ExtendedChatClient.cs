@@ -83,7 +83,7 @@ public interface IExtendedChatClientProvider
     /// <param name="message">The message to send.</param>
     /// <param name="cancellationToken">A cancellation token to observe while waiting for the task to complete.</param>
     /// <returns>The result state and other information.</returns>
-    Task<ExtendedChatMessageSendResult> SendAsync(IExtendedChatThread to, ExtendedChatMessage message, CancellationToken cancellationToken = default);
+    Task<ExtendedChatMessageSendResult> SendAsync(IExtendedChatTopic to, ExtendedChatMessage message, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Tries to get the user.
@@ -98,7 +98,7 @@ public interface IExtendedChatClientProvider
     /// </summary>
     /// <param name="cancellationToken">A cancellation token to observe while waiting for the task to complete.</param>
     /// <returns>The thread list.</returns>
-    Task<List<BaseExtendedChatThread>> ListThreadAsync(CancellationToken cancellationToken = default);
+    Task<List<BaseExtendedChatTopic>> ListThreadAsync(CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Searches threads.
@@ -106,7 +106,7 @@ public interface IExtendedChatClientProvider
     /// <param name="q">The search query.</param>
     /// <param name="cancellationToken">A cancellation token to observe while waiting for the task to complete.</param>
     /// <returns>The thread list.</returns>
-    Task<List<BaseExtendedChatThread>> ListThreadAsync(string q, CancellationToken cancellationToken = default);
+    Task<List<BaseExtendedChatTopic>> ListThreadAsync(string q, CancellationToken cancellationToken = default);
 }
 
 /// <summary>
@@ -141,7 +141,7 @@ public class ExtendedChatClient
     /// <param name="info">The additional data to send.</param>
     /// <param name="cancellationToken">A cancellation token to observe while waiting for the task to complete.</param>
     /// <returns>The message request.</returns>
-    public ExtendedChatMessageRequest Send(IExtendedChatThread to, string message, JsonObjectNode info, CancellationToken cancellationToken = default)
+    public ExtendedChatMessageRequest Send(IExtendedChatTopic to, string message, JsonObjectNode info, CancellationToken cancellationToken = default)
     {
         var req = new ExtendedChatMessageRequest(Provider, to, new ExtendedChatMessage(User, message, null, info));
         _ = req.GetResultAsync(cancellationToken);
@@ -162,7 +162,7 @@ public class ExtendedChatClient
     /// </summary>
     /// <param name="cancellationToken">A cancellation token to observe while waiting for the task to complete.</param>
     /// <returns>The thread list.</returns>
-    public async Task<List<BaseExtendedChatThread>> ListThreadAsync(CancellationToken cancellationToken = default)
+    public async Task<List<BaseExtendedChatTopic>> ListThreadAsync(CancellationToken cancellationToken = default)
     {
         if (Provider == null) return new();
         return await Provider.ListThreadAsync(cancellationToken) ?? new();
@@ -174,7 +174,7 @@ public class ExtendedChatClient
     /// <param name="q">The search query.</param>
     /// <param name="cancellationToken">A cancellation token to observe while waiting for the task to complete.</param>
     /// <returns>The thread list.</returns>
-    public async Task<List<BaseExtendedChatThread>> ListThreadAsync(string q, CancellationToken cancellationToken = default)
+    public async Task<List<BaseExtendedChatTopic>> ListThreadAsync(string q, CancellationToken cancellationToken = default)
     {
         if (Provider == null) return new();
         return await Provider.ListThreadAsync(q, cancellationToken) ?? new();
@@ -244,7 +244,7 @@ public class ExtendedChatMessageRequest
     /// <param name="client">The client provider.</param>
     /// <param name="to">The thread to send message.</param>
     /// <param name="message">The message to send.</param>
-    public ExtendedChatMessageRequest(IExtendedChatClientProvider client, IExtendedChatThread to, ExtendedChatMessage message)
+    public ExtendedChatMessageRequest(IExtendedChatClientProvider client, IExtendedChatTopic to, ExtendedChatMessage message)
     {
         this.client = client;
         Thread = to;
@@ -259,7 +259,7 @@ public class ExtendedChatMessageRequest
     /// <summary>
     /// Gets the thread to send message.
     /// </summary>
-    public IExtendedChatThread Thread { get; }
+    public IExtendedChatTopic Thread { get; }
 
     /// <summary>
     /// Gets the result.
