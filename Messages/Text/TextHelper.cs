@@ -54,4 +54,9 @@ internal static class TextHelper
 
     public static IBasicPublisherInfo ToPublisherInfo(JsonObjectNode json, string propertyKey)
         => ToPublisherInfo(json?.TryGetObjectValue(propertyKey));
+
+#if NETFRAMEWORK
+    public static bool StartsWith(this string s, char value)
+        => s.StartsWith(value.ToString(), StringComparison.Ordinal);
+#endif
 }
