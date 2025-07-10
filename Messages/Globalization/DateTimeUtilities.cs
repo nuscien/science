@@ -44,7 +44,7 @@ public static class DateTimeUtilities
     public static string ToMessageTimeString(DateTime time, CultureInfo culture = null)
     {
         culture ??= CultureInfo.CurrentUICulture ?? CultureInfo.CurrentCulture;
-        var now = new DateTime();
+        var now = DateTime.Now;
         if (now.Year != time.Year)
         {
             var key = GetCultureFamilyName(culture);

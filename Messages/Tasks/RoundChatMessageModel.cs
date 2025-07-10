@@ -38,7 +38,6 @@ public sealed class RoundChatMessageStateRecord(RoundChatMessageStates state, Da
     /// </summary>
     public string Note { get; } = note;
 
-
     /// <summary>
     /// Converts to JSON object.
     /// </summary>
@@ -216,9 +215,19 @@ public sealed class RoundChatMessageModel : IJsonObjectHost
     public string ErrorCode { get; set; }
 
     /// <summary>
+    /// Gets a value indicating whether the message has an error code.
+    /// </summary>
+    public bool HasErrorCode => !string.IsNullOrWhiteSpace(ErrorCode);
+
+    /// <summary>
     /// Gets the error message.
     /// </summary>
     public string ErrorMessage { get; private set; }
+
+    /// <summary>
+    /// Gets a value indicating whether the message has an error message.
+    /// </summary>
+    public bool HasErrorMessage => !string.IsNullOrWhiteSpace(ErrorMessage);
 
     /// <summary>
     /// Gets a value indicating whether the message is pending to get final result.
