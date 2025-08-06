@@ -41,5 +41,11 @@ public class DateTimeUnitTest
         time = DateTime.Now.AddYears(-1);
         s = DateTimeUtilities.ToMessageTimeString(time);
         Assert.IsNotEmpty(s);
+        time = new DateTime(2000, 1, 1, 11, 58, 10);
+        s = DateTimeUtilities.ToEmoji(time);
+        Assert.AreEqual("🕛", s);
+        time = new DateTime(2000, 1, 1, 12, 8, 10);
+        s = DateTimeUtilities.ToEmoji(time);
+        Assert.AreEqual("🕛", s);
     }
 }

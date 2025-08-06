@@ -31,7 +31,10 @@ public abstract class BaseResourceEntityInfo : BaseObservableProperties, IJsonOb
     /// </summary>
     protected BaseResourceEntityInfo()
     {
+        InitializationTime = DateTime.Now;
         State = ResourceEntityStates.Normal;
+        CreationTime = LastModificationTime = InitializationTime;
+        LastSavingStatus = new();
     }
 
     /// <summary>
@@ -41,6 +44,7 @@ public abstract class BaseResourceEntityInfo : BaseObservableProperties, IJsonOb
     protected BaseResourceEntityInfo(Guid id)
         : this(id.ToString("N"))
     {
+        State = ResourceEntityStates.Normal;
     }
 
     /// <summary>
@@ -68,10 +72,23 @@ public abstract class BaseResourceEntityInfo : BaseObservableProperties, IJsonOb
     /// Initializes a new instance of the BaseResourceObservableProperties class.
     /// </summary>
     /// <param name="id">The identifier.</param>
-    protected BaseResourceEntityInfo(string id)
+    /// <param name="initTime">true if initialize the creation and last modification time.</param>
+    private BaseResourceEntityInfo(string id, bool initTime)
     {
+        InitializationTime = DateTime.Now;
         Id = id;
         State = ResourceEntityStates.Normal;
+        LastSavingStatus = new();
+        if (initTime) CreationTime = LastModificationTime = InitializationTime;
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the BaseResourceObservableProperties class.
+    /// </summary>
+    /// <param name="id">The identifier.</param>
+    protected BaseResourceEntityInfo(string id)
+        : this(id, true)
+    {
     }
 
     /// <summary>
@@ -80,7 +97,7 @@ public abstract class BaseResourceEntityInfo : BaseObservableProperties, IJsonOb
     /// <param name="id">The identifier.</param>
     /// <param name="creation">The creation date time.</param>
     protected BaseResourceEntityInfo(string id, DateTime? creation)
-        : this(id)
+        : this(id, false)
     {
         CreationTime = creation ?? DateTime.Now;
         LastModificationTime = CreationTime;
@@ -93,7 +110,7 @@ public abstract class BaseResourceEntityInfo : BaseObservableProperties, IJsonOb
     /// <param name="creation">The creation date time.</param>
     /// <param name="modification">The last modification date time.</param>
     protected BaseResourceEntityInfo(string id, DateTime creation, DateTime modification)
-        : this(id)
+        : this(id, false)
     {
         CreationTime = creation;
         LastModificationTime = modification;
@@ -105,6 +122,8 @@ public abstract class BaseResourceEntityInfo : BaseObservableProperties, IJsonOb
     /// <param name="json">The JSON node to read and fill.</param>
     internal BaseResourceEntityInfo(JsonObjectNode json)
     {
+        InitializationTime = DateTime.Now;
+        LastSavingStatus = new();
         if (json == null) return;
         State = ResourceEntityStates.Normal;
         CreationTime = json.TryGetDateTimeValue("created") ?? DateTime.Now;
@@ -185,6 +204,28 @@ public abstract class BaseResourceEntityInfo : BaseObservableProperties, IJsonOb
     }
 
     /// <summary>
+    /// Gets the date time of this instance initialization.
+    /// </summary>
+    [JsonIgnore]
+#if NETCOREAPP
+    [NotMapped]
+#endif
+    public DateTime InitializationTime { get; }
+
+    /// <summary>
+    /// Gets the latest saving status of this entity.
+    /// </summary>
+    [JsonIgnore]
+#if NETCOREAPP
+    [NotMapped]
+#endif
+    public ResourceEntitySavingStatus LastSavingStatus
+    {
+        get => GetCurrentProperty<ResourceEntitySavingStatus>();
+        private set => SetCurrentProperty(value);
+    }
+
+    /// <summary>
     /// Gets the supertype.
     /// </summary>
     [JsonIgnore]
@@ -238,6 +279,43 @@ public abstract class BaseResourceEntityInfo : BaseObservableProperties, IJsonOb
     }
 
     /// <summary>
+    /// Updates the saving status of this entity.
+    /// </summary>
+    /// <param name="state">The new state.</param>
+    /// <param name="message">The additional message about this saving status.</param>
+    public void UpdateSavingStatus(ResourceEntitySavingStates state, string message = null)
+    {
+        var status = LastSavingStatus;
+        if (status == null)
+        {
+            status = new();
+            if (LastSavingStatus == null)
+            {
+                LastSavingStatus = status;
+            }
+            else
+            {
+                var tmp = status;
+                status = LastSavingStatus;
+                if (status == null)
+                {
+                    LastSavingStatus = tmp;
+                    status = tmp;
+                }
+            }
+        }
+
+        status.Update(state, message);
+    }
+
+    /// <summary>
+    /// Updates the saving status of this entity.
+    /// </summary>
+    /// <param name="ex">The exception thrown during saving.</param>
+    public void UpdateSavingStatus(Exception ex)
+        => UpdateSavingStatus(ResourceEntitySavingStates.Failure, ex?.Message);
+
+    /// <summary>
     /// Gets a property value.
     /// </summary>
     /// <typeparam name="T">The type of the property value.</typeparam>
@@ -267,11 +345,91 @@ public abstract class BaseResourceEntityInfo : BaseObservableProperties, IJsonOb
         => Id == id && Supertype == supertype;
 
     /// <summary>
+    /// Tests if the entity is created after the given date time.
+    /// </summary>
+    /// <param name="time">The target date time to test.</param>
+    /// <returns>true if the entity is created after the specific date time; otherwise, false.</returns>
+    public bool IsCreatedAfter(DateTime time)
+        => CreationTime > time;
+
+    /// <summary>
+    /// Tests if the entity is created after the given duration.
+    /// </summary>
+    /// <param name="duration">The target time span to test.</param>
+    /// <returns>true if the entity is created after the specific duration before now; otherwise, false.</returns>
+    public bool IsCreatedAfter(TimeSpan duration)
+        => (DateTime.Now - CreationTime) < duration;
+
+    /// <summary>
+    /// Tests if the entity is created before the given date time.
+    /// </summary>
+    /// <param name="time">The target date time to test.</param>
+    /// <returns>true if the entity is created before the specific date time; otherwise, false.</returns>
+    public bool IsCreatedBefore(DateTime time)
+        => CreationTime < time;
+
+    /// <summary>
+    /// Tests if the entity is created before the given duration.
+    /// </summary>
+    /// <param name="duration">The target time span to test.</param>
+    /// <returns>true if the entity is created before the specific duration before now; otherwise, false.</returns>
+    public bool IsCreatedBefore(TimeSpan duration)
+        => (DateTime.Now - CreationTime) > duration;
+
+    /// <summary>
+    /// Tests if the entity is modified after the given date time.
+    /// </summary>
+    /// <param name="time">The target date time to test.</param>
+    /// <returns>true if the entity is modified after the specific date time; otherwise, false.</returns>
+    public bool IsModifiedAfter(DateTime time)
+        => LastModificationTime > time;
+
+    /// <summary>
+    /// Tests if the entity is modified after the given duration.
+    /// </summary>
+    /// <param name="duration">The target time span to test.</param>
+    /// <returns>true if the entity is modified after the specific duration before now; otherwise, false.</returns>
+    public bool IsModifiedAfter(TimeSpan duration)
+        => (DateTime.Now - LastModificationTime) < duration;
+
+    /// <summary>
+    /// Tests if the entity is modified before the given date time.
+    /// </summary>
+    /// <param name="time">The target date time to test.</param>
+    /// <returns>true if the entity is modified before the specific date time; otherwise, false.</returns>
+    public bool IsModifiedBefore(DateTime time)
+        => LastModificationTime < time;
+
+    /// <summary>
+    /// Tests if the entity is modified before the given duration.
+    /// </summary>
+    /// <param name="duration">The target time span to test.</param>
+    /// <returns>true if the entity is modified before the specific duration before now; otherwise, false.</returns>
+    public bool IsModifiedBefore(TimeSpan duration)
+        => (DateTime.Now - LastModificationTime) > duration;
+
+    /// <summary>
     /// Sets the configuration information.
     /// </summary>
     /// <returns>The JSON object node of configuration of this item; or null, if not supported.</returns>
     protected JsonObjectNode GetConfig()
         => configInfo;
+
+    /// <summary>
+    /// Sets the configuration information.
+    /// </summary>
+    /// <param name="init">true if initializes an object if null; otherwise, false.</param>
+    /// <returns>The JSON object node of configuration of this item; or null, if not supported.</returns>
+    protected JsonObjectNode GetConfig(bool init)
+    {
+        if (configInfo == null && init)
+        {
+            var json = new JsonObjectNode();
+            if (configInfo == null) configInfo = json;
+        }
+
+        return configInfo;
+    }
 
     /// <summary>
     /// Sets the configuration information.

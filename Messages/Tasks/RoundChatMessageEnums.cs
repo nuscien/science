@@ -16,7 +16,7 @@ namespace Trivial.Tasks;
 /// <summary>
 /// The processing states of chat message.
 /// </summary>
-public enum RoundChatMessageStates : byte
+public enum ResponsiveChatMessageStates : byte
 {
     /// <summary>
     /// The message is initialized.

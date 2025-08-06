@@ -268,7 +268,7 @@ public static class JsonOperations
             requestBody.SetValue("required", !(item.Data.TryGetBooleanValue("argsOptional") ?? false));
             requestBody = SetContentSchema(requestBody, string.Concat("#/components/schemas/", opReqKey));
 
-            // Response
+            // Answer
             SetResponseContentSchema(responseBody, 200, string.Concat("#/components/schemas/", opRespKey), item.Data.TryGetStringTrimmedValue("httpRespDesc", true) ?? "Successful resposne.");
             var errorResponse = item.Data.TryGetObjectValue(HttpErrorProperty);
             if (errorResponse == null || item.ErrorSchema == null) continue;

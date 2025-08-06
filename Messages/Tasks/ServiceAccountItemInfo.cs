@@ -20,6 +20,7 @@ namespace Trivial.Tasks;
 /// The service item information.
 /// </summary>
 [JsonConverter(typeof(ServiceAccountItemInfoConverter))]
+[Guid("63AAF308-C3E7-4A5C-B390-A8B05E78B703")]
 public class ServiceAccountItemInfo : BaseUserItemInfo
 {
     /// <summary>

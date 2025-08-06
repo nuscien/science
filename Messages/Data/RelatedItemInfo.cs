@@ -15,7 +15,162 @@ namespace Trivial.Users;
 /// <summary>
 /// The user item related info.
 /// </summary>
-public abstract class RelatedResourceEntityInfo<TOwner> : BaseResourceEntityInfo
+public abstract class RelatedResourceEntityInfo : BaseResourceEntityInfo
+{
+    /// <summary>
+    /// Intializes a new instance of the RelatedResourceEntityInfo class.
+    /// </summary>
+    protected RelatedResourceEntityInfo()
+    {
+    }
+
+    /// <summary>
+    /// Intializes a new instance of the RelatedResourceEntityInfo class.
+    /// </summary>
+    /// <param name="id">The entity identifer.</param>
+    /// <param name="creation">The creation date time.</param>
+    internal RelatedResourceEntityInfo(string id, DateTime? creation)
+        : base(id, creation)
+    {
+    }
+
+    /// <summary>
+    /// Intializes a new instance of the RelatedResourceEntityInfo class.
+    /// </summary>
+    /// <param name="id">The entity identifer.</param>
+    /// <param name="creation">The creation date time.</param>
+    internal RelatedResourceEntityInfo(Guid id, DateTime? creation)
+        : base(id, creation)
+    {
+    }
+
+    /// <summary>
+    /// Intializes a new instance of the RelatedResourceEntityInfo class.
+    /// </summary>
+    /// <param name="id">The entity identifer.</param>
+    /// <param name="ownerId">The owner identifier.</param>
+    /// <param name="creation">The creation date time.</param>
+    protected RelatedResourceEntityInfo(string id, string ownerId, DateTime? creation = null)
+        : base(id, creation)
+    {
+        OwnerId = ownerId;
+    }
+
+    /// <summary>
+    /// Intializes a new instance of the RelatedResourceEntityInfo class.
+    /// </summary>
+    /// <param name="id">The entity identifer.</param>
+    /// <param name="ownerId">The owner identifier.</param>
+    /// <param name="creation">The creation date time.</param>
+    protected RelatedResourceEntityInfo(Guid id, string ownerId, DateTime? creation = null)
+        : base(id, creation)
+    {
+        OwnerId = ownerId;
+    }
+
+    /// <summary>
+    /// Intializes a new instance of the RelatedResourceEntityInfo class.
+    /// </summary>
+    /// <param name="id">The entity identifer.</param>
+    /// <param name="ownerId">The owner identifier.</param>
+    /// <param name="creation">The creation date time.</param>
+    protected RelatedResourceEntityInfo(string id, BaseResourceEntityInfo ownerId, DateTime? creation = null)
+        : this(id, ownerId?.Id, creation)
+    {
+    }
+
+    /// <summary>
+    /// Intializes a new instance of the RelatedResourceEntityInfo class.
+    /// </summary>
+    /// <param name="id">The entity identifer.</param>
+    /// <param name="ownerId">The owner identifier.</param>
+    /// <param name="creation">The creation date time.</param>
+    protected RelatedResourceEntityInfo(Guid id, BaseResourceEntityInfo ownerId, DateTime? creation = null)
+        : this(id, ownerId?.Id, creation)
+    {
+    }
+
+    /// <summary>
+    /// Intializes a new instance of the RelatedResourceEntityInfo class.
+    /// </summary>
+    /// <param name="json">The JSON object to parse.</param>
+    protected RelatedResourceEntityInfo(JsonObjectNode json)
+        : base(json)
+    {
+    }
+
+    /// <summary>
+    /// Gets or sets the identifier of owner.
+    /// </summary>
+    /// <exception cref="InvalidOperationException">The new owner identifier is not supported to set.</exception>
+    [DataMember(Name = "owner")]
+    [JsonPropertyName("owner")]
+    [Description("The identifier of the owner.")]
+    public string OwnerId
+    {
+        get
+        {
+            return GetProperty<string>(nameof(OwnerId));
+        }
+
+        protected set
+        {
+            var id = value?.Trim();
+            if (string.IsNullOrEmpty(id)) id = null;
+            var old = GetProperty<string>(nameof(OwnerId));
+            if (old != id)
+            {
+                if (CanOwnerIdChange(new(GetProperty<string>(nameof(OwnerId)), id)))
+                    SetProperty(nameof(OwnerId), id);
+                else
+                    throw new InvalidOperationException("Unable to set the owner identifier.");
+            }
+
+            OnOwnerIdChanged(id);
+        }
+    }
+
+    /// <summary>
+    /// Tests if the owner identifier is not null or empty.
+    /// </summary>
+    /// <returns>true if has an owner; otherwise, false.</returns>
+    /// <remarks>This is only test if the owner identifier has value but no resource validation.</remarks>
+    public bool HasOwner() => !string.IsNullOrWhiteSpace(OwnerId);
+
+    /// <inheritdoc />
+    protected override void Fill(JsonObjectNode json)
+    {
+        base.Fill(json);
+        OwnerId = json.TryGetStringTrimmedValue("owner", true);
+    }
+
+    /// <summary>
+    /// Converts to JSON object.
+    /// </summary>
+    /// <returns>A JSON object.</returns>
+    public override JsonObjectNode ToJson()
+    {
+        var json = base.ToJson();
+        json.SetValue("owner", OwnerId);
+        return json;
+    }
+
+    /// <summary>
+    /// Tests if the owner identifier can be changed to the new one.
+    /// </summary>
+    /// <param name="args">The change event arguments.</param>
+    protected virtual bool CanOwnerIdChange(ChangeEventArgs<string> args)
+        => true;
+
+    internal virtual void OnOwnerIdChanged(string id)
+    {
+    }
+}
+
+/// <summary>
+/// The user item related info.
+/// </summary>
+public abstract class RelatedResourceEntityInfo<TOwner> : RelatedResourceEntityInfo
     where TOwner : BaseResourceEntityInfo
 {
     /// <summary>
@@ -59,35 +214,6 @@ public abstract class RelatedResourceEntityInfo<TOwner> : BaseResourceEntityInfo
     }
 
     /// <summary>
-    /// Gets or sets the identifier of owner.
-    /// </summary>
-    [DataMember(Name = "owner")]
-    [JsonPropertyName("owner")]
-    [Description("The identifier of the owner.")]
-    public string OwnerId
-    {
-        get
-        {
-            return GetProperty<string>(nameof(OwnerId));
-        }
-
-        protected set
-        {
-            var id = value?.Trim();
-            if (string.IsNullOrEmpty(id)) id = null;
-            SetProperty(nameof(OwnerId), id);
-            if (id == null)
-            {
-                SetProperty(nameof(Owner), null);
-                return;
-            }
-
-            var owner = GetProperty<TOwner>(nameof(Owner));
-            if (owner != null && owner.Id != id) SetProperty(nameof(Owner), null);
-        }
-    }
-
-    /// <summary>
     /// Gets the owner resource.
     /// </summary>
     [JsonIgnore]
@@ -106,13 +232,6 @@ public abstract class RelatedResourceEntityInfo<TOwner> : BaseResourceEntityInfo
     }
 
     /// <summary>
-    /// Tests if the owner identifier is not null or empty.
-    /// </summary>
-    /// <returns>true if has an owner; otherwise, false.</returns>
-    /// <remarks>This is only test if the owner identifier has value but no resource validation.</remarks>
-    public bool HasOwner() => !string.IsNullOrWhiteSpace(OwnerId);
-
-    /// <summary>
     /// Tests if the owner is not null.
     /// </summary>
     /// <returns>true if has an owner cache; otherwise, false.</returns>
@@ -124,22 +243,16 @@ public abstract class RelatedResourceEntityInfo<TOwner> : BaseResourceEntityInfo
     public void ClearOwnerCache()
         => RemoveProperty(nameof(Owner));
 
-    /// <inheritdoc />
-    protected override void Fill(JsonObjectNode json)
+    internal override void OnOwnerIdChanged(string id)
     {
-        base.Fill(json);
-        OwnerId = json.TryGetStringTrimmedValue("owner", true);
-    }
+        if (id == null)
+        {
+            SetProperty(nameof(Owner), null);
+            return;
+        }
 
-    /// <summary>
-    /// Converts to JSON object.
-    /// </summary>
-    /// <returns>A JSON object.</returns>
-    public override JsonObjectNode ToJson()
-    {
-        var json = base.ToJson();
-        json.SetValue("owner", OwnerId);
-        return json;
+        var owner = GetProperty<TOwner>(nameof(Owner));
+        if (owner != null && owner.Id != id) SetProperty(nameof(Owner), null);
     }
 }
 

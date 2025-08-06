@@ -16,6 +16,7 @@ using Trivial.IO;
 using Trivial.Reflection;
 using Trivial.Tasks;
 using Trivial.Users;
+using Trivial.Web;
 
 namespace Trivial.Text;
 
@@ -26,231 +27,63 @@ public static class ExtendedChatMessages
 {
     internal const string AttachmentLinkItemKey = "attachment\\item";
     internal const string AttachmentLinkSetKey = "attachment\\list";
+    internal const string ProgrammingCodeKey = "text\\code";
     internal const string MarkdownKey = "text\\markdown";
 
     /// <summary>
-    /// Creates a chat message record.
+    /// Converts to saving state.
     /// </summary>
-    /// <param name="sender">The nickname of the sender.</param>
-    /// <param name="data">The message data.</param>
-    /// <param name="message">The message text.</param>
+    /// <param name="sendState">The status of sending.</param>
+    /// <returns>The saving state.</returns>
+    public static ResourceEntitySavingStates ToSavingState(ExtendedChatMessageSendResultStates sendState)
+        => sendState switch
+        {
+            ExtendedChatMessageSendResultStates.NotSend => ResourceEntitySavingStates.Local,
+            ExtendedChatMessageSendResultStates.Success => ResourceEntitySavingStates.Ready,
+            _ => ResourceEntitySavingStates.Failure
+        };
+
+    /// <summary>
+    /// Creates a chat message content to send.
+    /// </summary>
+    /// <param name="data">The data.</param>
+    /// <param name="message">The message content.</param>
     /// <param name="format">The message format.</param>
-    /// <param name="creation">The creation date time; or null if use now.</param>
-    /// <param name="info">The additional information; or null if create a new one.</param>
-    /// <returns>The chat message.</returns>
-    public static ExtendedChatMessage<AttachmentLinkItem> Create(UserItemInfo sender, AttachmentLinkItem data, string message, ExtendedChatMessageFormats format = ExtendedChatMessageFormats.Text, DateTime? creation = null, JsonObjectNode info = null)
-        => Create(Guid.NewGuid(), sender, data, message, format, creation, info);
+    /// <param name="info">The additional info.</param>
+    /// <returns>The chat message content.</returns>
+    public static ExtendedChatMessageContent<T> CreateMessageContent<T>(T data, string message, ExtendedChatMessageFormats format = ExtendedChatMessageFormats.Text, JsonObjectNode info = null) where T : IExtendedChatMessageDataDescription
+        => new(data, message, format, info);
 
     /// <summary>
-    /// Creates a chat message record.
+    /// Creates a chat message content to send.
     /// </summary>
-    /// <param name="id">The message identifier.</param>
-    /// <param name="sender">The nickname of the sender.</param>
-    /// <param name="data">The message data.</param>
-    /// <param name="message">The message text.</param>
+    /// <param name="data">The data.</param>
+    /// <param name="message">The message content.</param>
     /// <param name="format">The message format.</param>
-    /// <param name="creation">The creation date time; or null if use now.</param>
-    /// <param name="info">The additional information; or null if create a new one.</param>
-    /// <returns>The chat message.</returns>
-    public static ExtendedChatMessage<AttachmentLinkItem> Create(Guid id, UserItemInfo sender, AttachmentLinkItem data, string message, ExtendedChatMessageFormats format = ExtendedChatMessageFormats.Text, DateTime? creation = null, JsonObjectNode info = null)
-        => Create(ToIdString(id), sender, data, message, format, creation, info);
+    /// <param name="category">The optional category.</param>
+    /// <param name="info">The additional info.</param>
+    /// <returns>The chat message content.</returns>
+    public static ExtendedChatMessageContent<T> CreateMessageContent<T>(T data, string message, ExtendedChatMessageFormats format, string category, JsonObjectNode info = null) where T : IExtendedChatMessageDataDescription
+        => new(data, message, format, category, info);
 
     /// <summary>
-    /// Creates a chat message record.
+    /// Creates a chat message content to send.
     /// </summary>
-    /// <param name="id">The message identifier.</param>
-    /// <param name="sender">The nickname of the sender.</param>
-    /// <param name="data">The message data.</param>
-    /// <param name="message">The message text.</param>
-    /// <param name="format">The message format.</param>
-    /// <param name="creation">The creation date time; or null if use now.</param>
-    /// <param name="info">The additional information; or null if create a new one.</param>
-    /// <returns>The chat message.</returns>
-    public static ExtendedChatMessage<AttachmentLinkItem> Create(string id, UserItemInfo sender, AttachmentLinkItem data, string message, ExtendedChatMessageFormats format = ExtendedChatMessageFormats.Text, DateTime? creation = null, JsonObjectNode info = null)
-        => new(AttachmentLinkItemKey, id, sender, data, message, format, creation, info);
+    /// <param name="message">The message content.</param>
+    /// <param name="info">The additional info.</param>
+    /// <returns>The chat message content.</returns>
+    public static ExtendedChatMessageContent CreateMarkdownMessageContent(string message, JsonObjectNode info = null)
+        => new(message, ExtendedChatMessageFormats.Markdown, info);
 
     /// <summary>
-    /// Creates a chat message record.
+    /// Creates a chat message content to send.
     /// </summary>
-    /// <param name="json">The JSON object to parse.</param>
-    /// <returns>The chat message.</returns>
-    public static ExtendedChatMessage<AttachmentLinkItem> CreateAttachmentLinkItem(JsonObjectNode json)
-        => new(json, data => new AttachmentLinkItem(data), AttachmentLinkItemKey);
-
-    /// <summary>
-    /// Creates a chat message record.
-    /// </summary>
-    /// <param name="sender">The nickname of the sender.</param>
-    /// <param name="data">The message data.</param>
-    /// <param name="message">The message text.</param>
-    /// <param name="format">The message format.</param>
-    /// <param name="creation">The creation date time; or null if use now.</param>
-    /// <param name="info">The additional information; or null if create a new one.</param>
-    /// <returns>The chat message.</returns>
-    public static ExtendedChatMessage<AttachmentLinkSet> Create(UserItemInfo sender, AttachmentLinkSet data, string message, ExtendedChatMessageFormats format = ExtendedChatMessageFormats.Text, DateTime? creation = null, JsonObjectNode info = null)
-        => Create(Guid.NewGuid(), sender, data ?? new(), message, format, creation, info);
-
-    /// <summary>
-    /// Creates a chat message record.
-    /// </summary>
-    /// <param name="id">The message identifier.</param>
-    /// <param name="sender">The nickname of the sender.</param>
-    /// <param name="data">The message data.</param>
-    /// <param name="message">The message text.</param>
-    /// <param name="format">The message format.</param>
-    /// <param name="creation">The creation date time; or null if use now.</param>
-    /// <param name="info">The additional information; or null if create a new one.</param>
-    /// <returns>The chat message.</returns>
-    public static ExtendedChatMessage<AttachmentLinkSet> Create(Guid id, UserItemInfo sender, AttachmentLinkSet data, string message, ExtendedChatMessageFormats format = ExtendedChatMessageFormats.Text, DateTime? creation = null, JsonObjectNode info = null)
-        => Create(ToIdString(id), sender, data ?? new(), message, format, creation, info);
-
-    /// <summary>
-    /// Creates a chat message record.
-    /// </summary>
-    /// <param name="id">The message identifier.</param>
-    /// <param name="sender">The nickname of the sender.</param>
-    /// <param name="data">The message data.</param>
-    /// <param name="message">The message text.</param>
-    /// <param name="format">The message format.</param>
-    /// <param name="creation">The creation date time; or null if use now.</param>
-    /// <param name="info">The additional information; or null if create a new one.</param>
-    /// <returns>The chat message.</returns>
-    public static ExtendedChatMessage<AttachmentLinkSet> Create(string id, UserItemInfo sender, AttachmentLinkSet data, string message, ExtendedChatMessageFormats format = ExtendedChatMessageFormats.Text, DateTime? creation = null, JsonObjectNode info = null)
-        => new(AttachmentLinkSetKey, id, sender, data ?? new(), message, format, creation, info);
-
-    /// <summary>
-    /// Creates a chat message record.
-    /// </summary>
-    /// <param name="json">The JSON object to parse.</param>
-    /// <returns>The chat message.</returns>
-    public static ExtendedChatMessage<AttachmentLinkSet> CreateAttachmentLinkSet(JsonObjectNode json)
-        => new(json, data => new AttachmentLinkSet(data), AttachmentLinkSetKey);
-
-    /// <summary>
-    /// Creates a chat message record.
-    /// </summary>
-    /// <param name="factory">The data factory.</param>
-    /// <param name="sender">The nickname of the sender.</param>
-    /// <param name="data">The message data.</param>
-    /// <param name="message">The message text.</param>
-    /// <param name="format">The message format.</param>
-    /// <param name="creation">The creation date time; or null if use now.</param>
-    /// <param name="info">The additional information; or null if create a new one.</param>
-    /// <returns>The chat message.</returns>
-    public static ExtendedChatMessage<T> Create<T>(BaseExtendedChatMessageDataFactory<T> factory, UserItemInfo sender, T data, string message, ExtendedChatMessageFormats format = ExtendedChatMessageFormats.Text, DateTime? creation = null, JsonObjectNode info = null) where T : class
-        => factory?.CreateMessage(Guid.NewGuid(), sender, data, message, format, creation, info);
-
-    /// <summary>
-    /// Creates a chat message record.
-    /// </summary>
-    /// <param name="factory">The data factory.</param>
-    /// <param name="id">The message identifier.</param>
-    /// <param name="sender">The nickname of the sender.</param>
-    /// <param name="data">The message data.</param>
-    /// <param name="message">The message text.</param>
-    /// <param name="format">The message format.</param>
-    /// <param name="creation">The creation date time; or null if use now.</param>
-    /// <param name="info">The additional information; or null if create a new one.</param>
-    /// <returns>The chat message.</returns>
-    public static ExtendedChatMessage<T> Create<T>(BaseExtendedChatMessageDataFactory<T> factory, Guid id, UserItemInfo sender, T data, string message, ExtendedChatMessageFormats format = ExtendedChatMessageFormats.Text, DateTime? creation = null, JsonObjectNode info = null) where T : class
-        => factory?.CreateMessage(ToIdString(id), sender, data, message, format, creation, info);
-
-    /// <summary>
-    /// Creates a chat message record.
-    /// </summary>
-    /// <param name="factory">The data factory.</param>
-    /// <param name="id">The message identifier.</param>
-    /// <param name="sender">The nickname of the sender.</param>
-    /// <param name="data">The message data.</param>
-    /// <param name="message">The message text.</param>
-    /// <param name="format">The message format.</param>
-    /// <param name="creation">The creation date time; or null if use now.</param>
-    /// <param name="info">The additional information; or null if create a new one.</param>
-    /// <returns>The chat message.</returns>
-    public static ExtendedChatMessage<T> Create<T>(BaseExtendedChatMessageDataFactory<T> factory, string id, UserItemInfo sender, T data, string message, ExtendedChatMessageFormats format = ExtendedChatMessageFormats.Text, DateTime? creation = null, JsonObjectNode info = null) where T : class
-        => factory?.CreateMessage(id, sender, data, message, format, creation, info);
-
-    /// <summary>
-    /// Creates a chat message record.
-    /// </summary>
-    /// <param name="factory">The data factory.</param>
-    /// <param name="json">The JSON object to parse.</param>
-    /// <returns>The chat message.</returns>
-    public static ExtendedChatMessage<T> Create<T>(BaseExtendedChatMessageDataFactory<T> factory, JsonObjectNode json) where T : class
-        => factory?.CreateMessage(json);
-
-    /// <summary>
-    /// Creates a chat message record.
-    /// </summary>
-    /// <param name="languageName">The lowercase name of the programming language without whitespace.</param>
-    /// <param name="sender">The nickname of the sender.</param>
-    /// <param name="codeSnippet">The code snippet.</param>
-    /// <param name="creation">The creation date time; or null if use now.</param>
-    /// <param name="info">The additional information; or null if create a new one.</param>
-    /// <returns>The chat message.</returns>
-    public static ExtendedChatMessage CreateCodeSnippet(string languageName, UserItemInfo sender, string codeSnippet, DateTime? creation = null, JsonObjectNode info = null)
-        => new(Guid.NewGuid(), sender, codeSnippet, ExtendedChatMessageFormats.Code, creation, info, string.Concat("code\\", languageName));
-
-    /// <summary>
-    /// Creates a chat message record.
-    /// </summary>
-    /// <param name="languageName">The lowercase name of the programming language without whitespace.</param>
-    /// <param name="id">The message identifier.</param>
-    /// <param name="sender">The nickname of the sender.</param>
-    /// <param name="codeSnippet">The code snippet.</param>
-    /// <param name="creation">The creation date time; or null if use now.</param>
-    /// <param name="info">The additional information; or null if create a new one.</param>
-    /// <returns>The chat message.</returns>
-    public static ExtendedChatMessage CreateCodeSnippet(string languageName, Guid id, UserItemInfo sender, string codeSnippet, DateTime? creation = null, JsonObjectNode info = null)
-        => new(id, sender, codeSnippet, ExtendedChatMessageFormats.Code, creation, info, string.Concat("code\\", languageName));
-
-    /// <summary>
-    /// Creates a chat message record.
-    /// </summary>
-    /// <param name="languageName">The lowercase name of the programming language without whitespace.</param>
-    /// <param name="id">The message identifier.</param>
-    /// <param name="sender">The nickname of the sender.</param>
-    /// <param name="codeSnippet">The code snippet.</param>
-    /// <param name="creation">The creation date time; or null if use now.</param>
-    /// <param name="info">The additional information; or null if create a new one.</param>
-    /// <returns>The chat message.</returns>
-    public static ExtendedChatMessage CreateCodeSnippet(string languageName, string id, UserItemInfo sender, string codeSnippet, DateTime? creation = null, JsonObjectNode info = null)
-        => new(id, sender, codeSnippet, ExtendedChatMessageFormats.Code, creation, info, string.Concat("code\\", languageName));
-
-    /// <summary>
-    /// Creates a chat message record.
-    /// </summary>
-    /// <param name="sender">The nickname of the sender.</param>
-    /// <param name="markdown">The markdown text.</param>
-    /// <param name="creation">The creation date time; or null if use now.</param>
-    /// <param name="info">The additional information; or null if create a new one.</param>
-    /// <returns>The chat message.</returns>
-    public static ExtendedChatMessage CreateMarkdown(UserItemInfo sender, string markdown, DateTime? creation = null, JsonObjectNode info = null)
-        => CreateMarkdown(Guid.NewGuid(), sender, markdown, creation, info);
-
-    /// <summary>
-    /// Creates a chat message record.
-    /// </summary>
-    /// <param name="id">The message identifier.</param>
-    /// <param name="sender">The nickname of the sender.</param>
-    /// <param name="markdown">The markdown text.</param>
-    /// <param name="creation">The creation date time; or null if use now.</param>
-    /// <param name="info">The additional information; or null if create a new one.</param>
-    /// <returns>The chat message.</returns>
-    public static ExtendedChatMessage CreateMarkdown(Guid id, UserItemInfo sender, string markdown, DateTime? creation = null, JsonObjectNode info = null)
-        => new(id, sender, markdown, ExtendedChatMessageFormats.Markdown, creation, info);
-
-    /// <summary>
-    /// Creates a chat message record.
-    /// </summary>
-    /// <param name="id">The message identifier.</param>
-    /// <param name="sender">The nickname of the sender.</param>
-    /// <param name="markdown">The markdown text.</param>
-    /// <param name="creation">The creation date time; or null if use now.</param>
-    /// <param name="info">The additional information; or null if create a new one.</param>
-    /// <returns>The chat message.</returns>
-    public static ExtendedChatMessage CreateMarkdown(string id, UserItemInfo sender, string markdown, DateTime? creation = null, JsonObjectNode info = null)
-        => new(id, sender, markdown, ExtendedChatMessageFormats.Markdown, creation, info);
+    /// <param name="message">The message content.</param>
+    /// <param name="category">The optional category.</param>
+    /// <param name="info">The additional info.</param>
+    /// <returns>The chat message content.</returns>
+    public static ExtendedChatMessageContent CreateMarkdownMessageContent(string message, string category, JsonObjectNode info = null)
+        => new(message, ExtendedChatMessageFormats.Markdown, category, info);
 
     /// <summary>
     /// Tests if the message contains an attachment item.

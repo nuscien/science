@@ -22,6 +22,7 @@ namespace Trivial.Devices;
 /// The device item information.
 /// </summary>
 [JsonConverter(typeof(AuthDeviceItemInfoConverter))]
+[Guid("C01695B0-CA1C-4DED-8149-A149E55294DB")]
 public class AuthDeviceItemInfo : BaseUserItemInfo
 {
     /// <summary>

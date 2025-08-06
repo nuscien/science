@@ -21,6 +21,7 @@ namespace Trivial.Users;
 /// The bot item information.
 /// </summary>
 [JsonConverter(typeof(BotAccountItemInfoConverter))]
+[Guid("50381EBC-FAA7-41C9-B56C-32B0F82DF482")]
 public class BotAccountItemInfo : BaseUserItemInfo
 {
     /// <summary>

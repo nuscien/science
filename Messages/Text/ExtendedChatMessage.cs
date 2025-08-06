@@ -5,15 +5,18 @@ using System.ComponentModel;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.Threading;
 using System.Threading.Tasks;
 using Trivial.Collection;
 using Trivial.Data;
 using Trivial.Reflection;
 using Trivial.Tasks;
 using Trivial.Users;
+using Trivial.Web;
 
 namespace Trivial.Text;
 
@@ -21,7 +24,8 @@ namespace Trivial.Text;
 /// The chat message record.
 /// </summary>
 [JsonConverter(typeof(ExtendedChatMessageConverter.InternalConverter))]
-public class ExtendedChatMessage : BaseResourceEntityInfo
+[Guid("CD8B6B09-1423-4A83-A707-9FD0A9830C70")]
+public class ExtendedChatMessage : RelatedResourceEntityInfo
 {
     /// <summary>
     /// Initializes a new instance of the ExtendedChatMessage class.
@@ -31,20 +35,35 @@ public class ExtendedChatMessage : BaseResourceEntityInfo
     /// <param name="creation">The creation date time; or null if use now.</param>
     /// <param name="info">The additional information; or null if create a new one.</param>
     public ExtendedChatMessage(BaseUserItemInfo sender, string message, DateTime? creation = null, JsonObjectNode info = null)
-        : this(Guid.NewGuid(), sender, message, ExtendedChatMessageFormats.Text, creation, info, null)
+        : this(Guid.NewGuid(), null as BaseResourceEntityInfo, sender, new(message, ExtendedChatMessageFormats.Text, info), creation)
     {
     }
 
     /// <summary>
     /// Initializes a new instance of the ExtendedChatMessage class.
     /// </summary>
+    /// <param name="conversation">The conversation instance as owner of this chat message.</param>
     /// <param name="sender">The nickname of the sender.</param>
     /// <param name="message">The message text.</param>
     /// <param name="format">The message format.</param>
     /// <param name="creation">The creation date time; or null if use now.</param>
     /// <param name="info">The additional information; or null if create a new one.</param>
-    public ExtendedChatMessage(BaseUserItemInfo sender, string message, ExtendedChatMessageFormats format, DateTime? creation = null, JsonObjectNode info = null)
-        : this(Guid.NewGuid(), sender, message, format, creation, info, null)
+    public ExtendedChatMessage(ExtendedChatConversation conversation, BaseUserItemInfo sender, string message, ExtendedChatMessageFormats format = ExtendedChatMessageFormats.Text, DateTime? creation = null, JsonObjectNode info = null)
+        : this(Guid.NewGuid(), conversation?.Source, sender, new(message, format, info), creation)
+    {
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the ExtendedChatMessage class.
+    /// </summary>
+    /// <param name="conversation">The conversation instance as owner of this chat message.</param>
+    /// <param name="sender">The nickname of the sender.</param>
+    /// <param name="message">The message text.</param>
+    /// <param name="format">The message format.</param>
+    /// <param name="creation">The creation date time; or null if use now.</param>
+    /// <param name="info">The additional information; or null if create a new one.</param>
+    public ExtendedChatMessage(BaseResourceEntityInfo conversation, BaseUserItemInfo sender, string message, ExtendedChatMessageFormats format = ExtendedChatMessageFormats.Text, DateTime? creation = null, JsonObjectNode info = null)
+        : this(Guid.NewGuid(), conversation, sender, new(message, format, info), creation)
     {
     }
 
@@ -52,14 +71,12 @@ public class ExtendedChatMessage : BaseResourceEntityInfo
     /// Initializes a new instance of the ExtendedChatMessage class.
     /// </summary>
     /// <param name="id">The message identifier.</param>
+    /// <param name="conversation">The conversation instance as owner of this chat message.</param>
     /// <param name="sender">The nickname of the sender.</param>
-    /// <param name="message">The message text.</param>
-    /// <param name="format">The message format.</param>
+    /// <param name="content">The message content.</param>
     /// <param name="creation">The creation date time; or null if use now.</param>
-    /// <param name="info">The additional information; or null if create a new one.</param>
-    /// <param name="type">The message type.</param>
-    public ExtendedChatMessage(Guid id, BaseUserItemInfo sender, string message, ExtendedChatMessageFormats format = ExtendedChatMessageFormats.Text, DateTime? creation = null, JsonObjectNode info = null, string type = null)
-        : this(ExtendedChatMessages.ToIdString(id), sender, message, format, creation, info, type)
+    public ExtendedChatMessage(Guid id, ExtendedChatConversation conversation, BaseUserItemInfo sender, ExtendedChatMessageContent content, DateTime? creation = null)
+        : this(ExtendedChatMessages.ToIdString(id), conversation?.Id, sender, content, creation)
     {
     }
 
@@ -67,20 +84,78 @@ public class ExtendedChatMessage : BaseResourceEntityInfo
     /// Initializes a new instance of the ExtendedChatMessage class.
     /// </summary>
     /// <param name="id">The message identifier.</param>
+    /// <param name="conversation">The conversation instance as owner of this chat message.</param>
     /// <param name="sender">The nickname of the sender.</param>
-    /// <param name="message">The message text.</param>
-    /// <param name="format">The message format.</param>
+    /// <param name="content">The message content.</param>
     /// <param name="creation">The creation date time; or null if use now.</param>
-    /// <param name="info">The additional information; or null if create a new one.</param>
-    /// <param name="type">The message type.</param>
-    public ExtendedChatMessage(string id, BaseUserItemInfo sender, string message, ExtendedChatMessageFormats format = ExtendedChatMessageFormats.Text, DateTime? creation = null, JsonObjectNode info = null, string type = null)
-        : base(id, creation)
+    public ExtendedChatMessage(Guid id, BaseResourceEntityInfo conversation, BaseUserItemInfo sender, ExtendedChatMessageContent content, DateTime? creation = null)
+        : this(ExtendedChatMessages.ToIdString(id), conversation?.Id, sender, content, creation)
+    {
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the ExtendedChatMessage class.
+    /// </summary>
+    /// <param name="id">The message identifier.</param>
+    /// <param name="conversation">The conversation instance as owner of this chat message.</param>
+    /// <param name="sender">The nickname of the sender.</param>
+    /// <param name="content">The message content.</param>
+    /// <param name="creation">The creation date time; or null if use now.</param>
+    public ExtendedChatMessage(Guid id, string conversation, BaseUserItemInfo sender, ExtendedChatMessageContent content, DateTime? creation = null)
+        : this(ExtendedChatMessages.ToIdString(id), conversation, sender, content, creation)
+    {
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the ExtendedChatMessage class.
+    /// </summary>
+    /// <param name="id">The message identifier.</param>
+    /// <param name="conversation">The conversation instance as owner of this chat message.</param>
+    /// <param name="sender">The nickname of the sender.</param>
+    /// <param name="content">The message content.</param>
+    /// <param name="creation">The creation date time; or null if use now.</param>
+    public ExtendedChatMessage(string id, ExtendedChatConversation conversation, BaseUserItemInfo sender, ExtendedChatMessageContent content, DateTime? creation = null)
+        : this(id, conversation?.Id, sender, content, creation)
+    {
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the ExtendedChatMessage class.
+    /// </summary>
+    /// <param name="id">The message identifier.</param>
+    /// <param name="conversation">The conversation instance as owner of this chat message.</param>
+    /// <param name="sender">The nickname of the sender.</param>
+    /// <param name="content">The message content.</param>
+    /// <param name="creation">The creation date time; or null if use now.</param>
+    public ExtendedChatMessage(string id, BaseResourceEntityInfo conversation, BaseUserItemInfo sender, ExtendedChatMessageContent content, DateTime? creation = null)
+        : this(id, conversation?.Id, sender, content, creation)
+    {
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the ExtendedChatMessage class.
+    /// </summary>
+    /// <param name="id">The message identifier.</param>
+    /// <param name="conversation">The conversation instance as owner of this chat message.</param>
+    /// <param name="sender">The nickname of the sender.</param>
+    /// <param name="content">The message content.</param>
+    /// <param name="creation">The creation date time; or null if use now.</param>
+    public ExtendedChatMessage(string id, string conversation, BaseUserItemInfo sender, ExtendedChatMessageContent content, DateTime? creation = null)
+        : base(id, conversation, creation)
     {
         SetProperty(nameof(Sender), sender);
-        SetProperty(nameof(Message), message);
-        SetProperty(nameof(MessageFormat), format);
-        if (!string.IsNullOrEmpty(type)) SetProperty(nameof(MessageType), type);
-        Info = info ?? new();
+        if (content == null)
+        {
+            Info = new();
+            return;
+        }
+
+        SetProperty(nameof(Message), content.Message);
+        SetProperty(nameof(MessageFormat), content.MessageFormat);
+        SetProperty(nameof(Category), content.Category);
+        SetProperty(nameof(Priority), content.Priority);
+        if (!string.IsNullOrEmpty(content.MessageType)) SetProperty(nameof(MessageType), content.MessageType);
+        Info = content.Info ?? new();
     }
 
     /// <summary>
@@ -120,7 +195,8 @@ public class ExtendedChatMessage : BaseResourceEntityInfo
 
         set
         {
-            if (!SetCurrentProperty(value)) return;
+            var s = GetCurrentProperty<string>();
+            if (!SetCurrentProperty(value) || s == null) return;
             if (GetProperty<ChatMessageModificationKinds>(nameof(ModificationKind)) != ChatMessageModificationKinds.Original)
                 SetProperty(nameof(ModificationKind), ChatMessageModificationKinds.Modified);
             SetProperty(nameof(LastModificationTime), DateTime.Now);
@@ -189,12 +265,18 @@ public class ExtendedChatMessage : BaseResourceEntityInfo
         base.Fill(json);
         SetProperty(nameof(Sender), AccountEntityInfoConverter.Convert(json.TryGetObjectValue("sender")));
         SetProperty(nameof(Message), json.TryGetStringValue("text") ?? json.TryGetStringValue("message"));
-        SetProperty(nameof(MessageType), json.TryGetStringTrimmedValue("type", true));
+        var messageType = json.TryGetStringTrimmedValue("type", true);
+        SetProperty(nameof(MessageType), messageType);
         SetProperty(nameof(MessageFormat), json.TryGetEnumValue<ExtendedChatMessageFormats>("format") ?? ExtendedChatMessageFormats.Text);
         SetProperty(nameof(Priority), json.TryGetEnumValue<BasicPriorities>("priority") ?? BasicPriorities.Normal);
         Info = json.TryGetObjectValue("info") ?? new();
         Category = json.TryGetStringTrimmedValue("category", true);
-        SetProperty("Data", json.TryGetObjectValue("data"));
+        var data = json.TryGetObjectValue("data");
+        if (data == null) return;
+        SetProperty("Data", data);
+        if (messageType != null) return;
+        messageType = data.Schema;
+        if (!string.IsNullOrWhiteSpace(messageType)) SetProperty(nameof(MessageType), messageType);
     }
 
     /// <summary>
@@ -277,6 +359,59 @@ public class ExtendedChatMessage : BaseResourceEntityInfo
     }
 
     /// <summary>
+    /// Updates the saving status of this entity.
+    /// </summary>
+    /// <param name="state">The new state.</param>
+    /// <param name="message">The additional message about this saving status.</param>
+    public void UpdateSavingStatus(ExtendedChatMessageSendResultStates state, string message = null)
+        => GetSendResult().Update(state, message);
+
+    /// <summary>
+    /// Updates the saving status of this entity.
+    /// </summary>
+    /// <param name="ex">The exception thrown during saving.</param>
+    public new void UpdateSavingStatus(Exception ex)
+        => GetSendResult().Update(ex);
+
+    /// <summary>
+    /// Updates the saving status of this entity.
+    /// </summary>
+    /// <param name="ex">The exception thrown during saving.</param>
+    /// <param name="result">The message send result.</param>
+    internal void UpdateSavingStatus(Exception ex, out ExtendedChatMessageSendResult result)
+    {
+        result = GetSendResult();
+        result.Update(ex);
+    }
+
+    /// <summary>
+    /// Updates the saving status of this entity.
+    /// </summary>
+    /// <param name="resp">The action result.</param>
+    internal void UpdateSavingStatus(ExtendedChatMessageSendResult resp)
+    {
+        if (resp == null || resp.State == ResourceEntitySavingStates.Ready || resp.SendStatus == ExtendedChatMessageSendResultStates.Success)
+        {
+            UpdateSavingStatus(ResourceEntitySavingStates.Ready);
+            return;
+        }
+
+        var status = GetSendResult();
+        status.Update(resp.SendStatus, resp.Message);
+        status.Info.SetRange(resp.Info);
+    }
+
+    private ExtendedChatMessageSendResult GetSendResult()
+    {
+        if (LastSavingStatus is ExtendedChatMessageSendResult status) return status;
+        status = new ExtendedChatMessageSendResult();
+        var current = LastSavingStatus;
+        if (current is not null) status.Update(current.State, current.Message);
+        SetProperty(nameof(LastSavingStatus), status);
+        return status;
+    }
+
+    /// <summary>
     /// Converts the JSON raw back.
     /// </summary>
     /// <param name="value">The source value.</param>
@@ -286,11 +421,60 @@ public class ExtendedChatMessage : BaseResourceEntityInfo
         if (value is null) return null;
         var type = value.TryGetStringTrimmedValue("type", true)?.ToLowerInvariant();
         if (type == null) return new(value);
+        if (type.StartsWith("text\\") || type.StartsWith("text/") || (!type.Contains("\\") && !type.Contains("/")))
+        {
+            var program = type switch
+            {
+                JsonValues.JsonMIME or "text\\json" or "json" or ".json" => "json",
+                "text/x-csharp" or "text\\csharp" or "c#" or "csharp" or "c#" or ".cs" => "csharp",
+                WebFormat.JavaScriptMIME or "text\\javascript" or "text\\ecmascript" or "javascript" or "ecmascript" or "js" or ".js" or ".esm" => "javascript",
+                WebFormat.YamlMIME or "text\\yaml" or "yaml" => "yaml",
+                WebFormat.MarkdownMIME or "text\\md" or "text\\markdown" or "markdown" or ".md" => "markdown",
+                WebFormat.XmlMIME or "text\\xml" or "xml" or ".xml" or ".settings" => "xml",
+                WebFormat.SvgMIME or "text\\svg" or "svg" or ".svg" => "svg",
+                "text/x-python" or "text\\python" or "python" or ".py" or ".py2" or ".py3" or ".pyw" => "python",
+                "text/x-chdr" or "text\\c" or "text/x-c" or ".c" or ".cc" or ".cxx" or ".dic" or ".h" => "c",
+                "text\\cpp" or "c++" or "hh" or "hpp" or ".cpp" => "cpp",
+                "text/x-golang" or "text\\golang" or "text\\go" or "golang" or ".go" => "go",
+                "text/x-java-source" or "text\\java" or ".java" => "java",
+                "text/x-qsharp" or "text\\qsharp" or "qsharp" or "q#" or ".qs" => "qsharp",
+                JsonValues.JsonlMIME or "text\\jsonl" or "jsonl" => "jsonl",
+                _ => null
+            };
+            if (program != null)
+            {
+                var msg = new ExtendedChatMessage<ProgrammingCodeSnippetInfo>(value, null, ExtendedChatMessages.ProgrammingCodeKey);
+                if (msg.Data == null) return new(value);
+                msg.Data.Language = program;
+                return msg;
+            }
+        }
+        else if (type.StartsWith("code\\") && type.Length > 5)
+        {
+            var program = type.Substring(5);
+            var msg = new ExtendedChatMessage<ProgrammingCodeSnippetInfo>(value, null, ExtendedChatMessages.ProgrammingCodeKey);
+            if (msg.Data == null) return new(value);
+            msg.Data.Language = program;
+            return msg;
+        }
+
+        if (type.StartsWith("text\\") || type.StartsWith("text/"))
+        {
+            if (type == ExtendedChatMessages.ProgrammingCodeKey) return new ExtendedChatMessage<AttachmentLinkSet>(value, null);
+            var data = value.TryGetObjectValue("data");
+            if (data is null) return new(value);
+            var language = data.TryGetStringTrimmedValue("language", true);
+            if (language != null) return new ExtendedChatMessage<ProgrammingCodeSnippetInfo>(value, null);
+            var msg = new ExtendedChatMessage<ProgrammingCodeSnippetInfo>(value, null, ExtendedChatMessages.ProgrammingCodeKey);
+            msg.Data.Language = language;
+        }
+
         return type switch
         {
             ExtendedChatMessages.AttachmentLinkItemKey => new ExtendedChatMessage<AttachmentLinkItem>(value, json => new AttachmentLinkItem(json), type),
             ExtendedChatMessages.AttachmentLinkSetKey => new ExtendedChatMessage<AttachmentLinkSet>(value, json => new AttachmentLinkSet(json), type),
-            ExtendedChatMessages.MarkdownKey or "text\\md" or "text/markdown" or "markdown" => new ExtendedChatMessage<ExtendedChatMessageTextData>(value, json => new ExtendedChatMessageTextData(json), ExtendedChatMessages.MarkdownKey),
+            ExtendedChatMessages.ProgrammingCodeKey => new ExtendedChatMessage<ProgrammingCodeSnippetInfo>(value, null),
+            ExtendedChatMessages.MarkdownKey or "text\\md" or "text/markdown" or "markdown" or ".md" => new ExtendedChatMessage<ProgrammingCodeSnippetInfo>(value, null, ExtendedChatMessages.MarkdownKey),
             _ => new(value)
         };
     }
@@ -315,14 +499,15 @@ public class ExtendedChatMessage<T> : ExtendedChatMessage where T : class
     /// Initializes a new instance of the ExtendedChatMessage class.
     /// </summary>
     /// <param name="type">The message type.</param>
+    /// <param name="conversation">The conversation instance as owner of this chat message.</param>
     /// <param name="sender">The nickname of the sender.</param>
     /// <param name="data">The message data.</param>
     /// <param name="message">The message text.</param>
     /// <param name="format">The message format.</param>
     /// <param name="creation">The creation date time; or null if use now.</param>
     /// <param name="info">The additional information; or null if create a new one.</param>
-    protected ExtendedChatMessage(string type, UserItemInfo sender, T data, string message, ExtendedChatMessageFormats format = ExtendedChatMessageFormats.Text, DateTime? creation = null, JsonObjectNode info = null)
-        : this(type, Guid.NewGuid(), sender, data, message, format, creation, info)
+    protected ExtendedChatMessage(string type, BaseResourceEntityInfo conversation, UserItemInfo sender, T data, string message, ExtendedChatMessageFormats format = ExtendedChatMessageFormats.Text, DateTime? creation = null, JsonObjectNode info = null)
+        : this(Guid.NewGuid(), conversation, sender, new(type, data, message, format, info), creation)
     {
     }
 
@@ -330,33 +515,95 @@ public class ExtendedChatMessage<T> : ExtendedChatMessage where T : class
     /// Initializes a new instance of the ExtendedChatMessage class.
     /// </summary>
     /// <param name="type">The message type.</param>
-    /// <param name="id">The message identifier.</param>
+    /// <param name="conversation">The conversation instance as owner of this chat message.</param>
     /// <param name="sender">The nickname of the sender.</param>
     /// <param name="data">The message data.</param>
     /// <param name="message">The message text.</param>
     /// <param name="format">The message format.</param>
     /// <param name="creation">The creation date time; or null if use now.</param>
     /// <param name="info">The additional information; or null if create a new one.</param>
-    protected ExtendedChatMessage(string type, Guid id, UserItemInfo sender, T data, string message, ExtendedChatMessageFormats format = ExtendedChatMessageFormats.Text, DateTime? creation = null, JsonObjectNode info = null)
-        : this(type, ExtendedChatMessages.ToIdString(id), sender, data, message, format, creation, info)
+    protected ExtendedChatMessage(string type, ExtendedChatConversation conversation, UserItemInfo sender, T data, string message, ExtendedChatMessageFormats format = ExtendedChatMessageFormats.Text, DateTime? creation = null, JsonObjectNode info = null)
+        : this(Guid.NewGuid(), conversation, sender, new(type, data, message, format, info), creation)
     {
     }
 
     /// <summary>
     /// Initializes a new instance of the ExtendedChatMessage class.
     /// </summary>
-    /// <param name="type">The message type.</param>
     /// <param name="id">The message identifier.</param>
+    /// <param name="conversation">The conversation instance as owner of this chat message.</param>
     /// <param name="sender">The nickname of the sender.</param>
-    /// <param name="data">The message data.</param>
-    /// <param name="message">The message text.</param>
-    /// <param name="format">The message format.</param>
+    /// <param name="content">The message content.</param>
     /// <param name="creation">The creation date time; or null if use now.</param>
-    /// <param name="info">The additional information; or null if create a new one.</param>
-    protected internal ExtendedChatMessage(string type, string id, UserItemInfo sender, T data, string message, ExtendedChatMessageFormats format = ExtendedChatMessageFormats.Text, DateTime? creation = null, JsonObjectNode info = null)
-        : base(id, sender, message, format, creation, info, type)
+    protected ExtendedChatMessage(Guid id, BaseResourceEntityInfo conversation, UserItemInfo sender, ExtendedChatMessageContent<T> content, DateTime? creation = null)
+        : this(ExtendedChatMessages.ToIdString(id), conversation?.Id, sender, content, creation)
     {
-        Data = data;
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the ExtendedChatMessage class.
+    /// </summary>
+    /// <param name="id">The message identifier.</param>
+    /// <param name="conversation">The conversation instance as owner of this chat message.</param>
+    /// <param name="sender">The nickname of the sender.</param>
+    /// <param name="content">The message content.</param>
+    /// <param name="creation">The creation date time; or null if use now.</param>
+    protected ExtendedChatMessage(Guid id, ExtendedChatConversation conversation, UserItemInfo sender, ExtendedChatMessageContent<T> content, DateTime? creation = null)
+        : this(ExtendedChatMessages.ToIdString(id), conversation?.Id, sender, content, creation)
+    {
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the ExtendedChatMessage class.
+    /// </summary>
+    /// <param name="id">The message identifier.</param>
+    /// <param name="conversation">The conversation instance as owner of this chat message.</param>
+    /// <param name="sender">The nickname of the sender.</param>
+    /// <param name="content">The message content.</param>
+    /// <param name="creation">The creation date time; or null if use now.</param>
+    protected ExtendedChatMessage(Guid id, string conversation, UserItemInfo sender, ExtendedChatMessageContent<T> content, DateTime? creation = null)
+        : this(ExtendedChatMessages.ToIdString(id), conversation, sender, content, creation)
+    {
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the ExtendedChatMessage class.
+    /// </summary>
+    /// <param name="id">The message identifier.</param>
+    /// <param name="conversation">The conversation instance as owner of this chat message.</param>
+    /// <param name="sender">The nickname of the sender.</param>
+    /// <param name="content">The message content.</param>
+    /// <param name="creation">The creation date time; or null if use now.</param>
+    protected internal ExtendedChatMessage(string id, BaseResourceEntityInfo conversation, UserItemInfo sender, ExtendedChatMessageContent<T> content, DateTime? creation = null)
+        : this(id, conversation?.Id, sender, content, creation)
+    {
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the ExtendedChatMessage class.
+    /// </summary>
+    /// <param name="id">The message identifier.</param>
+    /// <param name="conversation">The conversation instance as owner of this chat message.</param>
+    /// <param name="sender">The nickname of the sender.</param>
+    /// <param name="content">The message content.</param>
+    /// <param name="creation">The creation date time; or null if use now.</param>
+    protected internal ExtendedChatMessage(string id, ExtendedChatConversation conversation, UserItemInfo sender, ExtendedChatMessageContent<T> content, DateTime? creation = null)
+        : this(id, conversation?.Id, sender, content, creation)
+    {
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the ExtendedChatMessage class.
+    /// </summary>
+    /// <param name="id">The message identifier.</param>
+    /// <param name="conversation">The conversation instance as owner of this chat message.</param>
+    /// <param name="sender">The nickname of the sender.</param>
+    /// <param name="content">The message content.</param>
+    /// <param name="creation">The creation date time; or null if use now.</param>
+    protected internal ExtendedChatMessage(string id, string conversation, UserItemInfo sender, ExtendedChatMessageContent<T> content, DateTime? creation = null)
+        : base(id, conversation, sender, content, creation)
+    {
+        if (content != null) Data = content.Data;
     }
 
     /// <summary>
@@ -389,10 +636,10 @@ public class ExtendedChatMessage<T> : ExtendedChatMessage where T : class
         if (data == null)
         {
             var s = json.TryGetStringTrimmedValue("data", true);
-            if (s == null || dataConverter == null) return;
+            if (s == null) return;
             if (s.StartsWith("{") && s.StartsWith("}")) data = JsonObjectNode.TryParse(s);
             else if (s.StartsWith("[") || s.StartsWith("<")) return;
-            else data = new()
+            else if (dataConverter != null) data = new()
             {
                 { "value", s }
             };

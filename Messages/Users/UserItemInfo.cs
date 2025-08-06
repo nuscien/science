@@ -113,6 +113,7 @@ public abstract class BaseUserItemInfo : BaseAccountEntityInfo
 /// The user item information.
 /// </summary>
 [JsonConverter(typeof(UserItemInfoConverter))]
+[Guid("31309158-4064-4C32-A865-BED57EA88684")]
 public class UserItemInfo : BaseUserItemInfo
 {
     /// <summary>

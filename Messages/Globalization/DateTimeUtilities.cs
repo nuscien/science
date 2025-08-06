@@ -27,7 +27,7 @@ public static class DateTimeUtilities
         if (time.Minute > 45)
         {
             h++;
-            if (h > 12) h -= 12;
+            if (h > 11) h -= 12;
             return clockEmojiItems[h];
         }
 

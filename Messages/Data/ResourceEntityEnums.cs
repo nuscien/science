@@ -91,3 +91,39 @@ public enum ResourceEntityOrders : byte
     /// </summary>
     Z2A = 4
 }
+
+/// <summary>
+/// The state of saving resource entity.
+/// </summary>
+public enum ResourceEntitySavingStates : byte
+{
+    /// <summary>
+    /// Available to save, or unknown state.
+    /// </summary>
+    Ready = 0,
+
+    /// <summary>
+    /// Offline initialization before saving.
+    /// </summary>
+    Local = 1,
+
+    /// <summary>
+    /// Working on saving.
+    /// </summary>
+    Saving = 2,
+
+    /// <summary>
+    /// Save failed.
+    /// </summary>
+    Failure = 3,
+
+    /// <summary>
+    /// Disable to save any more.
+    /// </summary>
+    Disabled = 6,
+
+    /// <summary>
+    /// Unknown state.
+    /// </summary>
+    Unknown = 7,
+}

@@ -27,7 +27,9 @@ public enum ChatMessageModificationKinds : byte
     Original = 0,
 
     /// <summary>
-    /// The streaming message which means the message is transferring by continious updating.
+    /// The message is currently streaming.
+    /// It means the message is transferring by continious updating for this while.
+    /// It will be original or other one if it streams completed.
     /// </summary>
     Streaming = 1,
 
@@ -42,7 +44,7 @@ public enum ChatMessageModificationKinds : byte
     Collaborative = 3,
 
     /// <summary>
-    /// The message has been removed by sender.
+    /// The message has been removed by sender or admin.
     /// </summary>
     Removed = 5,
 
@@ -73,12 +75,105 @@ public enum ExtendedChatMessageFormats : byte
     Markdown = 2,
 
     /// <summary>
-    /// The code.
+    /// The JSON object.
     /// </summary>
-    Code = 5,
+    Json = 5,
 
     /// <summary>
     /// The text is hidden but shows in the details view if available.
     /// </summary>
     Hidden = 7,
+}
+
+/// <summary>
+/// The states of send result for chat message.
+/// </summary>
+public enum ExtendedChatMessageSendResultStates : byte
+{
+    /// <summary>
+    /// Not send.
+    /// </summary>
+    NotSend = 0,
+
+    /// <summary>
+    /// Success.
+    /// </summary>
+    Success = 1,
+
+    /// <summary>
+    /// Network issue or timeout.
+    /// </summary>
+    NetworkIssue = 2,
+
+    /// <summary>
+    /// Unauthorized or fobidden to send.
+    /// </summary>
+    Forbidden = 3,
+
+    /// <summary>
+    /// Traffic limitation for connection.
+    /// </summary>
+    Throttle = 4,
+
+    /// <summary>
+    /// Format error or invalid request.
+    /// </summary>
+    RequestError = 5,
+
+    /// <summary>
+    /// Client error.
+    /// </summary>
+    ClientError = 6,
+
+    /// <summary>
+    /// Unknown server-side error.
+    /// </summary>
+    ServerError = 7,
+
+    /// <summary>
+    /// Unsupported operation or feature.
+    /// </summary>
+    Unsupported = 8,
+
+    /// <summary>
+    /// Canceled.
+    /// </summary>
+    Aborted = 9,
+
+    /// <summary>
+    /// Other error.
+    /// </summary>
+    OtherError = 10,
+}
+
+/// <summary>
+/// The basic management levels of the chat message, e.g. can delete, modify.
+/// </summary>
+[Flags]
+public enum ExtendedChatMessageManagementLevels : byte
+{
+    /// <summary>
+    /// No permission.
+    /// </summary>
+    None = 0,
+
+    /// <summary>
+    /// Markable.
+    /// </summary>
+    Mark = 1,
+
+    /// <summary>
+    /// Modifiable.
+    /// </summary>
+    Modification = 2,
+
+    /// <summary>
+    /// Removable.
+    /// </summary>
+    Deletion = 4,
+
+    /// <summary>
+    /// Modification and deletion permissions.
+    /// </summary>
+    All = 15
 }

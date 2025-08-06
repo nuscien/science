@@ -24,7 +24,7 @@ namespace Trivial.Data;
 /// The attachment link item model.
 /// </summary>
 [JsonConverter(typeof(AttachmentLinkItemConverter))]
-public class AttachmentLinkItem : BaseObservableProperties, IJsonObjectHost
+public class AttachmentLinkItem : BaseObservableProperties, IJsonObjectHost, IExtendedChatMessageDataDescription
 {
     /// <summary>
     /// Initializes a new instance of the AttachmentLinkItem class.
@@ -74,6 +74,8 @@ public class AttachmentLinkItem : BaseObservableProperties, IJsonObjectHost
         SetProperty(nameof(Thumbnail), json.TryGetUriValue("thumbnail") ?? json.TryGetUriValue("thumb"));
         SetProperty("Info", json.TryGetObjectValue("info") ?? new());
     }
+
+    string IExtendedChatMessageDataDescription.MessageType => ExtendedChatMessages.AttachmentLinkItemKey;
 
     /// <summary>
     /// Gets the URI of the attachment.
@@ -130,44 +132,6 @@ public class AttachmentLinkItem : BaseObservableProperties, IJsonObjectHost
         if (info != null && info.Count > 0) json.SetValue("info", info);
         return json;
     }
-
-    /// <summary>
-    /// Creates a chat message record.
-    /// </summary>
-    /// <param name="sender">The nickname of the sender.</param>
-    /// <param name="message">The message text.</param>
-    /// <param name="format">The message format.</param>
-    /// <param name="creation">The creation date time; or null if use now.</param>
-    /// <param name="info">The additional information; or null if create a new one.</param>
-    /// <returns>The chat message.</returns>
-    public ExtendedChatMessage<AttachmentLinkItem> CreateMessage(UserItemInfo sender, string message, ExtendedChatMessageFormats format = ExtendedChatMessageFormats.Text, DateTime? creation = null, JsonObjectNode info = null)
-        => CreateMessage(Guid.NewGuid(), sender, message, format, creation, info);
-
-    /// <summary>
-    /// Creates a chat message record.
-    /// </summary>
-    /// <param name="id">The message identifier.</param>
-    /// <param name="sender">The nickname of the sender.</param>
-    /// <param name="message">The message text.</param>
-    /// <param name="format">The message format.</param>
-    /// <param name="creation">The creation date time; or null if use now.</param>
-    /// <param name="info">The additional information; or null if create a new one.</param>
-    /// <returns>The chat message.</returns>
-    public ExtendedChatMessage<AttachmentLinkItem> CreateMessage(Guid id, UserItemInfo sender, string message, ExtendedChatMessageFormats format = ExtendedChatMessageFormats.Text, DateTime? creation = null, JsonObjectNode info = null)
-        => CreateMessage(ExtendedChatMessages.ToIdString(id), sender, message, format, creation, info);
-
-    /// <summary>
-    /// Creates a chat message record.
-    /// </summary>
-    /// <param name="id">The message identifier.</param>
-    /// <param name="sender">The nickname of the sender.</param>
-    /// <param name="message">The message text.</param>
-    /// <param name="format">The message format.</param>
-    /// <param name="creation">The creation date time; or null if use now.</param>
-    /// <param name="info">The additional information; or null if create a new one.</param>
-    /// <returns>The chat message.</returns>
-    public ExtendedChatMessage<AttachmentLinkItem> CreateMessage(string id, UserItemInfo sender, string message, ExtendedChatMessageFormats format = ExtendedChatMessageFormats.Text, DateTime? creation = null, JsonObjectNode info = null)
-        => new(ExtendedChatMessages.AttachmentLinkItemKey, id, sender, this, message, format, creation, info);
 
     /// <summary>
     /// Pluses two angles.

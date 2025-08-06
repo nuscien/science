@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Reflection;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.Json;
 using System.Threading;
@@ -18,6 +19,7 @@ namespace Trivial.Tasks;
 /// <summary>
 /// The API with JSON operation set.
 /// </summary>
+[Guid("8185B70A-E313-4944-A55D-042C50DF4D59")]
 public class JsonOperationApi : IJsonObjectHost
 {
     private readonly Dictionary<string, JsonOperationInfo> ops = new();
