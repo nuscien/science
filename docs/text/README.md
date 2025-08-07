@@ -6,5 +6,5 @@ In `Trivial.Text` namespace of `Trivial.Maths.dll` library.
 
 In `Trivial.Text` namespace of `Trivial.Messages.dll` library.
 
-- [Extended chat](./chat)
+- [Chat with extended message](./chat)
 - [Locale JSON property](./json)

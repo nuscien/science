@@ -9,6 +9,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Trivial.Collection;
 using Trivial.Data;
+using Trivial.Reflection;
 using Trivial.Tasks;
 using Trivial.Users;
 
@@ -103,31 +104,38 @@ public abstract class BaseExtendedChatClient(BaseUserItemInfo sender)
     /// <exception cref="OperationCanceledException">The token has had cancellation requested.</exception>
     /// <exception cref="ArgumentNullException">conversation was null.</exception>
     /// <exception cref="ArgumentException">The request message is not valid.</exception>
-    public async Task<ExtendedChatMessage> SendAsync(ExtendedChatConversation conversation, ExtendedChatMessageContent message, object parameter, CancellationToken cancellationToken = default)
+    public async Task<ExtendedChatMessage> SendAsync(ExtendedChatConversation conversation, ExtendedChatMessageContent message, ExtendedChatMessageParameter parameter, CancellationToken cancellationToken = default)
     {
         if (message == null) return null;
         if (conversation == null) throw new ArgumentNullException(nameof(conversation), "conversation was null.");
         conversation.ThrowIfCannotSend();
+        parameter ??= new();
         var msg = new ExtendedChatMessage(Guid.NewGuid(), conversation, Sender, message, null)
         {
             State = ResourceEntityStates.Publishing
         };
         conversation.History.Add(msg);
+        parameter.SendStatus = ExtendedChatMessageSendResultStates.NotSend;
+        parameter.Begin(msg, ChangeMethods.Add);
         msg.UpdateSavingStatus(ResourceEntitySavingStates.Saving);
         ExtendedChatMessageSendResult resp;
-        var context = CreateContext(msg, conversation, ChangeMethods.Add, parameter) ?? new(msg, conversation, ChangeMethods.Add, parameter);
+        var context = CreateContext(msg, conversation, ChangeMethods.Add, parameter.Parameter) ?? new(msg, conversation, ChangeMethods.Add, parameter.Parameter);
         Sending?.Invoke(this, new(msg));
         msg.State = ResourceEntityStates.Normal;
         conversation.ThrowIfCannotSend(msg);
+        context.CanSetDetails = true;
         try
         {
             resp = await SendAsync(context, cancellationToken) ?? new();
+            context.CanSetDetails = false;
         }
         catch (OperationCanceledException ex)
         {
+            context.CanSetDetails = false;
             try
             {
                 msg.UpdateSavingStatus(ex, out resp);
+                parameter.SendStatus = resp?.SendStatus ?? ExtendedChatMessageSendResultStates.Aborted;
                 conversation.History.Remove(msg);
             }
             finally
@@ -135,15 +143,19 @@ public abstract class BaseExtendedChatClient(BaseUserItemInfo sender)
                 OnSendStateUpdateError(context);
             }
 
+            parameter.Details = context.Details;
+            parameter.Cancel();
             OnSendCanceled(context, resp);
             SendCanceled?.Invoke(this, new(msg));
             throw;
         }
         catch (Exception ex)
         {
+            context.CanSetDetails = false;
             try
             {
                 msg.UpdateSavingStatus(ex, out resp);
+                parameter.SendStatus = resp?.SendStatus ?? ExtendedChatMessageSendResultStates.OtherError;
                 conversation.History.Remove(msg);
             }
             catch (Exception)
@@ -152,6 +164,8 @@ public abstract class BaseExtendedChatClient(BaseUserItemInfo sender)
                 throw;
             }
 
+            parameter.Details = context.Details;
+            parameter.End(false);
             OnSendFailed(context, resp);
             _ = OnSendFailedAsync(context, resp);
             SendFailed?.Invoke(this, new(msg));
@@ -159,9 +173,11 @@ public abstract class BaseExtendedChatClient(BaseUserItemInfo sender)
             return msg;
         }
 
+        parameter.Details = context.Details;
         try
         {
             msg.UpdateSavingStatus(resp);
+            parameter.SendStatus = resp.SendStatus;
         }
         catch (Exception)
         {
@@ -171,12 +187,14 @@ public abstract class BaseExtendedChatClient(BaseUserItemInfo sender)
 
         if (resp.IsSuccessful)
         {
+            parameter.End(true);
             OnSendSucceeded(context, resp);
             _ = OnSendSucceededAsync(context, resp);
             Sent?.Invoke(this, new(msg));
         }
         else
         {
+            parameter.End(false);
             OnSendFailed(context, resp);
             _ = OnSendFailedAsync(context, resp);
             SendFailed?.Invoke(this, new(msg));
@@ -184,6 +202,22 @@ public abstract class BaseExtendedChatClient(BaseUserItemInfo sender)
 
         return msg;
     }
+
+    /// <summary>
+    /// Sends a message.
+    /// </summary>
+    /// <param name="conversation">The chat conversation.</param>
+    /// <param name="message">The message content.</param>
+    /// <param name="parameter">The additional parameter.</param>
+    /// <param name="cancellationToken">A cancellation token to observe while waiting for the task to complete.</param>
+    /// <returns>The message sent.</returns>
+    /// <exception cref="InvalidOperationException">Cannot send the message.</exception>
+    /// <exception cref="NotSupportedException">Sending action is not available.</exception>
+    /// <exception cref="OperationCanceledException">The token has had cancellation requested.</exception>
+    /// <exception cref="ArgumentNullException">conversation was null.</exception>
+    /// <exception cref="ArgumentException">The request message is not valid.</exception>
+    public Task<ExtendedChatMessage> SendAsync(ExtendedChatConversation conversation, ExtendedChatMessageContent message, object parameter, CancellationToken cancellationToken = default)
+        => SendAsync(conversation, message, TextHelper.ToParameter(parameter), cancellationToken);
 
     /// <summary>
     /// Sends a message.
@@ -198,7 +232,23 @@ public abstract class BaseExtendedChatClient(BaseUserItemInfo sender)
     /// <exception cref="ArgumentNullException">conversation was null.</exception>
     /// <exception cref="ArgumentException">The request message is not valid.</exception>
     public Task<ExtendedChatMessage> SendAsync(ExtendedChatConversation conversation, ExtendedChatMessageContent message, CancellationToken cancellationToken = default)
-        => SendAsync(conversation, message, null, cancellationToken);
+        => SendAsync(conversation, message, new ExtendedChatMessageParameter(), cancellationToken);
+
+    /// <summary>
+    /// Modifies a message.
+    /// </summary>
+    /// <param name="original">The original message.</param>
+    /// <param name="message">The new message content.</param>
+    /// <param name="parameter">The additional parameter.</param>
+    /// <param name="cancellationToken">A cancellation token to observe while waiting for the task to complete.</param>
+    /// <returns>The result of saving action.</returns>
+    /// <exception cref="NotSupportedException">The modification action is not supported.</exception>
+    /// <exception cref="OperationCanceledException">The token has had cancellation requested.</exception>
+    public Task<ExtendedChatMessageSendResult> ModifyAsync(ExtendedChatMessage original, string message, ExtendedChatMessageParameter parameter, CancellationToken cancellationToken = default)
+    {
+        var conversation = GetConversation(original);
+        return ModifyAsync(conversation, original, message, parameter, cancellationToken);
+    }
 
     /// <summary>
     /// Modifies a message.
@@ -213,7 +263,7 @@ public abstract class BaseExtendedChatClient(BaseUserItemInfo sender)
     public Task<ExtendedChatMessageSendResult> ModifyAsync(ExtendedChatMessage original, string message, object parameter, CancellationToken cancellationToken = default)
     {
         var conversation = GetConversation(original);
-        return ModifyAsync(conversation, original, message, parameter, cancellationToken);
+        return ModifyAsync(conversation, original, message, TextHelper.ToParameter(parameter), cancellationToken);
     }
 
     /// <summary>
@@ -226,7 +276,7 @@ public abstract class BaseExtendedChatClient(BaseUserItemInfo sender)
     /// <exception cref="NotSupportedException">The modification action is not supported.</exception>
     /// <exception cref="OperationCanceledException">The token has had cancellation requested.</exception>
     public Task<ExtendedChatMessageSendResult> ModifyAsync(ExtendedChatMessage original, string message, CancellationToken cancellationToken = default)
-        => ModifyAsync(original, message, null, cancellationToken);
+        => ModifyAsync(original, message, new ExtendedChatMessageParameter(), cancellationToken);
 
     /// <summary>
     /// Modifies a message.
@@ -239,43 +289,74 @@ public abstract class BaseExtendedChatClient(BaseUserItemInfo sender)
     /// <returns>The result of saving action.</returns>
     /// <exception cref="NotSupportedException">The modification action is not supported.</exception>
     /// <exception cref="OperationCanceledException">The token has had cancellation requested.</exception>
-    public async Task<ExtendedChatMessageSendResult> ModifyAsync(ExtendedChatConversation conversation, ExtendedChatMessage original, string message, object parameter, CancellationToken cancellationToken = default)
+    public async Task<ExtendedChatMessageSendResult> ModifyAsync(ExtendedChatConversation conversation, ExtendedChatMessage original, string message, ExtendedChatMessageParameter parameter, CancellationToken cancellationToken = default)
     {
         var level = GetManageLevel(conversation, original);
         if (!level.HasFlag(ExtendedChatMessageManagementLevels.Modification)) throw new NotSupportedException("Update is not supported.", new UnauthorizedAccessException("No permission to update message."));
+        parameter ??= new();
         var old = original.Message;
         original.Message = message;
         ExtendedChatMessageSendResult resp;
         original.UpdateSavingStatus(ResourceEntitySavingStates.Saving);
+        parameter.SendStatus = ExtendedChatMessageSendResultStates.Pending;
+        parameter.Begin(original, ChangeMethods.Remove);
         Modifying?.Invoke(this, new(original));
+        var context = CreateContext(original, conversation, ChangeMethods.MemberModify, parameter.Parameter) ?? new(original, conversation, ChangeMethods.MemberModify, parameter.Parameter);
+        context.CanSetDetails = true;
         try
         {
-            resp = await UpdateAsync(CreateContext(original, conversation, ChangeMethods.MemberModify, parameter) ?? new(original, conversation, ChangeMethods.MemberModify, parameter), cancellationToken) ?? new();
+            resp = await UpdateAsync(context, cancellationToken) ?? new();
+            context.CanSetDetails = false;
         }
         catch (OperationCanceledException ex)
         {
+            context.CanSetDetails = false;
             original.Message = old;
             original.UpdateSavingStatus(ex, out resp);
+            parameter.SendStatus = resp?.SendStatus ?? ExtendedChatMessageSendResultStates.Aborted;
             conversation.History.Remove(original);
+            parameter.Details = context.Details;
+            parameter.Cancel();
             ModifyCanceled?.Invoke(this, new(original));
             throw;
         }
         catch (Exception ex)
         {
+            context.CanSetDetails = false;
             original.Message = old;
             original.UpdateSavingStatus(ex, out resp);
+            parameter.SendStatus = resp?.SendStatus ?? ExtendedChatMessageSendResultStates.OtherError;
             conversation.History.Remove(original);
+            parameter.Details = context.Details;
+            parameter.End(false);
             ModifyFailed?.Invoke(this, new(original));
             if (resp.ShouldThrowException) throw;
             return resp;
         }
 
+        parameter.Details = context.Details;
         if (resp.IsSuccessful) original.Message = old;
         original.UpdateSavingStatus(resp);
+        parameter.SendStatus = resp.SendStatus;
+        parameter.End(resp.IsSuccessful);
         if (resp.IsSuccessful) Modified?.Invoke(this, new(original));
         else ModifyFailed?.Invoke(this, new(original));
         return resp;
     }
+
+    /// <summary>
+    /// Modifies a message.
+    /// </summary>
+    /// <param name="conversation">The chat conversation.</param>
+    /// <param name="original">The original message.</param>
+    /// <param name="message">The new message content.</param>
+    /// <param name="parameter">The additional parameter.</param>
+    /// <param name="cancellationToken">A cancellation token to observe while waiting for the task to complete.</param>
+    /// <returns>The result of saving action.</returns>
+    /// <exception cref="NotSupportedException">The modification action is not supported.</exception>
+    /// <exception cref="OperationCanceledException">The token has had cancellation requested.</exception>
+    public Task<ExtendedChatMessageSendResult> ModifyAsync(ExtendedChatConversation conversation, ExtendedChatMessage original, string message, object parameter, CancellationToken cancellationToken = default)
+        => ModifyAsync(conversation, original, message, TextHelper.ToParameter(parameter), cancellationToken);
 
     /// <summary>
     /// Modifies a message.
@@ -288,7 +369,22 @@ public abstract class BaseExtendedChatClient(BaseUserItemInfo sender)
     /// <exception cref="NotSupportedException">The modification action is not supported.</exception>
     /// <exception cref="OperationCanceledException">The token has had cancellation requested.</exception>
     public Task<ExtendedChatMessageSendResult> ModifyAsync(ExtendedChatConversation conversation, ExtendedChatMessage original, string message, CancellationToken cancellationToken = default)
-        => ModifyAsync(conversation, original, message, null, cancellationToken);
+        => ModifyAsync(conversation, original, message, new ExtendedChatMessageParameter(), cancellationToken);
+
+    /// <summary>
+    /// Deletes a message.
+    /// </summary>
+    /// <param name="message">The message to delete.</param>
+    /// <param name="parameter">The additional parameter.</param>
+    /// <param name="cancellationToken">A cancellation token to observe while waiting for the task to complete.</param>
+    /// <returns>The result of saving action.</returns>
+    /// <exception cref="NotSupportedException">The deletion action is not supported.</exception>
+    /// <exception cref="OperationCanceledException">The token has had cancellation requested.</exception>
+    public Task<ExtendedChatMessageSendResult> DeleteAsync(ExtendedChatMessage message, ExtendedChatMessageParameter parameter, CancellationToken cancellationToken = default)
+    {
+        var conversation = GetConversation(message);
+        return DeleteAsync(conversation, message, parameter, cancellationToken);
+    }
 
     /// <summary>
     /// Deletes a message.
@@ -316,7 +412,7 @@ public abstract class BaseExtendedChatClient(BaseUserItemInfo sender)
     public Task<ExtendedChatMessageSendResult> DeleteAsync(ExtendedChatMessage message, CancellationToken cancellationToken = default)
     {
         var conversation = GetConversation(message);
-        return DeleteAsync(conversation, message, null, cancellationToken);
+        return DeleteAsync(conversation, message, new ExtendedChatMessageParameter(), cancellationToken);
     }
 
     /// <summary>
@@ -331,7 +427,7 @@ public abstract class BaseExtendedChatClient(BaseUserItemInfo sender)
     /// <exception cref="ArgumentNullException">The message identifier cannot be null.</exception>
     /// <exception cref="ArgumentException">The message identifier should not be empty or consist only of white-space characters.</exception>
     /// <exception cref="OperationCanceledException">The token has had cancellation requested.</exception>
-    public async Task<ExtendedChatMessageSendResult> DeleteAsync(string id, object parameter, CancellationToken cancellationToken = default)
+    public async Task<ExtendedChatMessageSendResult> DeleteAsync(string id, ExtendedChatMessageParameter parameter, CancellationToken cancellationToken = default)
     {
         if (id == null) throw new ArgumentNullException(nameof(id), "The message identifier cannot be null.");
         if (string.IsNullOrWhiteSpace(id)) throw new ArgumentException("The message identifier should not be empty or consist only of white-space characters.", nameof(id));
@@ -349,6 +445,21 @@ public abstract class BaseExtendedChatClient(BaseUserItemInfo sender)
     /// Deletes a message.
     /// </summary>
     /// <param name="id">The identifier of the message to delete.</param>
+    /// <param name="parameter">The additional parameter.</param>
+    /// <param name="cancellationToken">A cancellation token to observe while waiting for the task to complete.</param>
+    /// <returns>The result of saving action.</returns>
+    /// <exception cref="NotSupportedException">The deletion action is not supported.</exception>
+    /// <exception cref="ArgumentOutOfRangeException">Cannot find the message by the specific identifier.</exception>
+    /// <exception cref="ArgumentNullException">The message identifier cannot be null.</exception>
+    /// <exception cref="ArgumentException">The message identifier should not be empty or consist only of white-space characters.</exception>
+    /// <exception cref="OperationCanceledException">The token has had cancellation requested.</exception>
+    public Task<ExtendedChatMessageSendResult> DeleteAsync(string id, object parameter, CancellationToken cancellationToken = default)
+        => DeleteAsync(id, TextHelper.ToParameter(parameter), cancellationToken);
+
+    /// <summary>
+    /// Deletes a message.
+    /// </summary>
+    /// <param name="id">The identifier of the message to delete.</param>
     /// <param name="cancellationToken">A cancellation token to observe while waiting for the task to complete.</param>
     /// <returns>The result of saving action.</returns>
     /// <exception cref="NotSupportedException">The deletion action is not supported.</exception>
@@ -357,7 +468,7 @@ public abstract class BaseExtendedChatClient(BaseUserItemInfo sender)
     /// <exception cref="ArgumentException">The message identifier should not be empty or consist only of white-space characters.</exception>
     /// <exception cref="OperationCanceledException">The token has had cancellation requested.</exception>
     public Task<ExtendedChatMessageSendResult> DeleteAsync(string id, CancellationToken cancellationToken = default)
-        => DeleteAsync(id, null, cancellationToken);
+        => DeleteAsync(id, new ExtendedChatMessageParameter(), cancellationToken);
 
     /// <summary>
     /// Deletes a message.
@@ -369,34 +480,49 @@ public abstract class BaseExtendedChatClient(BaseUserItemInfo sender)
     /// <returns>The result of saving action.</returns>
     /// <exception cref="NotSupportedException">The deletion action is not supported.</exception>
     /// <exception cref="OperationCanceledException">The token has had cancellation requested.</exception>
-    public async Task<ExtendedChatMessageSendResult> DeleteAsync(ExtendedChatConversation conversation, ExtendedChatMessage message, object parameter, CancellationToken cancellationToken = default)
+    public async Task<ExtendedChatMessageSendResult> DeleteAsync(ExtendedChatConversation conversation, ExtendedChatMessage message, ExtendedChatMessageParameter parameter, CancellationToken cancellationToken = default)
     {
         var level = GetManageLevel(conversation, message);
         if (!level.HasFlag(ExtendedChatMessageManagementLevels.Deletion)) throw new NotSupportedException("Cannot delete the message.", new UnauthorizedAccessException("No permission to delete the message."));
+        parameter ??= new();
         var history = conversation.History;
         ExtendedChatMessageSendResult resp;
         message.UpdateSavingStatus(ResourceEntitySavingStates.Saving);
+        parameter.SendStatus = ExtendedChatMessageSendResultStates.Pending;
+        parameter.Begin(message, ChangeMethods.Remove);
         Deleting?.Invoke(this, new(message));
+        var context = CreateContext(message, conversation, ChangeMethods.Remove, parameter.Parameter) ?? new(message, conversation, ChangeMethods.Remove, parameter.Parameter);
+        context.CanSetDetails = true;
         try
         {
-            resp = await DeleteAsync(CreateContext(message, conversation, ChangeMethods.Remove, parameter) ?? new(message, conversation, ChangeMethods.Remove, parameter), cancellationToken) ?? new();
+            resp = await DeleteAsync(context, cancellationToken) ?? new();
+            context.CanSetDetails = false;
         }
         catch (OperationCanceledException ex)
         {
+            context.CanSetDetails = false;
             message.UpdateSavingStatus(ex, out resp);
+            parameter.SendStatus = resp?.SendStatus ?? ExtendedChatMessageSendResultStates.Aborted;
             conversation.History.Remove(message);
+            parameter.Details = context.Details;
+            parameter.Cancel();
             DeleteCanceled?.Invoke(this, new(message));
             throw;
         }
         catch (Exception ex)
         {
+            context.CanSetDetails = false;
             message.UpdateSavingStatus(ex, out resp);
+            parameter.SendStatus = resp?.SendStatus ?? ExtendedChatMessageSendResultStates.OtherError;
             conversation.History.Remove(message);
+            parameter.Details = context.Details;
+            parameter.End(false);
             DeleteFailed?.Invoke(this, new(message));
             if (resp.ShouldThrowException) throw;
             return resp;
         }
 
+        parameter.Details = context.Details;
         if (resp.IsSuccessful)
         {
             history.Remove(message);
@@ -404,10 +530,25 @@ public abstract class BaseExtendedChatClient(BaseUserItemInfo sender)
         }
 
         message.UpdateSavingStatus(resp);
+        parameter.SendStatus = resp.SendStatus;
+        parameter.End(resp.IsSuccessful);
         if (resp.IsSuccessful) Deleted?.Invoke(this, new(message));
         else DeleteFailed?.Invoke(this, new(message));
         return resp;
     }
+
+    /// <summary>
+    /// Deletes a message.
+    /// </summary>
+    /// <param name="conversation">The chat conversation.</param>
+    /// <param name="message">The message to delete.</param>
+    /// <param name="parameter">The additional parameter.</param>
+    /// <param name="cancellationToken">A cancellation token to observe while waiting for the task to complete.</param>
+    /// <returns>The result of saving action.</returns>
+    /// <exception cref="NotSupportedException">The deletion action is not supported.</exception>
+    /// <exception cref="OperationCanceledException">The token has had cancellation requested.</exception>
+    public Task<ExtendedChatMessageSendResult> DeleteAsync(ExtendedChatConversation conversation, ExtendedChatMessage message, object parameter, CancellationToken cancellationToken = default)
+        => DeleteAsync(conversation, message, TextHelper.ToParameter(parameter), cancellationToken);
 
     /// <summary>
     /// Deletes a message.
@@ -419,7 +560,7 @@ public abstract class BaseExtendedChatClient(BaseUserItemInfo sender)
     /// <exception cref="NotSupportedException">The deletion action is not supported.</exception>
     /// <exception cref="OperationCanceledException">The token has had cancellation requested.</exception>
     public Task<ExtendedChatMessageSendResult> DeleteAsync(ExtendedChatConversation conversation, ExtendedChatMessage message, CancellationToken cancellationToken = default)
-        => DeleteAsync(conversation, message, null, cancellationToken);
+        => DeleteAsync(conversation, message, new ExtendedChatMessageParameter(), cancellationToken);
 
     /// <summary>
     /// Gets the conversation.
@@ -502,6 +643,60 @@ public abstract class BaseExtendedChatClient(BaseUserItemInfo sender)
     /// <returns>A task that represents the completion of history loading.</returns>
     public virtual Task LoadHistoryAsync(ExtendedChatConversation conversation, CancellationToken cancellationToken = default)
         => Task.CompletedTask;
+
+    /// <summary>
+    /// Sends a question message and gets the details information.
+    /// </summary>
+    /// <param name="conversation">The chat conversation.</param>
+    /// <param name="message">The message content.</param>
+    /// <param name="parameter">The additional parameter.</param>
+    /// <param name="cancellationToken">A cancellation token to observe while waiting for the task to complete.</param>
+    /// <returns>The details information of processing and response.</returns>
+    /// <exception cref="InvalidOperationException">Send the message failed.</exception>
+    /// <exception cref="NotSupportedException">Sending action is not available.</exception>
+    /// <exception cref="OperationCanceledException">The token has had cancellation requested.</exception>
+    /// <exception cref="ArgumentNullException">conversation was null.</exception>
+    /// <exception cref="ArgumentException">The request message is not valid.</exception>
+    protected async Task<T> SendForDetailsAsync<T>(ExtendedChatConversation conversation, ExtendedChatMessageContent message, ExtendedChatMessageParameter parameter, CancellationToken cancellationToken = default)
+    {
+        parameter ??= new();
+        await SendAsync(conversation, message, parameter, cancellationToken);
+        if (ObjectConvert.TryGet(parameter.Details, out T response)) return response;
+        throw new InvalidOperationException(parameter.Details is null
+            ? "Get details information failed because it is null."
+            : $"Get details information failed because its type is not the expected one. Its actual type is {parameter.Details.GetType().Name}.");
+    }
+
+    /// <summary>
+    /// Sends a question message and gets the details information.
+    /// </summary>
+    /// <param name="conversation">The chat conversation.</param>
+    /// <param name="message">The message content.</param>
+    /// <param name="parameter">The additional parameter.</param>
+    /// <param name="cancellationToken">A cancellation token to observe while waiting for the task to complete.</param>
+    /// <returns>The details information of processing and response.</returns>
+    /// <exception cref="InvalidOperationException">Send the message failed.</exception>
+    /// <exception cref="NotSupportedException">Sending action is not available.</exception>
+    /// <exception cref="OperationCanceledException">The token has had cancellation requested.</exception>
+    /// <exception cref="ArgumentNullException">conversation was null.</exception>
+    /// <exception cref="ArgumentException">The request message is not valid.</exception>
+    protected Task<T> SendForDetailsAsync<T>(ExtendedChatConversation conversation, ExtendedChatMessageContent message, object parameter, CancellationToken cancellationToken = default)
+        => SendForDetailsAsync<T>(conversation, message, TextHelper.ToParameter(parameter), cancellationToken);
+
+    /// <summary>
+    /// Sends a question message and gets the details information.
+    /// </summary>
+    /// <param name="conversation">The chat conversation.</param>
+    /// <param name="message">The message content.</param>
+    /// <param name="cancellationToken">A cancellation token to observe while waiting for the task to complete.</param>
+    /// <returns>The details information of processing and response.</returns>
+    /// <exception cref="InvalidOperationException">Cannot send the message.</exception>
+    /// <exception cref="NotSupportedException">Sending action is not available.</exception>
+    /// <exception cref="OperationCanceledException">The token has had cancellation requested.</exception>
+    /// <exception cref="ArgumentNullException">conversation was null.</exception>
+    /// <exception cref="ArgumentException">The request message is not valid.</exception>
+    protected Task<T> SendForDetailsAsync<T>(ExtendedChatConversation conversation, ExtendedChatMessageContent message, CancellationToken cancellationToken = default)
+        => SendForDetailsAsync<T>(conversation, message, new ExtendedChatMessageParameter(), cancellationToken);
 
     /// <summary>
     /// Creates the chat message context.

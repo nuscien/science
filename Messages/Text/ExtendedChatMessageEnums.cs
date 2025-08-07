@@ -96,54 +96,59 @@ public enum ExtendedChatMessageSendResultStates : byte
     NotSend = 0,
 
     /// <summary>
+    /// Pending to update or remove.
+    /// </summary>
+    Pending = 1,
+
+    /// <summary>
     /// Success.
     /// </summary>
-    Success = 1,
+    Success = 2,
 
     /// <summary>
     /// Network issue or timeout.
     /// </summary>
-    NetworkIssue = 2,
+    NetworkIssue = 3,
 
     /// <summary>
     /// Unauthorized or fobidden to send.
     /// </summary>
-    Forbidden = 3,
+    Forbidden = 4,
 
     /// <summary>
     /// Traffic limitation for connection.
     /// </summary>
-    Throttle = 4,
+    Throttle = 5,
 
     /// <summary>
     /// Format error or invalid request.
     /// </summary>
-    RequestError = 5,
+    RequestError = 6,
 
     /// <summary>
     /// Client error.
     /// </summary>
-    ClientError = 6,
+    ClientError = 7,
 
     /// <summary>
     /// Unknown server-side error.
     /// </summary>
-    ServerError = 7,
+    ServerError = 8,
 
     /// <summary>
     /// Unsupported operation or feature.
     /// </summary>
-    Unsupported = 8,
+    Unsupported = 9,
 
     /// <summary>
     /// Canceled.
     /// </summary>
-    Aborted = 9,
+    Aborted = 14,
 
     /// <summary>
     /// Other error.
     /// </summary>
-    OtherError = 10,
+    OtherError = 15,
 }
 
 /// <summary>
@@ -175,5 +180,5 @@ public enum ExtendedChatMessageManagementLevels : byte
     /// <summary>
     /// Modification and deletion permissions.
     /// </summary>
-    All = 15
+    All = 63
 }

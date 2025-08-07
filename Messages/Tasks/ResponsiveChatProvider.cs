@@ -332,11 +332,7 @@ public abstract class BaseResponsiveChatProvider(BaseUserItemInfo profile)
     }
 
     internal ResponsiveChatMessageResponse GetResponse(ResponsiveChatContext context, ExtendedChatMessageSendResult result, ResponsiveChatSendingLifecycle monitor, Action callback, CancellationToken cancellationToken)
-    {
-        var resp = new ResponsiveChatMessageResponse(GetResponseAsync(context, monitor, cancellationToken), context.Model.Question, result, callback);
-        if (context.Parameter is ResponsiveChatMessageParameter parameter) parameter.Response = resp;
-        return resp;
-    }
+        => new(GetResponseAsync(context, monitor, cancellationToken), context.Model.Question, result, callback);
 
     internal async Task<ResponsiveChatContext> CreateContextAsync(ExtendedChatMessageContext context)
     {

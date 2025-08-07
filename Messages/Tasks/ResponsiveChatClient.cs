@@ -151,17 +151,29 @@ public class ResponsiveChatClient(BaseUserItemInfo sender) : BaseExtendedChatCli
     /// <param name="parameter">The additional parameter.</param>
     /// <param name="cancellationToken">A cancellation token to observe while waiting for the task to complete.</param>
     /// <returns>The message sent.</returns>
-    /// <exception cref="InvalidOperationException">Cannot send the message.</exception>
+    /// <exception cref="InvalidOperationException">Send the message failed.</exception>
     /// <exception cref="NotSupportedException">Sending action is not available.</exception>
     /// <exception cref="OperationCanceledException">The token has had cancellation requested.</exception>
     /// <exception cref="ArgumentNullException">conversation was null.</exception>
     /// <exception cref="ArgumentException">The request message is not valid.</exception>
-    public async Task<ResponsiveChatMessageResponse> SendForAnswerAsync(ExtendedChatConversation conversation, ExtendedChatMessageContent message, object parameter, CancellationToken cancellationToken = default)
-    {
-        var obj = new ResponsiveChatMessageParameter(parameter);
-        await SendAsync(conversation, message, obj, cancellationToken);
-        return obj.Response;
-    }
+    public Task<ResponsiveChatMessageResponse> SendForAnswerAsync(ExtendedChatConversation conversation, ExtendedChatMessageContent message, ExtendedChatMessageParameter parameter, CancellationToken cancellationToken = default)
+        => SendForDetailsAsync<ResponsiveChatMessageResponse>(conversation, message, parameter, cancellationToken);
+
+    /// <summary>
+    /// Sends a question message and receives answer.
+    /// </summary>
+    /// <param name="conversation">The chat conversation.</param>
+    /// <param name="message">The message content.</param>
+    /// <param name="parameter">The additional parameter.</param>
+    /// <param name="cancellationToken">A cancellation token to observe while waiting for the task to complete.</param>
+    /// <returns>The message sent.</returns>
+    /// <exception cref="InvalidOperationException">Send the message failed.</exception>
+    /// <exception cref="NotSupportedException">Sending action is not available.</exception>
+    /// <exception cref="OperationCanceledException">The token has had cancellation requested.</exception>
+    /// <exception cref="ArgumentNullException">conversation was null.</exception>
+    /// <exception cref="ArgumentException">The request message is not valid.</exception>
+    public Task<ResponsiveChatMessageResponse> SendForAnswerAsync(ExtendedChatConversation conversation, ExtendedChatMessageContent message, object parameter, CancellationToken cancellationToken = default)
+        => SendForDetailsAsync<ResponsiveChatMessageResponse>(conversation, message, TextHelper.ToParameter(parameter), cancellationToken);
 
     /// <summary>
     /// Sends a question message and receives answer.
@@ -176,7 +188,7 @@ public class ResponsiveChatClient(BaseUserItemInfo sender) : BaseExtendedChatCli
     /// <exception cref="ArgumentNullException">conversation was null.</exception>
     /// <exception cref="ArgumentException">The request message is not valid.</exception>
     public Task<ResponsiveChatMessageResponse> SendForAnswerAsync(ExtendedChatConversation conversation, ExtendedChatMessageContent message, CancellationToken cancellationToken = default)
-        => SendForAnswerAsync(conversation, message, null, cancellationToken);
+        => SendForDetailsAsync<ResponsiveChatMessageResponse>(conversation, message, new ExtendedChatMessageParameter(), cancellationToken);
 
     /// <inheritdoc />
     protected override async Task<ExtendedChatMessageSendResult> SendAsync(ExtendedChatMessageContext context, CancellationToken cancellationToken = default)
@@ -190,10 +202,11 @@ public class ResponsiveChatClient(BaseUserItemInfo sender) : BaseExtendedChatCli
             var result = await provider.SendMessageAsync(c, monitor ?? new(), cancellationToken);
             var t = token;
             token = null;
-            provider.GetResponse(c, result, monitor, () =>
+            var response = provider.GetResponse(c, result, monitor, () =>
             {
-                if (token != null) context.CanSend(token, true, out _);
+                context.CanSend(t, true, out _);
             }, cancellationToken);
+            context.SetDetails(response);
             return result;
         }
         finally

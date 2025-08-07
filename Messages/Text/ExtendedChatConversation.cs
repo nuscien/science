@@ -26,12 +26,12 @@ public class ExtendedChatConversation : BaseObservableProperties
     /// Initializes a new instance of the ExtendedChatConversation class.
     /// </summary>
     /// <param name="provider">The provider.</param>
-    /// <param name="entity">The conversation entity.</param>
-    internal protected ExtendedChatConversation(BaseExtendedChatClient provider, BaseResourceEntityInfo entity)
+    /// <param name="source">The conversation source.</param>
+    internal protected ExtendedChatConversation(BaseExtendedChatClient provider, BaseResourceEntityInfo source)
     {
-        if (string.IsNullOrEmpty(entity?.Id)) provider = null;
+        if (string.IsNullOrEmpty(source?.Id)) provider = null;
         Provider = provider ?? new InternalExtendedChatClient(null, false);
-        SetProperty(nameof(Source), entity);
+        SetProperty(nameof(Source), source);
         _ = CanSendAsync();
     }
 
@@ -46,7 +46,7 @@ public class ExtendedChatConversation : BaseObservableProperties
     public string Id => Source?.Id;
 
     /// <summary>
-    /// Gets the resource entity which is the owner of the messages.
+    /// Gets the resource source which is the owner of the messages.
     /// </summary>
     public BaseResourceEntityInfo Source => GetCurrentProperty<BaseResourceEntityInfo>();
 
@@ -134,10 +134,10 @@ public class ExtendedChatConversation : BaseObservableProperties
     }
 
     /// <summary>
-    /// Gets the entity.
+    /// Gets the source.
     /// </summary>
-    /// <param name="id">The identifier of the resource entity.</param>
-    /// <returns>The entity info; or null, if not found.</returns>
+    /// <param name="id">The identifier of the resource source.</param>
+    /// <returns>The source info; or null, if not found.</returns>
     public ExtendedChatMessage GetMessage(string id)
     {
         if (string.IsNullOrWhiteSpace(id)) return null;

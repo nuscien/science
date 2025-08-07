@@ -58,6 +58,9 @@ internal static class TextHelper
     public static string GetIfNotEmpty(string s, string defaultValue)
         => string.IsNullOrWhiteSpace(s) ? defaultValue : s;
 
+    public static ExtendedChatMessageParameter ToParameter(object parameter)
+        => parameter is ExtendedChatMessageParameter p ? p : new(parameter);
+
     public static JsonObjectNode ToJson(Exception ex, int maxInnerException = 10)
     {
         var json = new JsonObjectNode();

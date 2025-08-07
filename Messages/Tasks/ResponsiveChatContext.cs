@@ -38,8 +38,7 @@ public sealed class ResponsiveChatContext
         Topic = provider.CurrentTopic;
         var topicId = Topic?.Id;
         history = context?.History ?? new();
-        var parameter = context?.Parameter;
-        Parameter = parameter is ResponsiveChatMessageParameter rcmp ? rcmp.Parameter : parameter;
+        Parameter = context?.Parameter;
         intentContainer = new();
         var q = context?.Message ?? new(Guid.NewGuid(), null as string, null, new ExtendedChatMessageContent());
         var answer = new ExtendedChatMessage(Guid.NewGuid(), q.OwnerId, provider.Profile, new ExtendedChatMessageContent(null, ExtendedChatMessageFormats.Markdown, new()
@@ -326,9 +325,4 @@ public class ResponsiveChatSendingLifecycle
     public virtual void OnStateChange(ResponsiveChatMessageStates value)
     {
     }
-}
-
-internal class ResponsiveChatMessageParameter(object parameter) : BaseNestedParameter(parameter)
-{
-    public ResponsiveChatMessageResponse Response { get; internal set; }
 }
