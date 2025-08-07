@@ -36,6 +36,7 @@ public sealed class ResponsiveChatContext
     internal ResponsiveChatContext(BaseResponsiveChatProvider provider, ExtendedChatMessageContext context)
     {
         Topic = provider.CurrentTopic;
+        var topicId = Topic?.Id;
         history = context?.History ?? new();
         var parameter = context?.Parameter;
         Parameter = parameter is ResponsiveChatMessageParameter rcmp ? rcmp.Parameter : parameter;
@@ -46,7 +47,7 @@ public sealed class ResponsiveChatContext
             { "context", new JsonObjectNode
             {
                 { "interact", "turn-based" },
-                { "topic", Topic.Id },
+                { "topic", topicId },
                 { "provider", "round-chat-service" },
                 { "kind", "answer" },
                 { "reply", q.Id },
@@ -58,7 +59,7 @@ public sealed class ResponsiveChatContext
             { "context", new JsonObjectNode
             {
                 { "interact", "turn-based" },
-                { "topic", Topic.Id },
+                { "topic", topicId },
                 { "provider", "round-chat-service" },
                 { "kind", "error" },
                 { "reply", q.Id },
@@ -67,7 +68,7 @@ public sealed class ResponsiveChatContext
         questionContext = new JsonObjectNode()
         {
             { "interact", "turn-based" },
-            { "topic", Topic.Id },
+            { "topic", topicId },
             { "provider", "round-chat-service" },
             { "kind", "question" },
             { "answer", answer.Id },
@@ -327,9 +328,7 @@ public class ResponsiveChatSendingLifecycle
     }
 }
 
-internal class ResponsiveChatMessageParameter()
+internal class ResponsiveChatMessageParameter(object parameter) : BaseNestedParameter(parameter)
 {
-    public ResponsiveChatMessageResponse Response { get; set; }
-
-    public object Parameter { get; set; }
+    public ResponsiveChatMessageResponse Response { get; internal set; }
 }

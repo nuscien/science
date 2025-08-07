@@ -158,10 +158,7 @@ public class ResponsiveChatClient(BaseUserItemInfo sender) : BaseExtendedChatCli
     /// <exception cref="ArgumentException">The request message is not valid.</exception>
     public async Task<ResponsiveChatMessageResponse> SendForAnswerAsync(ExtendedChatConversation conversation, ExtendedChatMessageContent message, object parameter, CancellationToken cancellationToken = default)
     {
-        var obj = new ResponsiveChatMessageParameter()
-        {
-            Parameter = parameter,
-        };
+        var obj = new ResponsiveChatMessageParameter(parameter);
         await SendAsync(conversation, message, obj, cancellationToken);
         return obj.Response;
     }
@@ -189,15 +186,7 @@ public class ResponsiveChatClient(BaseUserItemInfo sender) : BaseExtendedChatCli
         {
             var provider = GetProvider(context);
             var c = await provider.CreateContextAsync(context) ?? throw new ArgumentException("The question message content should not be empty.", nameof(context));
-            ResponsiveChatSendingLifecycle monitor;
-            if (context.Parameter == null)
-                monitor = null;
-            else if (context.Parameter is ResponsiveChatSendingLifecycle rcsl)
-                monitor = rcsl;
-            else if (context.Parameter is ResponsiveChatMessageParameter rcmp)
-                monitor = rcmp.Parameter as ResponsiveChatSendingLifecycle;
-            else
-                monitor = null;
+            if (!context.ParameterIs(out ResponsiveChatSendingLifecycle monitor)) monitor = null;
             var result = await provider.SendMessageAsync(c, monitor ?? new(), cancellationToken);
             var t = token;
             token = null;

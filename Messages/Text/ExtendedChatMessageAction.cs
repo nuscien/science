@@ -13,6 +13,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Trivial.Data;
 using Trivial.Net;
+using Trivial.Reflection;
 using Trivial.Users;
 
 namespace Trivial.Text;
@@ -112,6 +113,15 @@ public class ExtendedChatMessageContext
         newStateToken = CanSend(value);
         return true;
     }
+
+    /// <summary>
+    /// Tries to convert the value in a specific type.
+    /// </summary>
+    /// <typeparam name="T">The type of value.</typeparam>
+    /// <param name="value">The value converted.</param>
+    /// <returns>true if the type is the specific one; otherwise, false.</returns>
+    public bool ParameterIs<T>(out T value)
+        => ObjectConvert.TryGet(Parameter, out value);
 }
 
 /// <summary>
