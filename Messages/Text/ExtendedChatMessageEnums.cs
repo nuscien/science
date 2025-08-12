@@ -152,6 +152,57 @@ public enum ExtendedChatMessageSendResultStates : byte
 }
 
 /// <summary>
+/// The availability of sending chat message.
+/// </summary>
+public enum ExtendedChatMessageAvailability : byte
+{
+    /// <summary>
+    /// Allow to send.
+    /// </summary>
+    Allowed = 0,
+
+    /// <summary>
+    /// The user is not logged in.
+    /// </summary>
+    Unauthorized = 1,
+
+    /// <summary>
+    /// The conversation is read-only.
+    /// </summary>
+    ReadOnly = 2,
+
+    /// <summary>
+    /// The user or convesation is disabled, banned, off or stopped for sending messages.
+    /// </summary>
+    Disabled = 3,
+
+    /// <summary>
+    /// The connection is not available.
+    /// </summary>
+    Disconnnected = 4,
+
+    /// <summary>
+    /// Traffic limitation for connection.
+    /// </summary>
+    Throttle = 5,
+
+    /// <summary>
+    /// The conversation is not supported.
+    /// </summary>
+    NotSupported = 13,
+
+    /// <summary>
+    /// The service is under testing.
+    /// </summary>
+    Testing = 14,
+
+    /// <summary>
+    /// Other reason to disable sending messages.
+    /// </summary>
+    OtherError = 15,
+}
+
+/// <summary>
 /// The basic management levels of the chat message, e.g. can delete, modify.
 /// </summary>
 [Flags]

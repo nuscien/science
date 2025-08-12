@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
 using System.Net.Http;
 using System.Net.WebSockets;
@@ -125,6 +126,187 @@ internal static class TextHelper
         if (arr.Count > 0) json.SetValue("inner", arr);
         json.SetValue("type", ex.GetType()?.Name);
         return json;
+    }
+
+    public static void Add<T>(this List<BaseExtendedChatConversationCache<T>> list, ExtendedChatConversation conversation, T provider)
+    {
+        if (conversation?.Source is null) return;
+        foreach (var item in list)
+        {
+            if (item is null) continue;
+            if (ReferenceEquals(item.Provider, provider)) return;
+        }
+
+        list.Add(new(conversation, provider));
+    }
+
+    /// <summary>
+    /// Registers a set of provider.
+    /// </summary>
+    /// <param name="list">The source collection.</param>
+    /// <param name="providers">The providers to register.</param>
+    /// <param name="conversationMaker">The handler to create conversation from the provider.</param>
+    public static int AddRange<T>(this List<BaseExtendedChatConversationCache<T>> list, IEnumerable<T> providers, Func<T, ExtendedChatConversation> conversationMaker)
+    {
+        var i = 0;
+        if (providers == null || conversationMaker is null) return i;
+        foreach (var provider in providers)
+        {
+            Add(list, conversationMaker(provider), provider);
+            i++;
+        }
+
+        return i;
+    }
+
+    /// <summary>
+    /// Registers a set of provider.
+    /// </summary>
+    /// <param name="list">The source collection.</param>
+    /// <param name="providers">The providers to register.</param>
+    /// <param name="conversationMaker">The handler to create conversation from the provider.</param>
+    public static int AddRange<T>(this List<BaseExtendedChatConversationCache<T>> list, ReadOnlySpan<T> providers, Func<T, ExtendedChatConversation> conversationMaker)
+    {
+        var i = 0;
+        if (conversationMaker is null) return i;
+        foreach (var provider in providers)
+        {
+            Add(list, conversationMaker(provider), provider);
+            i++;
+        }
+
+        return i;
+    }
+
+    /// <summary>
+    /// Removes a specific provider from the registry.
+    /// </summary>
+    /// <param name="list">The source collection.</param>
+    /// <param name="provider">The provider to remove.</param>
+    /// <returns>true if item is successfully removed; otherwise, false. This method also returns false if item was not found in the provider registry.</returns>
+    public static bool Remove<T>(this List<BaseExtendedChatConversationCache<T>> list, T provider)
+    {
+        if (provider == null) return false;
+        BaseExtendedChatConversationCache<T> cache = null;
+        foreach (var item in list)
+        {
+            if (item is null || !ReferenceEquals(item.Provider, provider)) continue;
+            cache = item;
+            break;
+        }
+
+        if (cache == null) return false;
+        return list.Remove(cache);
+    }
+
+    /// <summary>
+    /// Removes a specific provider from the registry.
+    /// </summary>
+    /// <param name="list">The source collection.</param>
+    /// <param name="provider">The provider to remove.</param>
+    /// <returns>true if item is successfully removed; otherwise, false. This method also returns false if item was not found in the provider registry.</returns>
+    public static bool Remove<T>(this List<BaseExtendedChatConversationCache<T>> list, string provider)
+    {
+        if (string.IsNullOrWhiteSpace(provider)) return false;
+        BaseExtendedChatConversationCache<T> cache = null;
+        foreach (var item in list)
+        {
+            if (item?.Conversation?.Id != provider) continue;
+            cache = item;
+            break;
+        }
+
+        if (cache == null) return false;
+        return list.Remove(cache);
+    }
+
+    /// <summary>
+    /// Adds a set of conversation to the cache.
+    /// </summary>
+    /// <param name="source">The source conversation list.</param>
+    /// <param name="conversations">The conversations to add.</param>
+    public static void Add(ObservableCollection<ExtendedChatConversation> source, IEnumerable<ExtendedChatConversation> conversations)
+    {
+        if (conversations == null) return;
+        foreach (var conversation in conversations)
+        {
+            if (conversation?.Id == null || source.Contains(conversation)) continue;
+            source.Add(conversation);
+        }
+    }
+
+    /// <summary>
+    /// Adds a conversation to the cache.
+    /// </summary>
+    /// <param name="source">The source conversation list.</param>
+    /// <param name="conversation">The conversation to add.</param>
+    public static void Add(ObservableCollection<ExtendedChatConversation> source, ExtendedChatConversation conversation)
+    {
+        if (conversation?.Id == null || source.Contains(conversation)) return;
+        source.Add(conversation);
+    }
+
+    /// <summary>
+    /// Removes a set of convsersation from the cache.
+    /// </summary>
+    /// <param name="source">The source conversation list.</param>
+    /// <param name="conversations">The conversations to remove.</param>
+    public static int Remove(ObservableCollection<ExtendedChatConversation> source, IEnumerable<ExtendedChatConversation> conversations)
+    {
+        var i = 0;
+        if (conversations == null) return i;
+        foreach (var conversation in conversations)
+        {
+            if (conversation == null) continue;
+            if (source.Remove(conversation)) i++;
+        }
+
+        return i;
+    }
+
+    /// <summary>
+    /// Removes a convsersation from the cache.
+    /// </summary>
+    /// <param name="source">The source conversation list.</param>
+    /// <param name="conversation">The conversation to remove.</param>
+    public static bool Remove(ObservableCollection<ExtendedChatConversation> source, ExtendedChatConversation conversation)
+    {
+        if (conversation == null) return false;
+        return source.Remove(conversation);
+    }
+
+    /// <summary>
+    /// Sorts a given conversation in the collection cache.
+    /// </summary>
+    /// <param name="source">The source conversation list.</param>
+    /// <param name="conversation">The conversation item to sort its order in the collection cache.</param>
+    public static void Sort(ObservableCollection<ExtendedChatConversation> source, ExtendedChatConversation conversation)
+    {
+        var last = conversation?.History?.LastOrDefault();
+        if (last == null) return;
+        var i = 0;
+        try
+        {
+            for (; i < source.Count; i++)
+            {
+                var item = source[i];
+                var testItem = item?.History?.LastOrDefault();
+                if (testItem == null) continue;
+                if (testItem.CreationTime < last.CreationTime) break;
+                if (testItem.CreationTime == last.CreationTime && item == conversation) return;
+            }
+
+            var j = source.IndexOf(conversation);
+            if (i == j) return;
+            else if (j < 0) source.Insert(i, conversation);
+            else source.Move(j, i);
+        }
+        catch (ArgumentException)
+        {
+        }
+        catch (InvalidOperationException)
+        {
+        }
     }
 
     public static IBasicPublisherInfo ToPublisherInfo(JsonObjectNode json, string propertyKey)

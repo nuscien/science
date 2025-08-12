@@ -15,7 +15,7 @@ Other common-used properties are `Priority`, `ModificationKind` and `Sender`.
 Some of these are read-only after initializing.
 
 To extend the message, use property `MessageType` as the identifier of the message type,
-and set struct data into property `Info` for presenting and background states.
+and set struct data into property `Data` for presenting and background states.
 
 All `ExtendedChatMessage` instances should belong to an `ExtendedChatConversation` instance.
 The conversation is about all messages with the same participators and a topic thread.

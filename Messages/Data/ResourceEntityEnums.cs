@@ -127,3 +127,44 @@ public enum ResourceEntitySavingStates : byte
     /// </summary>
     Unknown = 7,
 }
+
+/// <summary>
+/// The reversed properties of resource entity.
+/// </summary>
+public enum ResourceEntitySpecialProperties : byte
+{
+    /// <summary>
+    /// None.
+    /// </summary>
+    None = 0,
+
+    /// <summary>
+    /// The identifier.
+    /// </summary>
+    Id = 1,
+
+    /// <summary>
+    /// The display name.
+    /// </summary>
+    DisplayName = 2,
+
+    /// <summary>
+    /// The resource type.
+    /// </summary>
+    ResourceType = 3,
+
+    /// <summary>
+    /// The supertype of the resource type.
+    /// </summary>
+    Supertype = 4,
+
+    /// <summary>
+    /// The JSON schema URI.
+    /// </summary>
+    Schema = 5,
+
+    /// <summary>
+    /// The state in string.
+    /// </summary>
+    State = 6,
+}

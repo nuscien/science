@@ -25,7 +25,6 @@ public sealed class ResponsiveChatContext
 {
     private readonly ExtendedChatMessage notification;
     private readonly JsonObjectNode questionContext;
-    private readonly ObservableCollection<ExtendedChatMessage> history;
     private readonly JsonObjectNode intentContainer;
 
     /// <summary>
@@ -37,8 +36,9 @@ public sealed class ResponsiveChatContext
     {
         Topic = provider.CurrentTopic;
         var topicId = Topic?.Id;
-        history = context?.History ?? new();
+        Conversation = context?.Conversation;
         Parameter = context?.Parameter;
+        ChangingMethod = context?.ChangingMethod ?? ChangeMethods.Unknown;
         intentContainer = new();
         var q = context?.Message ?? new(Guid.NewGuid(), null as string, null, new ExtendedChatMessageContent());
         var answer = new ExtendedChatMessage(Guid.NewGuid(), q.OwnerId, provider.Profile, new ExtendedChatMessageContent(null, ExtendedChatMessageFormats.Markdown, new()
@@ -64,7 +64,7 @@ public sealed class ResponsiveChatContext
                 { "reply", q.Id },
             } }
         }));
-        questionContext = new JsonObjectNode()
+        questionContext = new()
         {
             { "interact", "turn-based" },
             { "topic", topicId },
@@ -89,9 +89,19 @@ public sealed class ResponsiveChatContext
     internal ResponsiveChatMessageModel Model { get; }
 
     /// <summary>
+    /// Gets the chat conversation.
+    /// </summary>
+    internal ExtendedChatConversation Conversation { get; }
+
+    /// <summary>
     /// Gets the topic.
     /// </summary>
     public ResponsiveChatMessageTopic Topic { get; }
+
+    /// <summary>
+    /// Gets the changing method.
+    /// </summary>
+    public ChangeMethods ChangingMethod { get; }
 
     /// <summary>
     /// Gets the additional parameter.
@@ -251,7 +261,8 @@ public sealed class ResponsiveChatContext
         notification.Message = message;
         Model.UpdateState(ResponsiveChatMessageStates.ResponseError, "Streaming error.");
         if (ex != null) notification.Info.SetValue("error", TextHelper.ToJson(ex));
-        if (string.IsNullOrWhiteSpace(message) || history.Contains(notification)) return;
+        var history = Conversation?.History;
+        if (string.IsNullOrWhiteSpace(message) || history == null || history.Contains(notification)) return;
         history.Add(notification);
         questionContext.SetValue("answer", notification.Id);
     }
@@ -261,7 +272,8 @@ public sealed class ResponsiveChatContext
 
     private void EnableAnswer()
     {
-        if (history.Contains(Model.Answer)) return;
+        var history = Conversation?.History;
+        if (history == null || history.Contains(Model.Answer)) return;
         history.Add(Model.Answer);
         questionContext.SetValue("answer", Model.Answer.Id);
     }

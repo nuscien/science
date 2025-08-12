@@ -70,6 +70,30 @@ public class ExtendedChatMessage : RelatedResourceEntityInfo
     /// <summary>
     /// Initializes a new instance of the ExtendedChatMessage class.
     /// </summary>
+    /// <param name="conversation">The conversation instance as owner of this chat message.</param>
+    /// <param name="sender">The nickname of the sender.</param>
+    /// <param name="content">The message content.</param>
+    /// <param name="creation">The creation date time; or null if use now.</param>
+    public ExtendedChatMessage(ExtendedChatConversation conversation, BaseUserItemInfo sender, ExtendedChatMessageContent content, DateTime? creation = null)
+        : this(Guid.NewGuid(), conversation?.Id, sender, content, creation)
+    {
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the ExtendedChatMessage class.
+    /// </summary>
+    /// <param name="conversation">The conversation instance as owner of this chat message.</param>
+    /// <param name="sender">The nickname of the sender.</param>
+    /// <param name="content">The message content.</param>
+    /// <param name="creation">The creation date time; or null if use now.</param>
+    public ExtendedChatMessage(BaseResourceEntityInfo conversation, BaseUserItemInfo sender, ExtendedChatMessageContent content, DateTime? creation = null)
+        : this(Guid.NewGuid(), conversation?.Id, sender, content, creation)
+    {
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the ExtendedChatMessage class.
+    /// </summary>
     /// <param name="id">The message identifier.</param>
     /// <param name="conversation">The conversation instance as owner of this chat message.</param>
     /// <param name="sender">The nickname of the sender.</param>

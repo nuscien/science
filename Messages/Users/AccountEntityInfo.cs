@@ -137,6 +137,13 @@ public abstract class BaseAccountEntityInfo : BaseResourceEntityInfo
     protected override string ResourceType => AccountEntityType.ToString();
 
     /// <summary>
+    /// Gets the display name of this entity.
+    /// </summary>
+    /// <returns>The display name.</returns>
+    protected override string GetDisplayName()
+        => Nickname;
+
+    /// <summary>
     /// Returns a string that represents this entity.
     /// </summary>
     /// <param name="sb">A string builder that represents this entity.</param>

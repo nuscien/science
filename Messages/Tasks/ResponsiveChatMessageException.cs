@@ -5,6 +5,7 @@ using System.Net;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
+using Trivial.Data;
 using Trivial.Net;
 using Trivial.Text;
 
@@ -13,7 +14,7 @@ namespace Trivial.Tasks;
 /// <summary>
 /// The error during the round chat message sending.
 /// </summary>
-public class ResponsiveChatMessageException : Exception
+public class ResponsiveChatMessageException : ExtendedChatMessageException
 {
     /// <summary>
     /// Initializes an instance of the ResponsiveChatMessageException class.
@@ -29,7 +30,7 @@ public class ResponsiveChatMessageException : Exception
     /// <param name="message">The message that describes the error.</param>
     /// <param name="innerException">The inner exception.</param>
     public ResponsiveChatMessageException(ResponsiveChatContext context, string message, Exception innerException = null)
-        : base(message, innerException)
+        : base(context?.Conversation, context?.Model?.Question, context?.ChangingMethod ?? ChangeMethods.Unchanged, message, innerException is ResponsiveChatMessageException ? innerException.InnerException : innerException)
     {
         Question = context.Model.Question;
         Answer = context.Model.Answer;

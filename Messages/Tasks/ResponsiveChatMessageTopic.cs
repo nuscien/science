@@ -130,7 +130,7 @@ public class ResponsiveChatMessageTopic
     /// <param name="systemPrompt">The optional system prompt.</param>
     /// <param name="options">The options to generate history data.</param>
     /// <returns>The JSON array about the history.</returns>
-    public JsonArrayNode ToHistoryPromptJsonArray(string currentQuestion, string systemPrompt, ResponsiveChatMessageHistoryOptions options)
+    public JsonArrayNode ToHistoryPromptJsonArray(string currentQuestion, string systemPrompt, ResponsiveChatMessageHistoryOptions options = null)
     {
         var arr = new JsonArrayNode();
         options ??= ResponsiveChatMessageHistoryOptions.Default;

@@ -42,6 +42,15 @@ public static class ResourceEntityUtils
         => entity?.ToJson();
 
     /// <summary>
+    /// Gets the specific property value.
+    /// </summary>
+    /// <param name="entity">The source entity.</param>
+    /// <param name="key">The property key.</param>
+    /// <returns>The value of the property.</returns>
+    public static string GetProperty(BaseResourceEntityInfo entity, ResourceEntitySpecialProperties key)
+        => entity?.GetProperty(key);
+
+    /// <summary>
     /// Writes the entity to the specified writer as a JSON value.
     /// </summary>
     /// <param name="entity">The entity to write.</param>

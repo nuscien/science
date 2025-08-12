@@ -79,11 +79,6 @@ public class ExtendedChatMessageSendResult : ResourceEntitySavingStatus
     public bool IsSuccessful => State == ResourceEntitySavingStates.Ready || SendStatus == ExtendedChatMessageSendResultStates.Success;
 
     /// <summary>
-    /// Gets a value indicating whether need throw the exception.
-    /// </summary>
-    internal bool ShouldThrowException => SendStatus == ExtendedChatMessageSendResultStates.Aborted || SendStatus == ExtendedChatMessageSendResultStates.OtherError;
-
-    /// <summary>
     /// Gets a value indicating whether the state is a retry-able one.
     /// </summary>
     internal bool CanRetry => SendStatus == ExtendedChatMessageSendResultStates.NotSend || SendStatus == ExtendedChatMessageSendResultStates.Throttle || SendStatus == ExtendedChatMessageSendResultStates.NetworkIssue;
@@ -150,6 +145,14 @@ public class ExtendedChatMessageSendResult : ResourceEntitySavingStatus
             Update(ExtendedChatMessageSendResultStates.Forbidden, message ?? ex.Message);
         else
             Update(ExtendedChatMessageSendResultStates.OtherError, message ?? ex?.Message);
+    }
+
+    internal bool ThrowException(Exception ex, ExtendedChatMessageContext context)
+    {
+        if (SendStatus != ExtendedChatMessageSendResultStates.Aborted && SendStatus != ExtendedChatMessageSendResultStates.OtherError) return false;
+        if (ex is FailedHttpException || ex is JsonException || ex is HttpRequestException || ex is IOException)
+            throw new ExtendedChatMessageException(context, ex.Message, ex);
+        return true;
     }
 
     /// <summary>

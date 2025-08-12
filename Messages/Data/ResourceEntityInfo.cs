@@ -159,15 +159,6 @@ public abstract class BaseResourceEntityInfo : BaseObservableProperties, IJsonOb
     }
 
     /// <summary>
-    /// Gets or sets the JSON schema of the entity.
-    /// </summary>
-    [JsonIgnore]
-#if NETCOREAPP
-    [NotMapped]
-#endif
-    public string Schema { get; protected set; }
-
-    /// <summary>
     /// Gets or sets the state.
     /// </summary>
     [DataMember(Name = "state")]
@@ -224,6 +215,15 @@ public abstract class BaseResourceEntityInfo : BaseObservableProperties, IJsonOb
         get => GetCurrentProperty<ResourceEntitySavingStatus>();
         private set => SetCurrentProperty(value);
     }
+
+    /// <summary>
+    /// Gets or sets the JSON schema of the entity.
+    /// </summary>
+    [JsonIgnore]
+#if NETCOREAPP
+    [NotMapped]
+#endif
+    protected string Schema { get; set; }
 
     /// <summary>
     /// Gets the supertype.
@@ -416,6 +416,13 @@ public abstract class BaseResourceEntityInfo : BaseObservableProperties, IJsonOb
         => configInfo;
 
     /// <summary>
+    /// Gets the display name of this entity.
+    /// </summary>
+    /// <returns>The display name.</returns>
+    protected virtual string GetDisplayName()
+        => GetProperty<string>("Name");
+
+    /// <summary>
     /// Sets the configuration information.
     /// </summary>
     /// <param name="init">true if initializes an object if null; otherwise, false.</param>
@@ -540,4 +547,22 @@ public abstract class BaseResourceEntityInfo : BaseObservableProperties, IJsonOb
                 break;
         }
     }
+
+    /// <summary>
+    /// Gets the specific property value.
+    /// </summary>
+    /// <param name="key">The property key.</param>
+    /// <returns>The value of the property.</returns>
+
+    internal string GetProperty(ResourceEntitySpecialProperties key)
+        => key switch
+        {
+            ResourceEntitySpecialProperties.Id => Id,
+            ResourceEntitySpecialProperties.DisplayName => GetDisplayName(),
+            ResourceEntitySpecialProperties.ResourceType => ResourceType,
+            ResourceEntitySpecialProperties.Supertype => Supertype,
+            ResourceEntitySpecialProperties.Schema => Schema,
+            ResourceEntitySpecialProperties.State => State.ToString(),
+            _ => null
+        };
 }

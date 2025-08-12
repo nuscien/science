@@ -25,9 +25,14 @@ public abstract class BaseResponsiveChatProvider(BaseUserItemInfo profile)
     private bool isDisabled;
 
     /// <summary>
-    /// Adds or removes the event handler raised on property changed.
+    /// Adds or removes the event handler raised on the provider is disabled.
     /// </summary>
-    public event PropertyChangedEventHandler PropertyChanged;
+    public event EventHandler<EventArgs> Disabled;
+
+    /// <summary>
+    /// Adds or removes the event handler raised on the provider is enabled.
+    /// </summary>
+    public event EventHandler<EventArgs> Enabled;
 
     /// <summary>
     /// Adds or removes the event handler occurred on the answer state is changed.
@@ -55,7 +60,28 @@ public abstract class BaseResponsiveChatProvider(BaseUserItemInfo profile)
     public event DataEventHandler<ResponsiveChatMessageModel> SendCanceled;
 
     /// <summary>
+    /// Adds or removes the event handler occurred on a message is waiting to delete.
+    /// </summary>
+    public event DataEventHandler<ResponsiveChatMessageModel> Deleting;
+
+    /// <summary>
+    /// Adds or removes the event handler occurred on a message has already deleted.
+    /// </summary>
+    public event DataEventHandler<ResponsiveChatMessageModel> Deleted;
+
+    /// <summary>
+    /// Adds or removes the event handler occurred on a message is failed to delete.
+    /// </summary>
+    public event DataEventHandler<ResponsiveChatMessageModel> DeleteFailed;
+
+    /// <summary>
+    /// Adds or removes the event handler occurred on a message is canceled to delete.
+    /// </summary>
+    public event DataEventHandler<ResponsiveChatMessageModel> DeleteCanceled;
+
+    /// <summary>
     /// Gets the bot info.
+    /// This is also the source of the chat conversation.
     /// </summary>
     public BaseUserItemInfo Profile { get; } = profile;
 
@@ -96,9 +122,10 @@ public abstract class BaseResponsiveChatProvider(BaseUserItemInfo profile)
 
         protected set
         {
-            if (string.IsNullOrWhiteSpace(Profile?.Id)) return;
+            if (string.IsNullOrWhiteSpace(Profile?.Id) || isDisabled == value) return;
             isDisabled = value;
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IsDisabled)));
+            if (isDisabled) Disabled?.Invoke(this, new());
+            else Enabled?.Invoke(this, new());
         }
     }
 
@@ -111,8 +138,9 @@ public abstract class BaseResponsiveChatProvider(BaseUserItemInfo profile)
     {
         if (IsDisabled) return false;
         if (CurrentTopic != null && skipIfExists) return false;
+        var old = CurrentTopic;
         CurrentTopic = await CreateNewTopicAsync();
-        return CurrentTopic != null;
+        return CurrentTopic != null && !ReferenceEquals(CurrentTopic, old);
     }
 
     /// <summary>
@@ -209,7 +237,7 @@ public abstract class BaseResponsiveChatProvider(BaseUserItemInfo profile)
     /// </summary>
     /// <param name="record">The record item of server-sent event.</param>
     /// <param name="context">The chat context.</param>
-    protected virtual void ConvertSeverSentEventMessage(ServerSentEventInfo record, ResponsiveChatContext context)
+    protected virtual void ConvertServerSentEventMessage(ServerSentEventInfo record, ResponsiveChatContext context)
     {
         var recJson = record?.TryGetJsonData();
         if (recJson == null || string.IsNullOrEmpty(record.EventName))
@@ -321,24 +349,50 @@ public abstract class BaseResponsiveChatProvider(BaseUserItemInfo profile)
     /// <summary>
     /// Deletes a message.
     /// </summary>
-    /// <param name="context">The current chat message context.</param>
+    /// <param name="message">The message.</param>
+    /// <param name="context">The message context.</param>
     /// <param name="cancellationToken">A cancellation token to observe while waiting for the task to complete.</param>
     /// <returns>The result of saving action.</returns>
-    /// <exception cref="NotSupportedException">The deletion action is not supported.</exception>
-    public async virtual Task<ExtendedChatMessageSendResult> DeleteAsync(ExtendedChatMessageContext context, CancellationToken cancellationToken = default)
+    /// <exception cref="ExtendedChatMessageAvailabilityException">Sending action is not available.</exception>
+    /// <exception cref="ResponsiveChatMessageException">Delete message failed.</exception>
+    protected async virtual Task<ExtendedChatMessageSendResult> DeleteAsync(ExtendedChatMessage message, ResponsiveChatContext context, CancellationToken cancellationToken = default)
     {
         await Task.CompletedTask;
-        throw new NotSupportedException("Cannot delete the message.", new UnauthorizedAccessException("No permission to delete the message."));
+        throw new ExtendedChatMessageAvailabilityException(ExtendedChatMessageAvailability.Disabled, "Cannot delete the message.", new UnauthorizedAccessException("No permission to delete the message."));
     }
 
     internal ResponsiveChatMessageResponse GetResponse(ResponsiveChatContext context, ExtendedChatMessageSendResult result, ResponsiveChatSendingLifecycle monitor, Action callback, CancellationToken cancellationToken)
         => new(GetResponseAsync(context, monitor, cancellationToken), context.Model.Question, result, callback);
 
-    internal async Task<ResponsiveChatContext> CreateContextAsync(ExtendedChatMessageContext context)
+    /// <summary>
+    /// Deletes a message.
+    /// </summary>
+    /// <param name="message">The message.</param>
+    /// <param name="context">The message context.</param>
+    /// <param name="cancellationToken">A cancellation token to observe while waiting for the task to complete.</param>
+    /// <returns>The result of saving action.</returns>
+    /// <exception cref="ExtendedChatMessageAvailabilityException">Sending action is not available.</exception>
+    /// <exception cref="ResponsiveChatMessageException">Delete message failed.</exception>
+    internal async Task<ExtendedChatMessageSendResult> DeleteMessageAsync(ExtendedChatMessage message, ResponsiveChatContext context, CancellationToken cancellationToken = default)
     {
-        if (string.IsNullOrWhiteSpace(context?.Message?.Message)) return null;
-        await CreateTopicAsync(true);
-        return new ResponsiveChatContext(this, context);
+        try
+        {
+            Deleting?.Invoke(this, context.Model);
+            var result = await DeleteAsync(message, context, cancellationToken);
+            Deleted?.Invoke(this, context.Model);
+            return result;
+        }
+        catch (OperationCanceledException)
+        {
+            DeleteCanceled?.Invoke(this, context.Model);
+            throw;
+        }
+        catch (Exception ex)
+        {
+            DeleteFailed?.Invoke(this, context.Model);
+            if (NeedThrowOriginal(ex)) throw;
+            throw new ResponsiveChatMessageException(context, ex);
+        }
     }
 
     internal async Task<ExtendedChatMessageSendResult> SendMessageAsync(ResponsiveChatContext context, ResponsiveChatSendingLifecycle monitor, CancellationToken cancellationToken = default)
@@ -403,7 +457,7 @@ public abstract class BaseResponsiveChatProvider(BaseUserItemInfo profile)
             OnGetIntentInfoError(ex, context);
             monitor?.OnError(ex);
             SendFailed?.Invoke(this, m);
-            if (ThrowOriginalOnSending) throw;
+            if (NeedThrowOriginal(ex)) throw;
             throw new ResponsiveChatMessageException(context, ex);
         }
     }
@@ -437,7 +491,7 @@ public abstract class BaseResponsiveChatProvider(BaseUserItemInfo profile)
             OnProcessIntentError(ex, context);
             monitor?.OnError(ex);
             SendFailed?.Invoke(this, m);
-            if (ThrowOriginalOnSending) throw;
+            if (NeedThrowOriginal(ex)) throw;
             throw new ResponsiveChatMessageException(context, ex);
         }
 
@@ -464,7 +518,7 @@ public abstract class BaseResponsiveChatProvider(BaseUserItemInfo profile)
                     }
 
                     cancellationToken.ThrowIfCancellationRequested();
-                    ConvertSeverSentEventMessage(item, context);
+                    ConvertServerSentEventMessage(item, context);
                     monitor?.OnReceive();
                     if (context.IsError) break;
                     if (state == 1 && context.AnswerMessageLength > 0)
@@ -500,7 +554,7 @@ public abstract class BaseResponsiveChatProvider(BaseUserItemInfo profile)
                 OnGetResponseError(ex, context);
                 monitor?.OnError(ex);
                 SendFailed?.Invoke(this, m);
-                if (ThrowOriginalOnSending) throw;
+                if (NeedThrowOriginal(ex)) throw;
                 throw new ResponsiveChatMessageException(context, ex);
             }
         }
@@ -540,7 +594,7 @@ public abstract class BaseResponsiveChatProvider(BaseUserItemInfo profile)
                 AnswerStateChanged?.Invoke(this, m);
                 OnGetResponseError(ex, context);
                 SendFailed?.Invoke(this, m);
-                if (ThrowOriginalOnSending) throw;
+                if (NeedThrowOriginal(ex)) throw;
                 throw new ResponsiveChatMessageException(context, ex);
             }
         }
@@ -558,5 +612,11 @@ public abstract class BaseResponsiveChatProvider(BaseUserItemInfo profile)
         context.SetError(FormatMessage(ex), ex is ResponsiveChatMessageException rcmEx ? (rcmEx.InnerException ?? ex) : ex);
         context.SetDataRecord();
         context.UpdateState(state, ex.Message);
+    }
+
+    private bool NeedThrowOriginal(Exception ex)
+    {
+        if (ThrowOriginalOnSending) return true;
+        return ex is ResponsiveChatMessageException || ex is OutOfMemoryException;
     }
 }
