@@ -30,18 +30,18 @@ public sealed class ResponsiveChatContext
     /// <summary>
     /// Initializes a new instance of the <see cref="ResponsiveChatContext"/> class.
     /// </summary>
-    /// <param name="provider">The chat provider.</param>
+    /// <param name="conversation">The chat conversation.</param>
     /// <param name="context">The chat message context.</param>
-    internal ResponsiveChatContext(BaseResponsiveChatProvider provider, ExtendedChatMessageContext context)
+    internal ResponsiveChatContext(BaseResponsiveChatConversation conversation, ExtendedChatMessageContext context)
     {
-        Topic = provider.CurrentTopic;
+        Topic = conversation.CurrentTopic;
         var topicId = Topic?.Id;
         Conversation = context?.Conversation;
         Parameter = context?.Parameter;
         ChangingMethod = context?.ChangingMethod ?? ChangeMethods.Unknown;
         intentContainer = new();
         var q = context?.Message ?? new(Guid.NewGuid(), null as string, null, new ExtendedChatMessageContent());
-        var answer = new ExtendedChatMessage(Guid.NewGuid(), q.OwnerId, provider.Profile, new ExtendedChatMessageContent(null, ExtendedChatMessageFormats.Markdown, new()
+        var answer = new ExtendedChatMessage(Guid.NewGuid(), q.OwnerId, conversation.Profile, new ExtendedChatMessageContent(null, ExtendedChatMessageFormats.Markdown, new()
         {
             { "context", new JsonObjectNode
             {
@@ -53,7 +53,7 @@ public sealed class ResponsiveChatContext
             } }
         }));
         Model = new(q, answer);
-        notification = new(Guid.NewGuid(), q.OwnerId, provider.NotificationProfile ?? provider.Profile, new ExtendedChatMessageContent(null, ExtendedChatMessageFormats.Markdown, new()
+        notification = new(Guid.NewGuid(), q.OwnerId, conversation.NotificationProfile ?? conversation.Profile, new ExtendedChatMessageContent(null, ExtendedChatMessageFormats.Markdown, new()
         {
             { "context", new JsonObjectNode
             {

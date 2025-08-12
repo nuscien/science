@@ -92,6 +92,17 @@ public class ExtendedChatMessageContext
     public ObservableCollection<ExtendedChatMessage> History => Conversation.History;
 
     /// <summary>
+    /// Gets the state about if the user can send message.
+    /// </summary>
+    public ExtendedChatMessageAvailability Availability => Conversation.Availability;
+
+    /// <summary>
+    /// Tests if the conversation is available to send message.
+    /// </summary>
+    /// <returns>true if it allows to send message; otherwise, false.</returns>
+    public bool CanSend => Conversation.CanSend;
+
+    /// <summary>
     /// Sets the details information of processing and response.
     /// Only during the sending is occurring the provider can set.
     /// </summary>
@@ -105,28 +116,22 @@ public class ExtendedChatMessageContext
     }
 
     /// <summary>
-    /// Gets the state about if the user can send message.
+    /// Sets the flag about if the conversation is available to send message.
     /// </summary>
-    /// <returns>The state about if the user can send message.</returns>
-    public ExtendedChatMessageAvailability CanSend()
-        => Conversation.CanSend;
-
-    /// <summary>
-    /// Tests if the conversation is available to send message.
-    /// </summary>
-    /// <returns>true if it allows to send message; otherwise, false.</returns>
-    public bool IsAllowedToSend()
-        => Conversation.IsAllowedToSendMessage;
+    /// <param name="state">true if the user can send message; otherwise, false.</param>
+    /// <returns>The token.</returns>
+    public object SetAvailability(bool state)
+        => SetAvailability(state ? ExtendedChatMessageAvailability.Allowed : ExtendedChatMessageAvailability.Disabled);
 
     /// <summary>
     /// Sets the flag about if the conversation is available to send message.
     /// </summary>
     /// <param name="state">The state about if the user can send message.</param>
     /// <returns>The token.</returns>
-    public object CanSend(ExtendedChatMessageAvailability state)
+    public object SetAvailability(ExtendedChatMessageAvailability state)
     {
         stateToken = new();
-        Conversation.SetValueOfCanSendTemp(state);
+        Conversation.SetTempAvailability(state);
         return stateToken;
     }
 
@@ -137,7 +142,7 @@ public class ExtendedChatMessageContext
     /// <param name="state">The state about if the user can send message.</param>
     /// <param name="newStateToken">The new state token.</param>
     /// <returns>true if set a value indicating whether enables sending capability succeeded; otherwise, false.</returns>
-    public bool CanSend(object oldStateToken, ExtendedChatMessageAvailability state, out object newStateToken)
+    public bool SetAvailability(object oldStateToken, ExtendedChatMessageAvailability state, out object newStateToken)
     {
         if (oldStateToken != stateToken)
         {
@@ -145,7 +150,7 @@ public class ExtendedChatMessageContext
             return false;
         }
 
-        newStateToken = CanSend(state);
+        newStateToken = SetAvailability(state);
         return true;
     }
 
@@ -169,7 +174,11 @@ public class ExtendedChatMessageHistoryContext(ExtendedChatConversation conversa
     /// <summary>
     /// Gets or sets the status of the history.
     /// </summary>
-    public object Status { get; set; } = conversation?.HistoryStatus;
+    public object Status
+    {
+        get => Conversation.HistoryStatus;
+        set => Conversation.HistoryStatus = value;
+    }
 
     /// <summary>
     /// Gets the chat conversation.

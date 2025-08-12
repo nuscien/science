@@ -19,21 +19,10 @@ namespace Trivial.Tasks;
 /// <summary>
 /// The base provider of responsive chat message service.
 /// </summary>
+/// <param name="sender">The message sender.</param>
 /// <param name="profile">The provider profile of chat message service.</param>
-public abstract class BaseResponsiveChatProvider(BaseUserItemInfo profile)
+public abstract class BaseResponsiveChatConversation(BaseUserItemInfo sender, BaseUserItemInfo profile) : ExtendedChatConversation(null, sender, profile)
 {
-    private bool isDisabled;
-
-    /// <summary>
-    /// Adds or removes the event handler raised on the provider is disabled.
-    /// </summary>
-    public event EventHandler<EventArgs> Disabled;
-
-    /// <summary>
-    /// Adds or removes the event handler raised on the provider is enabled.
-    /// </summary>
-    public event EventHandler<EventArgs> Enabled;
-
     /// <summary>
     /// Adds or removes the event handler occurred on the answer state is changed.
     /// </summary>
@@ -42,42 +31,47 @@ public abstract class BaseResponsiveChatProvider(BaseUserItemInfo profile)
     /// <summary>
     /// Adds or removes the event handler occurred on a message is waiting to send.
     /// </summary>
-    public event DataEventHandler<ResponsiveChatMessageModel> Sending;
+    public new event DataEventHandler<ResponsiveChatMessageModel> Sending;
 
     /// <summary>
     /// Adds or removes the event handler occurred on a message has already sent and got the response.
     /// </summary>
-    public event DataEventHandler<ResponsiveChatMessageModel> Sent;
+    public new event DataEventHandler<ResponsiveChatMessageModel> Sent;
 
     /// <summary>
     /// Adds or removes the event handler occurred on a message is failed to get response.
     /// </summary>
-    public event DataEventHandler<ResponsiveChatMessageModel> SendFailed;
+    public new event DataEventHandler<ResponsiveChatMessageModel> SendFailed;
 
     /// <summary>
     /// Adds or removes the event handler occurred on a message is canceled to get response.
     /// </summary>
-    public event DataEventHandler<ResponsiveChatMessageModel> SendCanceled;
+    public new event DataEventHandler<ResponsiveChatMessageModel> SendCanceled;
 
     /// <summary>
     /// Adds or removes the event handler occurred on a message is waiting to delete.
     /// </summary>
-    public event DataEventHandler<ResponsiveChatMessageModel> Deleting;
+    public new event DataEventHandler<ResponsiveChatMessageModel> Deleting;
 
     /// <summary>
     /// Adds or removes the event handler occurred on a message has already deleted.
     /// </summary>
-    public event DataEventHandler<ResponsiveChatMessageModel> Deleted;
+    public new event DataEventHandler<ResponsiveChatMessageModel> Deleted;
 
     /// <summary>
     /// Adds or removes the event handler occurred on a message is failed to delete.
     /// </summary>
-    public event DataEventHandler<ResponsiveChatMessageModel> DeleteFailed;
+    public new event DataEventHandler<ResponsiveChatMessageModel> DeleteFailed;
 
     /// <summary>
     /// Adds or removes the event handler occurred on a message is canceled to delete.
     /// </summary>
-    public event DataEventHandler<ResponsiveChatMessageModel> DeleteCanceled;
+    public new event DataEventHandler<ResponsiveChatMessageModel> DeleteCanceled;
+
+    /// <summary>
+    /// Adds or removes an event handler occurred when a new topic is created in the conversation.
+    /// </summary>
+    public event DataEventHandler<ResponsiveChatMessageTopic> TopicCreated;
 
     /// <summary>
     /// Gets the bot info.
@@ -101,33 +95,9 @@ public abstract class BaseResponsiveChatProvider(BaseUserItemInfo profile)
     public ResponsiveChatMessageTopic CurrentTopic { get; private set; }
 
     /// <summary>
-    /// Gets the identifier of the chat service.
-    /// </summary>
-    public virtual string Id => Profile?.Id ?? Guid.Empty.ToString("N");
-
-    /// <summary>
     /// Gets a value indicating whether throw the original exception during sending.
     /// </summary>
     public bool ThrowOriginalOnSending { get; set; }
-
-    /// <summary>
-    /// Gets a value indicating whether the chat service is disabled.
-    /// </summary>
-    public bool IsDisabled
-    {
-        get
-        {
-            return isDisabled || string.IsNullOrWhiteSpace(Profile?.Id);
-        }
-
-        protected set
-        {
-            if (string.IsNullOrWhiteSpace(Profile?.Id) || isDisabled == value) return;
-            isDisabled = value;
-            if (isDisabled) Disabled?.Invoke(this, new());
-            else Enabled?.Invoke(this, new());
-        }
-    }
 
     /// <summary>
     /// Creates a new round chat message topic.
@@ -136,11 +106,147 @@ public abstract class BaseResponsiveChatProvider(BaseUserItemInfo profile)
     /// <returns>true if create succeeded; otherwise, false.</returns>
     public async Task<bool> CreateTopicAsync(bool skipIfExists = false)
     {
-        if (IsDisabled) return false;
+        if (!CanSend) return false;
         if (CurrentTopic != null && skipIfExists) return false;
         var old = CurrentTopic;
         CurrentTopic = await CreateNewTopicAsync();
-        return CurrentTopic != null && !ReferenceEquals(CurrentTopic, old);
+        var b = CurrentTopic != null && !ReferenceEquals(CurrentTopic, old);
+        if (b) TopicCreated?.Invoke(this, CurrentTopic);
+        return b;
+    }
+
+    /// <summary>
+    /// Sends a question message and receives answer.
+    /// </summary>
+    /// <param name="message">The message content.</param>
+    /// <param name="parameter">The additional parameter.</param>
+    /// <param name="cancellationToken">A cancellation token to observe while waiting for the task to complete.</param>
+    /// <returns>The message sent.</returns>
+    /// <exception cref="InvalidOperationException">Send the message failed.</exception>
+    /// <exception cref="NotSupportedException">Sending action is not available.</exception>
+    /// <exception cref="OperationCanceledException">The token has had cancellation requested.</exception>
+    /// <exception cref="ArgumentNullException">conversation was null.</exception>
+    /// <exception cref="ArgumentException">The request message is not valid.</exception>
+    public Task<ResponsiveChatMessageResponse> SendForDetailsAsync(ExtendedChatMessageContent message, ExtendedChatMessageParameter parameter, CancellationToken cancellationToken = default)
+        => SendForDetailsAsync<ResponsiveChatMessageResponse>(message, parameter, cancellationToken);
+
+    /// <summary>
+    /// Sends a question message and receives answer.
+    /// </summary>
+    /// <param name="message">The message content.</param>
+    /// <param name="parameter">The additional parameter.</param>
+    /// <param name="cancellationToken">A cancellation token to observe while waiting for the task to complete.</param>
+    /// <returns>The message sent.</returns>
+    /// <exception cref="InvalidOperationException">Send the message failed.</exception>
+    /// <exception cref="NotSupportedException">Sending action is not available.</exception>
+    /// <exception cref="OperationCanceledException">The token has had cancellation requested.</exception>
+    /// <exception cref="ArgumentNullException">conversation was null.</exception>
+    /// <exception cref="ArgumentException">The request message is not valid.</exception>
+    public Task<ResponsiveChatMessageResponse> SendForDetailsAsync(ExtendedChatMessageContent message, object parameter, CancellationToken cancellationToken = default)
+        => SendForDetailsAsync<ResponsiveChatMessageResponse>(message, TextHelper.ToParameter(parameter), cancellationToken);
+
+    /// <summary>
+    /// Sends a question message and receives answer.
+    /// </summary>
+    /// <param name="message">The message content.</param>
+    /// <param name="cancellationToken">A cancellation token to observe while waiting for the task to complete.</param>
+    /// <returns>The message sent.</returns>
+    /// <exception cref="InvalidOperationException">Cannot send the message.</exception>
+    /// <exception cref="NotSupportedException">Sending action is not available.</exception>
+    /// <exception cref="OperationCanceledException">The token has had cancellation requested.</exception>
+    /// <exception cref="ArgumentNullException">conversation was null.</exception>
+    /// <exception cref="ArgumentException">The request message is not valid.</exception>
+    public Task<ResponsiveChatMessageResponse> SendForDetailsAsync(ExtendedChatMessageContent message, CancellationToken cancellationToken = default)
+        => SendForDetailsAsync<ResponsiveChatMessageResponse>(message, new ExtendedChatMessageParameter(), cancellationToken);
+
+    /// <summary>
+    /// Adds a notification message to the chat history.
+    /// </summary>
+    /// <param name="message">The notification message.</param>
+    /// <param name="category">An optional category.</param>
+    /// <param name="notes">The additional notes.</param>
+    /// <returns>The message instance.</returns>
+    /// <exception cref="InvalidOperationException">Send the message failed.</exception>
+    /// <exception cref="ArgumentNullException">conversation was null.</exception>
+    public ExtendedChatMessage AddNotification(string message, string category = null, string notes = null)
+    {
+        if (string.IsNullOrWhiteSpace(message)) return null;
+        var msg = new ExtendedChatMessage(this, NotificationProfile ?? Profile, new ExtendedChatMessageContent(message, ExtendedChatMessageFormats.Markdown))
+        {
+            Category = category
+        };
+        History.Add(msg);
+        msg.Info.SetValueIfNotEmpty("notes", notes);
+        return msg;
+    }
+
+    /// <summary>
+    /// Adds a notification message to the chat history.
+    /// </summary>
+    /// <param name="message">The notification message.</param>
+    /// <returns>The message instance.</returns>
+    /// <exception cref="InvalidOperationException">Send the message failed.</exception>
+    /// <exception cref="ArgumentNullException">conversation was null.</exception>
+    public ExtendedChatMessage AddNotification(ExtendedChatMessageContent message)
+    {
+        if (message == null) return null;
+        var msg = new ExtendedChatMessage(this, NotificationProfile ?? Profile, message);
+        History.Add(msg);
+        return msg;
+    }
+
+    /// <inheritdoc />
+    internal override async Task<ExtendedChatMessageSendResult> SendInternalAsync(ExtendedChatMessageContext context, CancellationToken cancellationToken = default)
+    {
+        var token = context.SetAvailability(ExtendedChatMessageAvailability.Throttle);
+        try
+        {
+            if (string.IsNullOrWhiteSpace(context?.Message?.Message)) throw new ArgumentException("The question message content should not be empty.", nameof(context));
+            await CreateTopicAsync(true);
+            var c = new ResponsiveChatContext(this, context);
+            if (!context.ParameterIs(out ResponsiveChatSendingLifecycle monitor)) monitor = null;
+            var result = await SendMessageAsync(c, monitor ?? new(), cancellationToken);
+            var t = token;
+            token = null;
+            var response = GetResponse(c, result, monitor, () =>
+            {
+                context.SetAvailability(t, ExtendedChatMessageAvailability.Allowed, out _);
+            }, cancellationToken);
+            context.SetDetails(response);
+            return result;
+        }
+        finally
+        {
+            if (token != null) context.SetAvailability(token, ExtendedChatMessageAvailability.Allowed, out _);
+        }
+    }
+
+    /// <inheritdoc />
+    internal override async Task<ExtendedChatMessageSendResult> UpdateInternalAsync(ExtendedChatMessageContext context, CancellationToken cancellationToken = default)
+    {
+        await Task.CompletedTask;
+        throw new ExtendedChatMessageAvailabilityException(ExtendedChatMessageAvailability.Disabled, "Update is not supported.", new UnauthorizedAccessException("No permission to update message."));
+    }
+
+    /// <inheritdoc />
+    internal override async Task<ExtendedChatMessageSendResult> DeleteInternalAsync(ExtendedChatMessageContext context, CancellationToken cancellationToken = default)
+    {
+        var c = new ResponsiveChatContext(this, context);
+        return await DeleteMessageAsync(context.Message, c, cancellationToken);
+    }
+
+
+    /// <inheritdoc />
+    internal override Task<ExtendedChatMessageAvailability> GetServiceAvailabilityInternalAsync(CancellationToken cancellationToken = default)
+        => GetServiceAvailabilityAsync(cancellationToken);
+
+
+    /// <summary>
+    /// Occurs when a new topic is created in the conversation.
+    /// </summary>
+    /// <param name="topic">The new topic.</param>
+    protected virtual void OnTopicCreate(ResponsiveChatMessageTopic topic)
+    {
     }
 
     /// <summary>
@@ -214,6 +320,13 @@ public abstract class BaseResponsiveChatProvider(BaseUserItemInfo profile)
     /// <param name="cancellationToken">A cancellation token to observe while waiting for the task to complete.</param>
     /// <returns>The server-sent events.</returns>
     protected abstract IAsyncEnumerable<ServerSentEventInfo> StreamAsync(string message, JsonObjectNode data, ResponsiveChatContext context, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Tests if current conversation is avalaible to send message.
+    /// </summary>
+    /// <param name="cancellationToken">A cancellation token to observe while waiting for the task to complete.</param>
+    /// <returns>The state about if the user can send message.</returns>
+    protected abstract Task<ExtendedChatMessageAvailability> GetServiceAvailabilityAsync(CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Formats the message.
@@ -397,7 +510,7 @@ public abstract class BaseResponsiveChatProvider(BaseUserItemInfo profile)
 
     internal async Task<ExtendedChatMessageSendResult> SendMessageAsync(ResponsiveChatContext context, ResponsiveChatSendingLifecycle monitor, CancellationToken cancellationToken = default)
     {
-        if (IsDisabled) throw new InvalidOperationException("The message is not available to send.");
+        if (!CanSend) throw new InvalidOperationException("The message is not available to send.");
         var m = context.Model;
         var q = context.QuestionMessage;
         if (string.IsNullOrWhiteSpace(q)) return new(ExtendedChatMessageSendResultStates.RequestError, "Request message is empty.");
