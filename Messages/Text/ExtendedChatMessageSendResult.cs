@@ -149,10 +149,10 @@ public class ExtendedChatMessageSendResult : ResourceEntitySavingStatus
 
     internal bool ThrowException(Exception ex, ExtendedChatMessageContext context)
     {
-        if (SendStatus != ExtendedChatMessageSendResultStates.Aborted && SendStatus != ExtendedChatMessageSendResultStates.OtherError) return false;
-        if (ex is FailedHttpException || ex is JsonException || ex is HttpRequestException || ex is IOException)
+        if (ex is ExtendedChatMessageException || ex is NotSupportedException || ex is InvalidOperationException || ex is OutOfMemoryException) return true;
+        if (ex is FailedHttpException || ex is JsonException || ex is HttpRequestException || ex is IOException || ex is FormatException || ex is ArgumentException)
             throw new ExtendedChatMessageException(context, ex.Message, ex);
-        return true;
+        return SendStatus != ExtendedChatMessageSendResultStates.Success;
     }
 
     /// <summary>

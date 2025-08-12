@@ -106,7 +106,6 @@ public abstract class BaseResponsiveChatConversation(BaseUserItemInfo sender, Ba
     /// <returns>true if create succeeded; otherwise, false.</returns>
     public async Task<bool> CreateTopicAsync(bool skipIfExists = false)
     {
-        if (!CanSend) return false;
         if (CurrentTopic != null && skipIfExists) return false;
         var old = CurrentTopic;
         CurrentTopic = await CreateNewTopicAsync();
@@ -510,7 +509,6 @@ public abstract class BaseResponsiveChatConversation(BaseUserItemInfo sender, Ba
 
     internal async Task<ExtendedChatMessageSendResult> SendMessageAsync(ResponsiveChatContext context, ResponsiveChatSendingLifecycle monitor, CancellationToken cancellationToken = default)
     {
-        if (!CanSend) throw new InvalidOperationException("The message is not available to send.");
         var m = context.Model;
         var q = context.QuestionMessage;
         if (string.IsNullOrWhiteSpace(q)) return new(ExtendedChatMessageSendResultStates.RequestError, "Request message is empty.");

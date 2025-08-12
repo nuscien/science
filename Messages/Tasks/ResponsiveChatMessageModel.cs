@@ -172,6 +172,7 @@ public class ResponsiveChatMessageResponse
         this.callback = callback;
         Result = result;
         Question = question;
+        _ = OnInitAsync();
     }
 
     /// <summary>
@@ -230,8 +231,14 @@ public class ResponsiveChatMessageResponse
             task = null;
             var cb = callback;
             callback = null;
-            cb();
+            cb?.Invoke();
         }
+    }
+
+    private async Task OnInitAsync()
+    {
+        await Task.CompletedTask;
+        await GetAnswerAsync();
     }
 }
 
