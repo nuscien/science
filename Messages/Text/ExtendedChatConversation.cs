@@ -623,7 +623,28 @@ public class ExtendedChatConversation : BaseObservableProperties
     protected async Task<T> SendForDetailsAsync<T>(ExtendedChatMessageContent message, ExtendedChatMessageParameter parameter, CancellationToken cancellationToken = default)
     {
         parameter ??= new();
-        await SendAsync(message, parameter, cancellationToken);
+        var hasDetails = parameter.Details is not null;
+        try
+        {
+            await SendAsync(message, parameter, cancellationToken);
+        }
+        catch (ExtendedChatMessageAvailabilityException)
+        {
+            throw;
+        }
+        catch (OperationCanceledException)
+        {
+            throw;
+        }
+        catch (OutOfMemoryException)
+        {
+            throw;
+        }
+        catch (Exception)
+        {
+            if (hasDetails || parameter.Details is null) throw;
+        }
+
         if (ObjectConvert.TryGet(parameter.Details, out T response)) return response;
         throw new InvalidCastException(parameter.Details is null
             ? "Get details information failed because it is null."

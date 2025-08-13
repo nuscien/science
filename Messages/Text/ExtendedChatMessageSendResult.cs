@@ -150,7 +150,7 @@ public class ExtendedChatMessageSendResult : ResourceEntitySavingStatus
     internal bool ThrowException(Exception ex, ExtendedChatMessageContext context)
     {
         if (ex is ExtendedChatMessageException || ex is NotSupportedException || ex is InvalidOperationException || ex is OutOfMemoryException) return true;
-        if (ex is FailedHttpException || ex is JsonException || ex is HttpRequestException || ex is IOException || ex is FormatException || ex is ArgumentException)
+        if (ex is FailedHttpException || ex is JsonException || ex is HttpRequestException || ex is IOException || ex is FormatException || ex is InvalidCastException)
             throw new ExtendedChatMessageException(context, ex.Message, ex);
         return SendStatus != ExtendedChatMessageSendResultStates.Success;
     }
@@ -168,7 +168,6 @@ public class ExtendedChatMessageSendResult : ResourceEntitySavingStatus
             return;
         }
 
-        var code = (int)ex.StatusCode.Value;
         var httpStatus = Update(ex.StatusCode.Value, message ?? ex.Message);
         httpStatus.SetValue("reason", ex.ReasonPhrase);
         try
