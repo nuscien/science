@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Security;
 using System.Text;
 using System.Text.Json;
@@ -16,6 +17,7 @@ namespace Trivial.Chemistry;
 /// The model of chemical element.
 /// </summary>
 [JsonConverter(typeof(ChemicalElementJsonConverter))]
+[Guid("42D0D040-850F-4217-AADD-82D204F5DC4F")]
 public partial class ChemicalElement : IEquatable<ChemicalElement>
 {
     /// <summary>

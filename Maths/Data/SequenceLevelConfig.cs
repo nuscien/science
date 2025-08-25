@@ -19,6 +19,11 @@ public class SequenceLevelConfig
     private Dictionary<string, SequenceLevelConfigHandler> handlers = new();
 
     /// <summary>
+    /// Gets all keys of the handler registered.
+    /// </summary>
+    public IReadOnlyCollection<string> HandlerKeys => handlers.Keys;
+
+    /// <summary>
     /// Calculates.
     /// </summary>
     /// <param name="input">The input data.</param>
@@ -80,6 +85,14 @@ public class SequenceLevelConfig
 
         return Calculate(input, arr);
     }
+
+    /// <summary>
+    /// Tests if contains the specific handler.
+    /// </summary>
+    /// <param name="kind">The kind.</param>
+    /// <returns>true if has registered such handler; otherwise, false.</returns>
+    public bool ContainsHandler(string kind)
+        => handlers.ContainsKey(kind);
 
     /// <summary>
     /// Registers a handler.

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -9,6 +10,7 @@ namespace Trivial.Chemistry;
 /// <summary>
 /// The model of the molecular formula.
 /// </summary>
+[Guid("ED5E1F60-8380-44ED-A6A2-0AE867AC7874")]
 public class MolecularFormula : IEquatable<MolecularFormula>
 {
     /// <summary>

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
@@ -12,6 +13,7 @@ namespace Trivial.Chemistry;
 /// <summary>
 /// The model of isotope.
 /// </summary>
+[Guid("39AFAEA4-9FA2-417B-B722-B7A1379C6519")]
 public class Isotope : IEquatable<Isotope>
 {
     /// <summary>
