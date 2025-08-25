@@ -5,6 +5,7 @@ using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Reflection;
+using System.Runtime.InteropServices;
 using System.Security.Authentication.ExtendedProtection;
 using System.Text;
 using System.Text.Json;
@@ -20,6 +21,7 @@ namespace Trivial.Tasks;
 /// <summary>
 /// The mapping item for routed JSON API operation.
 /// </summary>
+[Guid("7426E564-DCD5-41DA-B76F-7879CEFFBBF8")]
 public class RoutedJsonOperationMappingItem
 {
     /// <summary>
@@ -165,6 +167,7 @@ public class RoutedJsonOperationMappingItem
 /// <summary>
 /// The context of routed JSON API operation.
 /// </summary>
+[Guid("E6342BD3-3F6B-495E-AD2E-6CAE9FFA6C9E")]
 public class RoutedJsonOperationContext
 {
     /// <summary>

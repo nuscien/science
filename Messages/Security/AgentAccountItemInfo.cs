@@ -21,6 +21,7 @@ namespace Trivial.Security;
 /// The agent item information.
 /// </summary>
 [JsonConverter(typeof(AgentAccountItemInfoConverter))]
+[Guid("1FA2B538-3658-4349-B3DE-70E778FC7787")]
 public class AgentAccountItemInfo : BaseUserItemInfo
 {
     /// <summary>

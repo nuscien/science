@@ -20,6 +20,7 @@ namespace Trivial.Users;
 /// The organization item information.
 /// </summary>
 [JsonConverter(typeof(OrgAccountItemInfoConverter))]
+[Guid("3E5511FC-4206-4691-9C3D-F24F31343A83")]
 public class OrgAccountItemInfo : BaseUserItemInfo, IBasicPublisherInfo
 {
     /// <summary>

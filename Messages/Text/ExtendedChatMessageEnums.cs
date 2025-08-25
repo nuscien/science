@@ -27,7 +27,9 @@ public enum ChatMessageModificationKinds : byte
     Original = 0,
 
     /// <summary>
-    /// The streaming message which means the message is transferring by continious updating.
+    /// The message is currently streaming.
+    /// It means the message is transferring by continious updating for this while.
+    /// It will be original or other one if it streams completed.
     /// </summary>
     Streaming = 1,
 
@@ -42,7 +44,7 @@ public enum ChatMessageModificationKinds : byte
     Collaborative = 3,
 
     /// <summary>
-    /// The message has been removed by sender.
+    /// The message has been removed by sender or admin.
     /// </summary>
     Removed = 5,
 
