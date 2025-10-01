@@ -30,6 +30,32 @@ public class ExtendedChatMessage : RelatedResourceEntityInfo
     /// <summary>
     /// Initializes a new instance of the ExtendedChatMessage class.
     /// </summary>
+    /// <param name="args">The initialization arguments.</param>
+    /// <param name="sender">The nickname of the sender.</param>
+    /// <param name="content">The message content.</param>
+    public ExtendedChatMessage(RelatedResourceEntityArgs args, BaseUserItemInfo sender, ExtendedChatMessageContent content)
+        : base(args)
+    {
+        SetProperty(nameof(Sender), sender);
+        if (content == null)
+        {
+            Info = new();
+            return;
+        }
+
+        SetProperty(nameof(Message), content.Message);
+        SetProperty(nameof(MessageFormat), content.MessageFormat);
+        SetProperty(nameof(Category), content.Category);
+        SetProperty(nameof(Priority), content.Priority);
+        if (!string.IsNullOrEmpty(content.MessageType)) SetProperty(nameof(MessageType), content.MessageType);
+        SetProperty(nameof(ReplyId), content.ReplyId);
+        SetProperty(nameof(RootReplyId), content.RootReplyId ?? content.ReplyId);
+        Info = content.Info ?? new();
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the ExtendedChatMessage class.
+    /// </summary>
     /// <param name="sender">The nickname of the sender.</param>
     /// <param name="message">The message text.</param>
     /// <param name="creation">The creation date time; or null if use now.</param>
@@ -179,6 +205,8 @@ public class ExtendedChatMessage : RelatedResourceEntityInfo
         SetProperty(nameof(Category), content.Category);
         SetProperty(nameof(Priority), content.Priority);
         if (!string.IsNullOrEmpty(content.MessageType)) SetProperty(nameof(MessageType), content.MessageType);
+        SetProperty(nameof(ReplyId), content.ReplyId);
+        SetProperty(nameof(RootReplyId), content.RootReplyId ?? content.ReplyId);
         Info = content.Info ?? new();
     }
 
@@ -206,6 +234,15 @@ public class ExtendedChatMessage : RelatedResourceEntityInfo
     /// Gets the sender.
     /// </summary>
     public BaseUserItemInfo Sender => GetCurrentProperty<BaseUserItemInfo>();
+
+    /// <summary>
+    /// Gets or sets the method of sender.
+    /// </summary>
+    public MessageSenderMethodInfo SenderMethod
+    {
+        get => GetCurrentProperty<MessageSenderMethodInfo>();
+        set => SetCurrentProperty(value);
+    }
 
     /// <summary>
     /// Gets the markdown text of the message.
@@ -269,6 +306,25 @@ public class ExtendedChatMessage : RelatedResourceEntityInfo
     /// </summary>
     public JsonObjectNode Info { get; private set; }
 
+    /// <summary>
+    /// Gets the message identifier of reply.
+    /// </summary>
+    public string ReplyId => GetCurrentProperty<string>();
+
+    /// <summary>
+    /// Gets the message identifier of root reply.
+    /// </summary>
+    public string RootReplyId => GetCurrentProperty<string>() ?? ReplyId;
+
+    /// <summary>
+    /// Gets the message identifier of conversation topic.
+    /// </summary>
+    public string TopicId
+    {
+        get => GetCurrentProperty<string>();
+        set => SetCurrentProperty(value);
+    }
+
     /// <inheritdoc />
     [JsonIgnore]
 #if NETCOREAPP
@@ -293,6 +349,10 @@ public class ExtendedChatMessage : RelatedResourceEntityInfo
         SetProperty(nameof(MessageType), messageType);
         SetProperty(nameof(MessageFormat), json.TryGetEnumValue<ExtendedChatMessageFormats>("format") ?? ExtendedChatMessageFormats.Text);
         SetProperty(nameof(Priority), json.TryGetEnumValue<BasicPriorities>("priority") ?? BasicPriorities.Normal);
+        if (json.TryDeserializeValue<MessageSenderMethodInfo>("method", default, out var senderMethod)) SenderMethod = senderMethod;
+        SetProperty(nameof(ReplyId), json.TryGetStringTrimmedValue("reply", true));
+        SetProperty(nameof(RootReplyId), json.TryGetStringTrimmedValue("parent", true));
+        TopicId = json.TryGetStringTrimmedValue("topic", true);
         Info = json.TryGetObjectValue("info") ?? new();
         Category = json.TryGetStringTrimmedValue("category", true);
         var data = json.TryGetObjectValue("data");
@@ -320,6 +380,48 @@ public class ExtendedChatMessage : RelatedResourceEntityInfo
         SetProperty(nameof(Sender), user);
         return true;
     }
+
+    /// <summary>
+    /// Creates a chat message content by replying this message.
+    /// </summary>
+    /// <param name="message">The message text.</param>
+    /// <param name="info">The additional information.</param>
+    /// <returns>The chat message content to reply this message.</returns>
+    public ExtendedChatMessageContent Reply(string message, JsonObjectNode info = null)
+        => new(message, MessageFormat, info)
+        {
+            ReplyId = Id,
+            RootReplyId = RootReplyId ?? ReplyId ?? Id
+        };
+
+    /// <summary>
+    /// Creates a chat message content by replying this message.
+    /// </summary>
+    /// <param name="message">The message text.</param>
+    /// <param name="category">The optional category.</param>
+    /// <param name="info">The additional information.</param>
+    /// <returns>The chat message content to reply this message.</returns>
+    public ExtendedChatMessageContent Reply(string message, string category, JsonObjectNode info = null)
+        => new(message, MessageFormat, category, info)
+        {
+            ReplyId = Id,
+            RootReplyId = RootReplyId ?? ReplyId ?? Id
+        };
+
+    /// <summary>
+    /// Creates a chat message content by replying this message.
+    /// </summary>
+    /// <param name="message">The message text.</param>
+    /// <param name="format">The message format.</param>
+    /// <param name="category">The optional category.</param>
+    /// <param name="info">The additional information.</param>
+    /// <returns>The chat message content to reply this message.</returns>
+    public ExtendedChatMessageContent Reply(string message, ExtendedChatMessageFormats format, string category = null, JsonObjectNode info = null)
+        => new(message, format, category, info)
+        {
+            ReplyId = Id,
+            RootReplyId = RootReplyId ?? ReplyId ?? Id
+        };
 
     /// <summary>
     /// Converts to JSON object.
@@ -368,6 +470,9 @@ public class ExtendedChatMessage : RelatedResourceEntityInfo
         }
 
         json.SetValueIfNotNull("priority", (int)Priority);
+        json.SetValueIfNotEmpty("reply", ReplyId);
+        json.SetValueIfNotEmpty("parent", RootReplyId);
+        json.SetValueIfNotEmpty("topic", TopicId);
         return json;
     }
 

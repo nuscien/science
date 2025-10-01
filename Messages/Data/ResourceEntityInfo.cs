@@ -27,7 +27,7 @@ public abstract class BaseResourceEntityInfo : BaseObservableProperties, IJsonOb
     private JsonObjectNode configInfo;
 
     /// <summary>
-    /// Initializes a new instance of the BaseResourceObservableProperties class.
+    /// Initializes a new instance of the BaseResourceEntityInfo class.
     /// </summary>
     protected BaseResourceEntityInfo()
     {
@@ -38,7 +38,26 @@ public abstract class BaseResourceEntityInfo : BaseObservableProperties, IJsonOb
     }
 
     /// <summary>
-    /// Initializes a new instance of the BaseResourceObservableProperties class.
+    /// Initializes a new instance of the BaseResourceEntityInfo class.
+    /// </summary>
+    /// <param name="args">The initialization arguments.</param>
+    protected BaseResourceEntityInfo(ResourceEntityArgs args)
+    {
+        args ??= new(true);
+        var creation = args.CreationTime;
+        var diff = (DateTime.Now - creation).TotalSeconds;
+        InitializationTime = diff > 0 && diff < 1 ? creation : DateTime.Now;
+        Id = args.Id;
+        State = args.State;
+        CreationTime = creation;
+        LastModificationTime = args.LastModificationTime;
+        LastSavingStatus = args.LastSavingStatus ?? new();
+        if (!string.IsNullOrWhiteSpace(args.Name)) SetProperty("Name", args.Name);
+        if (!string.IsNullOrWhiteSpace(args.RevisionId)) RevisionId = args.RevisionId;
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the BaseResourceEntityInfo class.
     /// </summary>
     /// <param name="id">The identifier.</param>
     protected BaseResourceEntityInfo(Guid id)
@@ -48,7 +67,7 @@ public abstract class BaseResourceEntityInfo : BaseObservableProperties, IJsonOb
     }
 
     /// <summary>
-    /// Initializes a new instance of the BaseResourceObservableProperties class.
+    /// Initializes a new instance of the BaseResourceEntityInfo class.
     /// </summary>
     /// <param name="id">The identifier.</param>
     /// <param name="creation">The creation date time.</param>
@@ -58,7 +77,7 @@ public abstract class BaseResourceEntityInfo : BaseObservableProperties, IJsonOb
     }
 
     /// <summary>
-    /// Initializes a new instance of the BaseResourceObservableProperties class.
+    /// Initializes a new instance of the BaseResourceEntityInfo class.
     /// </summary>
     /// <param name="id">The identifier.</param>
     /// <param name="creation">The creation date time.</param>
@@ -69,7 +88,7 @@ public abstract class BaseResourceEntityInfo : BaseObservableProperties, IJsonOb
     }
 
     /// <summary>
-    /// Initializes a new instance of the BaseResourceObservableProperties class.
+    /// Initializes a new instance of the BaseResourceEntityInfo class.
     /// </summary>
     /// <param name="id">The identifier.</param>
     /// <param name="initTime">true if initialize the creation and last modification time.</param>
@@ -83,7 +102,7 @@ public abstract class BaseResourceEntityInfo : BaseObservableProperties, IJsonOb
     }
 
     /// <summary>
-    /// Initializes a new instance of the BaseResourceObservableProperties class.
+    /// Initializes a new instance of the BaseResourceEntityInfo class.
     /// </summary>
     /// <param name="id">The identifier.</param>
     protected BaseResourceEntityInfo(string id)
@@ -92,7 +111,7 @@ public abstract class BaseResourceEntityInfo : BaseObservableProperties, IJsonOb
     }
 
     /// <summary>
-    /// Initializes a new instance of the BaseResourceObservableProperties class.
+    /// Initializes a new instance of the BaseResourceEntityInfo class.
     /// </summary>
     /// <param name="id">The identifier.</param>
     /// <param name="creation">The creation date time.</param>
@@ -104,7 +123,7 @@ public abstract class BaseResourceEntityInfo : BaseObservableProperties, IJsonOb
     }
 
     /// <summary>
-    /// Initializes a new instance of the BaseResourceObservableProperties class.
+    /// Initializes a new instance of the BaseResourceEntityInfo class.
     /// </summary>
     /// <param name="id">The identifier.</param>
     /// <param name="creation">The creation date time.</param>
@@ -117,7 +136,7 @@ public abstract class BaseResourceEntityInfo : BaseObservableProperties, IJsonOb
     }
 
     /// <summary>
-    /// Initializes a new instance of the BaseResourceObservableProperties class.
+    /// Initializes a new instance of the BaseResourceEntityInfo class.
     /// </summary>
     /// <param name="json">The JSON node to read and fill.</param>
     internal BaseResourceEntityInfo(JsonObjectNode json)

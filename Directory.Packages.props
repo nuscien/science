@@ -9,8 +9,8 @@
     <PackageVersion Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3" PrivateAssets="All" />
     <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="17.13.0" />
     <PackageVersion Include="Microsoft.SourceLink.GitHub" Version="8.0.0" PrivateAssets="All" />
-    <PackageVersion Include="MSTest.TestAdapter" Version="3.10.1" />
-    <PackageVersion Include="MSTest.TestFramework" Version="3.10.1" />
+    <PackageVersion Include="MSTest.TestAdapter" Version="3.11.0" />
+    <PackageVersion Include="MSTest.TestFramework" Version="3.11.0" />
     <PackageVersion Include="coverlet.msbuild" Version="6.0.4">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>

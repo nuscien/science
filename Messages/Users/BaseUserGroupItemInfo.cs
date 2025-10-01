@@ -33,6 +33,26 @@ public class BaseUserGroupItemInfo : BaseAccountEntityInfo
     /// <summary>
     /// Initializes a new instance of the BaseUserGroupItemInfo class.
     /// </summary>
+    /// <param name="args">The initialization arguments.</param>
+    /// <param name="nickname">The nickname or display name.</param>
+    /// <param name="avatar">The avatar URI.</param>
+    public BaseUserGroupItemInfo(ResourceEntityArgs args, string nickname = null, Uri avatar = null)
+        : base(AccountEntityTypes.Group, args, nickname, avatar)
+    {
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the BaseUserGroupItemInfo class.
+    /// </summary>
+    /// <param name="args">The initialization arguments.</param>
+    public BaseUserGroupItemInfo(AccountEntityArgs args)
+        : base(AccountEntityTypes.Group, args)
+    {
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the BaseUserGroupItemInfo class.
+    /// </summary>
     /// <param name="id">The resource identifier.</param>
     /// <param name="nickname">The nickname or display name.</param>
     /// <param name="avatar">The avatar URI.</param>

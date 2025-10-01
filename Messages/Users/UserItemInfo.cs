@@ -36,6 +36,42 @@ public abstract class BaseUserItemInfo : BaseAccountEntityInfo
     /// Initializes a new instance of the BaseUserItemInfo class.
     /// </summary>
     /// <param name="type">The account entity type.</param>
+    /// <param name="args">The initialization arguments.</param>
+    internal BaseUserItemInfo(AccountEntityTypes type, ResourceEntityArgs args)
+        : base(type, args)
+    {
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the BaseUserItemInfo class.
+    /// </summary>
+    /// <param name="type">The account entity type.</param>
+    /// <param name="args">The initialization arguments.</param>
+    /// <param name="gender">The gender.</param>
+    internal BaseUserItemInfo(AccountEntityTypes type, AccountEntityArgs args, Genders gender)
+        : base(type, args)
+    {
+        Gender = gender;
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the BaseUserItemInfo class.
+    /// </summary>
+    /// <param name="type">The account entity type.</param>
+    /// <param name="args">The initialization arguments.</param>
+    /// <param name="nickname">The nickname or display name.</param>
+    /// <param name="gender">The gender.</param>
+    /// <param name="avatar">The avatar URI.</param>
+    internal BaseUserItemInfo(AccountEntityTypes type, ResourceEntityArgs args, string nickname, Genders gender, Uri avatar = null)
+        : base(type, args, nickname, avatar)
+    {
+        Gender = gender;
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the BaseUserItemInfo class.
+    /// </summary>
+    /// <param name="type">The account entity type.</param>
     /// <param name="id">The resource identifier.</param>
     /// <param name="nickname">The nickname or display name.</param>
     /// <param name="gender">The gender.</param>
@@ -121,6 +157,28 @@ public class UserItemInfo : BaseUserItemInfo
     /// </summary>
     public UserItemInfo()
         : base(AccountEntityTypes.User)
+    {
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the UserItemInfo class.
+    /// </summary>
+    /// <param name="args">The initialization arguments.</param>
+    /// <param name="nickname">The nickname or display name.</param>
+    /// <param name="gender">The gender.</param>
+    /// <param name="avatar">The avatar URI.</param>
+    public UserItemInfo(ResourceEntityArgs args, string nickname = null, Genders gender = Genders.Unknown, Uri avatar = null)
+        : base(gender == Genders.Asexual ? AccountEntityTypes.Bot : AccountEntityTypes.User, args, nickname, gender, avatar)
+    {
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the UserItemInfo class.
+    /// </summary>
+    /// <param name="args">The initialization arguments.</param>
+    /// <param name="gender">The gender.</param>
+    public UserItemInfo(AccountEntityArgs args, Genders gender = Genders.Unknown)
+        : base(gender == Genders.Asexual ? AccountEntityTypes.Bot : AccountEntityTypes.User, args, gender)
     {
     }
 

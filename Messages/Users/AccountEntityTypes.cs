@@ -13,7 +13,7 @@ using Trivial.Text;
 namespace Trivial.Users;
 
 /// <summary>
-/// Security account entity types.
+/// The types of the security account entity.
 /// </summary>
 public enum AccountEntityTypes : byte
 {

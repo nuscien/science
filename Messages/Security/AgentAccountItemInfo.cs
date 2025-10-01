@@ -36,6 +36,28 @@ public class AgentAccountItemInfo : BaseUserItemInfo
     /// <summary>
     /// Initializes a new instance of the AgentAccountItemInfo class.
     /// </summary>
+    /// <param name="args">The initialization arguments.</param>
+    /// <param name="nickname">The nickname or display name.</param>
+    /// <param name="avatar">The avatar URI.</param>
+    public AgentAccountItemInfo(ResourceEntityArgs args, string nickname = null, Uri avatar = null)
+        : base(AccountEntityTypes.Agent, args, nickname, Genders.Asexual, avatar)
+    {
+        Scope = new();
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the AgentAccountItemInfo class.
+    /// </summary>
+    /// <param name="args">The initialization arguments.</param>
+    public AgentAccountItemInfo(AccountEntityArgs args)
+        : base(AccountEntityTypes.Agent, args, Genders.Asexual)
+    {
+        Scope = new();
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the AgentAccountItemInfo class.
+    /// </summary>
     /// <param name="id">The resource identifier.</param>
     /// <param name="nickname">The nickname or display name.</param>
     /// <param name="avatar">The avatar URI.</param>

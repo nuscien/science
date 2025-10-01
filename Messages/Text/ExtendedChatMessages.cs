@@ -86,6 +86,81 @@ public static class ExtendedChatMessages
         => new(message, ExtendedChatMessageFormats.Markdown, category, info);
 
     /// <summary>
+    /// Gets the message which the specific one replies.
+    /// </summary>
+    /// <param name="messages">The message collection </param>
+    /// <param name="message">The reply.</param>
+    /// <returns>The message replied by the specific one.</returns>
+    public static ExtendedChatMessage GetReplied(this IEnumerable<ExtendedChatMessage> messages, ExtendedChatMessage message)
+        => ResourceEntityUtils.Get(messages, message?.ReplyId);
+
+    /// <summary>
+    /// Gets the specific message replies.
+    /// </summary>
+    /// <param name="messages">The message collection </param>
+    /// <param name="source">The identifier of the source message to find its replies.</param>
+    /// <param name="replyExactly">true if reply the given message exactly; otherwise, false, also including the replies to its replies.</param>
+    /// <returns>The collection of the messages which reply the given one.</returns>
+    public static IEnumerable<ExtendedChatMessage> GetReplies(this IEnumerable<ExtendedChatMessage> messages, string source, bool replyExactly = false)
+    {
+        if (messages == null || string.IsNullOrEmpty(source)) yield break;
+        if (replyExactly)
+        {
+            foreach (var m in messages)
+            {
+                if (m?.Id == null) continue;
+                if (m.ReplyId == source) yield return m;
+            }
+        }
+        else
+        {
+            foreach (var m in messages)
+            {
+                if (m?.Id == null) continue;
+                if (m.RootReplyId == source || m.ReplyId == source) yield return m;
+            }
+        }
+    }
+
+    /// <summary>
+    /// Gets the specific message replies.
+    /// </summary>
+    /// <param name="messages">The message collection </param>
+    /// <param name="source">The source message to find its replies.</param>
+    /// <param name="replyExactly">true if reply the given message exactly; otherwise, false, also including the replies to its replies.</param>
+    /// <returns>The collection of the messages which reply the given one.</returns>
+    public static IEnumerable<ExtendedChatMessage> GetReplies(this IEnumerable<ExtendedChatMessage> messages, ExtendedChatMessage source, bool replyExactly = false)
+        => GetReplies(messages, source?.Id, replyExactly);
+
+    /// <summary>
+    /// Gets the specific message with same topic.
+    /// </summary>
+    /// <param name="messages">The message collection </param>
+    /// <param name="topic">The topic identifier.</param>
+    /// <returns>The collection of the messages which reply the given one.</returns>
+    public static IEnumerable<ExtendedChatMessage> GetTopicMessages(this IEnumerable<ExtendedChatMessage> messages, string topic)
+    {
+        if (messages == null) yield break;
+        if (string.IsNullOrEmpty(topic))
+        {
+            if (topic != null) yield break;
+            foreach (var m in messages)
+            {
+                if (m?.Id == null) continue;
+                if (m.TopicId == null) yield return m;
+            }
+        }
+        else
+        {
+            foreach (var m in messages)
+            {
+                if (m?.Id == null) continue;
+                if (m.TopicId == topic) yield return m;
+            }
+        }
+    }
+
+    /// <summary>
     /// Tests if the message contains an attachment item.
     /// </summary>
     /// <param name="message">The chat message.</param>

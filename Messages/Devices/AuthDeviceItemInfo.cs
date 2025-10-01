@@ -36,6 +36,26 @@ public class AuthDeviceItemInfo : BaseUserItemInfo
     /// <summary>
     /// Initializes a new instance of the AuthDeviceItemInfo class.
     /// </summary>
+    /// <param name="args">The initialization arguments.</param>
+    /// <param name="nickname">The nickname or display name.</param>
+    /// <param name="avatar">The avatar URI.</param>
+    public AuthDeviceItemInfo(ResourceEntityArgs args, string nickname = null, Uri avatar = null)
+        : base(AccountEntityTypes.Device, args, nickname, Genders.Asexual, avatar)
+    {
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the AuthDeviceItemInfo class.
+    /// </summary>
+    /// <param name="args">The initialization arguments.</param>
+    public AuthDeviceItemInfo(AccountEntityArgs args)
+        : base(AccountEntityTypes.Device, args, Genders.Asexual)
+    {
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the AuthDeviceItemInfo class.
+    /// </summary>
     /// <param name="id">The resource identifier.</param>
     /// <param name="nickname">The nickname or display name.</param>
     /// <param name="avatar">The avatar URI.</param>

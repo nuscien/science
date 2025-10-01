@@ -25,6 +25,26 @@ public abstract class RelatedResourceEntityInfo : BaseResourceEntityInfo
     }
 
     /// <summary>
+    /// Initializes a new instance of the RelatedResourceEntityInfo class.
+    /// </summary>
+    /// <param name="args">The initialization arguments.</param>
+    protected RelatedResourceEntityInfo(ResourceEntityArgs args)
+        : base(args)
+    {
+        if (args is RelatedResourceEntityArgs a) OwnerId = a.OwnerId;
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the RelatedResourceEntityInfo class.
+    /// </summary>
+    /// <param name="args">The initialization arguments.</param>
+    protected RelatedResourceEntityInfo(RelatedResourceEntityArgs args)
+        : base(args)
+    {
+        OwnerId = args?.OwnerId;
+    }
+
+    /// <summary>
     /// Intializes a new instance of the RelatedResourceEntityInfo class.
     /// </summary>
     /// <param name="id">The entity identifer.</param>
@@ -181,6 +201,24 @@ public abstract class RelatedResourceEntityInfo<TOwner> : RelatedResourceEntityI
     }
 
     /// <summary>
+    /// Initializes a new instance of the RelatedResourceEntityInfo class.
+    /// </summary>
+    /// <param name="args">The initialization arguments.</param>
+    protected RelatedResourceEntityInfo(ResourceEntityArgs args)
+        : base(args)
+    {
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the RelatedResourceEntityInfo class.
+    /// </summary>
+    /// <param name="args">The initialization arguments.</param>
+    protected RelatedResourceEntityInfo(RelatedResourceEntityArgs args)
+        : base(args)
+    {
+    }
+
+    /// <summary>
     /// Intializes a new instance of the RelatedResourceEntityInfo class.
     /// </summary>
     /// <param name="id">The entity identifer.</param>
@@ -268,6 +306,46 @@ public abstract class RelatedResourceEntityInfo<TOwner, TTarget> : RelatedResour
     /// </summary>
     protected RelatedResourceEntityInfo()
     {
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the RelatedResourceEntityInfo class.
+    /// </summary>
+    /// <param name="args">The initialization arguments.</param>
+    protected RelatedResourceEntityInfo(ResourceEntityArgs args)
+        : base(args)
+    {
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the RelatedResourceEntityInfo class.
+    /// </summary>
+    /// <param name="args">The initialization arguments.</param>
+    protected RelatedResourceEntityInfo(RelatedResourceEntityArgs args)
+        : base(args)
+    {
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the RelatedResourceEntityInfo class.
+    /// </summary>
+    /// <param name="args">The initialization arguments.</param>
+    /// <param name="target">The target.</param>
+    protected RelatedResourceEntityInfo(ResourceEntityArgs args, TTarget target)
+        : base(args)
+    {
+        Target = target;
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the RelatedResourceEntityInfo class.
+    /// </summary>
+    /// <param name="args">The initialization arguments.</param>
+    /// <param name="target">The target.</param>
+    protected RelatedResourceEntityInfo(RelatedResourceEntityArgs args, TTarget target)
+        : base(args)
+    {
+        Target = target;
     }
 
     /// <summary>

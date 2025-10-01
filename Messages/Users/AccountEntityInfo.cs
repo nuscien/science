@@ -8,6 +8,7 @@ using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Reflection;
+using System.Runtime.InteropServices;
 using System.Runtime.Serialization;
 using System.Security.Claims;
 using System.Text;
@@ -35,11 +36,56 @@ public abstract class BaseAccountEntityInfo : BaseResourceEntityInfo
     /// Initializes a new instance of the BaseAccountEntityInfo class.
     /// </summary>
     /// <param name="type">The account entity type.</param>
+    /// <param name="args">The initialization arguments.</param>
+    internal BaseAccountEntityInfo(AccountEntityTypes type, ResourceEntityArgs args)
+        : base(args)
+    {
+        AccountEntityType = type;
+        if (args is not AccountEntityArgs a) return;
+        Nickname = a.Nickname;
+        AvatarUri = a.AvatarUri;
+        Bio = a.Bio;
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the BaseAccountEntityInfo class.
+    /// </summary>
+    /// <param name="type">The account entity type.</param>
+    /// <param name="args">The initialization arguments.</param>
+    internal BaseAccountEntityInfo(AccountEntityTypes type, AccountEntityArgs args)
+        : base(args)
+    {
+        AccountEntityType = type;
+        if (args == null) return;
+        Nickname = args.Nickname;
+        AvatarUri = args.AvatarUri;
+        Bio = args.Bio;
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the BaseAccountEntityInfo class.
+    /// </summary>
+    /// <param name="type">The account entity type.</param>
     /// <param name="creation">The creation date time.</param>
     internal BaseAccountEntityInfo(AccountEntityTypes type, DateTime? creation = null)
         : base(null, creation)
     {
         AccountEntityType = type;
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the BaseAccountEntityInfo class.
+    /// </summary>
+    /// <param name="type">The account entity type.</param>
+    /// <param name="args">The initialization arguments.</param>
+    /// <param name="nickname">The nickname or display name.</param>
+    /// <param name="avatar">The avatar URI.</param>
+    internal BaseAccountEntityInfo(AccountEntityTypes type, ResourceEntityArgs args, string nickname, Uri avatar = null)
+        : base(args)
+    {
+        AccountEntityType = type;
+        Nickname = nickname;
+        AvatarUri = avatar;
     }
 
     /// <summary>
@@ -75,7 +121,7 @@ public abstract class BaseAccountEntityInfo : BaseResourceEntityInfo
     /// </summary>
     [DataMember(Name = "type")]
     [JsonPropertyName("type")]
-    [Description("This kind of entity can be used as an owner of the resource. This property is to define the type of the owner, e.g. a user, a user group, a service agent, etc.")]
+    [Description("The types of this security account entity, e.g. a user, a user group, a service agent, etc.")]
     public AccountEntityTypes AccountEntityType { get; }
 
     /// <summary>
@@ -239,6 +285,160 @@ public abstract class BaseAccountEntityInfo : BaseResourceEntityInfo
     /// <returns>A JSON object.</returns>
     public static explicit operator JsonObjectNode(BaseAccountEntityInfo value)
         => value?.ToJson();
+}
+
+/// <summary>
+/// The arguments to initializes an account resource entity.
+/// </summary>
+[Guid("DDB1CE37-021F-464D-8476-298977062400")]
+public class AccountEntityArgs : ResourceEntityArgs
+{
+    /// <summary>
+    /// Initializes a new instance of the AccountEntityArgs class.
+    /// </summary>
+    /// <param name="keepNullId">true if keep the identifier as null; otherwise, false.</param>
+    /// <param name="nickname">The nickname or display name.</param>
+    /// <param name="avatar">The avatar URI.</param>
+    public AccountEntityArgs(bool keepNullId, string nickname = null, Uri avatar = null)
+        : base(keepNullId)
+    {
+        Nickname = nickname;
+        AvatarUri = avatar;
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the AccountEntityArgs class.
+    /// </summary>
+    public AccountEntityArgs()
+        : base(false)
+    {
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the AccountEntityArgs class.
+    /// </summary>
+    /// <param name="id">The identifier.</param>
+    /// <param name="creation">The creation date time.</param>
+    public AccountEntityArgs(Guid id, DateTime? creation = null)
+        : base(id.ToString("N"), creation)
+    {
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the AccountEntityArgs class.
+    /// </summary>
+    /// <param name="id">The identifier.</param>
+    /// <param name="creation">The creation date time.</param>
+    /// <param name="modification">The last modification date time.</param>
+    public AccountEntityArgs(Guid id, DateTime creation, DateTime modification)
+        : base(id.ToString("N"), creation, modification)
+    {
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the AccountEntityArgs class.
+    /// </summary>
+    /// <param name="id">The identifier.</param>
+    /// <param name="creation">The creation date time.</param>
+    public AccountEntityArgs(string id, DateTime? creation = null)
+        : base(id, creation)
+    {
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the AccountEntityArgs class.
+    /// </summary>
+    /// <param name="id">The identifier.</param>
+    /// <param name="creation">The creation date time.</param>
+    /// <param name="modification">The last modification date time.</param>
+    public AccountEntityArgs(string id, DateTime creation, DateTime modification)
+        : base(id, creation, modification)
+    {
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the AccountEntityArgs class.
+    /// </summary>
+    /// <param name="id">The identifier.</param>
+    /// <param name="nickname">The nickname or display name.</param>
+    /// <param name="avatar">The avatar URI.</param>
+    /// <param name="creation">The creation date time.</param>
+    public AccountEntityArgs(Guid id, string nickname, Uri avatar, DateTime? creation = null)
+        : base(id.ToString("N"), creation)
+    {
+        Nickname = nickname;
+        AvatarUri = avatar;
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the AccountEntityArgs class.
+    /// </summary>
+    /// <param name="id">The identifier.</param>
+    /// <param name="nickname">The nickname or display name.</param>
+    /// <param name="avatar">The avatar URI.</param>
+    /// <param name="creation">The creation date time.</param>
+    /// <param name="modification">The last modification date time.</param>
+    public AccountEntityArgs(Guid id, string nickname, Uri avatar, DateTime creation, DateTime modification)
+        : base(id.ToString("N"), creation, modification)
+    {
+        Nickname = nickname;
+        AvatarUri = avatar;
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the AccountEntityArgs class.
+    /// </summary>
+    /// <param name="id">The identifier.</param>
+    /// <param name="nickname">The nickname or display name.</param>
+    /// <param name="avatar">The avatar URI.</param>
+    /// <param name="creation">The creation date time.</param>
+    public AccountEntityArgs(string id, string nickname, Uri avatar, DateTime? creation = null)
+        : base(id, creation)
+    {
+        Nickname = nickname;
+        AvatarUri = avatar;
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the AccountEntityArgs class.
+    /// </summary>
+    /// <param name="id">The identifier.</param>
+    /// <param name="nickname">The nickname or display name.</param>
+    /// <param name="avatar">The avatar URI.</param>
+    /// <param name="creation">The creation date time.</param>
+    /// <param name="modification">The last modification date time.</param>
+    public AccountEntityArgs(string id, string nickname, Uri avatar, DateTime creation, DateTime modification)
+        : base(id, creation, modification)
+    {
+        Nickname = nickname;
+        AvatarUri = avatar;
+    }
+
+    /// <summary>
+    /// Gets or sets the nickname.
+    /// </summary>
+    [DataMember(Name = "nickname")]
+    [JsonPropertyName("nickname")]
+    [Description("The nickname.")]
+    public string Nickname { get; set; }
+
+    /// <summary>
+    /// Gets or sets the URI of avatar.
+    /// </summary>
+    [DataMember(Name = "avatar")]
+    [JsonPropertyName("avatar")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+    [Description("The URI of the avatar.")]
+    public Uri AvatarUri { get; set; }
+
+    /// <summary>
+    /// Gets or sets the introduction.
+    /// </summary>
+    [DataMember(Name = "bio", EmitDefaultValue = false)]
+    [JsonPropertyName("bio")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+    [Description("The introduction.")]
+    public string Bio { get; set; }
 }
 
 /// <summary>

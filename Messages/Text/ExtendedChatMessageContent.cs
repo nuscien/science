@@ -28,7 +28,7 @@ public class ExtendedChatMessageContent
     /// </summary>
     /// <param name="message">The message content.</param>
     /// <param name="format">The message format.</param>
-    /// <param name="info">The additional info.</param>
+    /// <param name="info">The additional information.</param>
     public ExtendedChatMessageContent(string message, ExtendedChatMessageFormats format = ExtendedChatMessageFormats.Text, JsonObjectNode info = null)
         : this(message, format, null, info)
     {
@@ -40,7 +40,7 @@ public class ExtendedChatMessageContent
     /// <param name="message">The message content.</param>
     /// <param name="format">The message format.</param>
     /// <param name="category">The optional category.</param>
-    /// <param name="info">The additional info.</param>
+    /// <param name="info">The additional information.</param>
     public ExtendedChatMessageContent(string message, ExtendedChatMessageFormats format, string category, JsonObjectNode info = null)
     {
         Message = message;
@@ -78,6 +78,16 @@ public class ExtendedChatMessageContent
     /// Gets or sets the priority.
     /// </summary>
     public BasicPriorities Priority { get; set; } = BasicPriorities.Normal;
+
+    /// <summary>
+    /// Gets the message identifier of reply.
+    /// </summary>
+    public string ReplyId { get; set; }
+
+    /// <summary>
+    /// Gets the message identifier of root reply.
+    /// </summary>
+    public string RootReplyId { get; set; }
 
     /// <summary>
     /// Gets the additional data.

@@ -592,6 +592,32 @@ public class ExtendedChatConversation : BaseObservableProperties
     }
 
     /// <summary>
+    /// Gets the specific message replies.
+    /// </summary>
+    /// <param name="source">The identifier of the source message to find its replies.</param>
+    /// <param name="replyExactly">true if reply the given message exactly; otherwise, false, also including the replies to its replies.</param>
+    /// <returns>The collection of the messages which reply the given one.</returns>
+    public IEnumerable<ExtendedChatMessage> GetReplies(string source, bool replyExactly)
+        => ExtendedChatMessages.GetReplies(History, source, replyExactly);
+
+    /// <summary>
+    /// Gets the specific message replies.
+    /// </summary>
+    /// <param name="source">The identifier of the source message to find its replies.</param>
+    /// <param name="replyExactly">true if reply the given message exactly; otherwise, false, also including the replies to its replies.</param>
+    /// <returns>The collection of the messages which reply the given one.</returns>
+    public IEnumerable<ExtendedChatMessage> GetReplies(ExtendedChatMessage source, bool replyExactly)
+        => ExtendedChatMessages.GetReplies(History, source?.Id, replyExactly);
+
+    /// <summary>
+    /// Gets the specific message with same topic.
+    /// </summary>
+    /// <param name="topic">The topic identifier.</param>
+    /// <returns>The collection of the messages which reply the given one.</returns>
+    public IEnumerable<ExtendedChatMessage> GetTopicMessages(string topic)
+        => ExtendedChatMessages.GetTopicMessages(History, topic);
+
+    /// <summary>
     /// Sets the service availability.
     /// </summary>
     /// <param name="value">The availability about if the service is available to send message.</param>

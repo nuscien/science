@@ -110,7 +110,12 @@ public abstract class BaseResponsiveChatConversation(BaseUserItemInfo sender, Ba
         var old = CurrentTopic;
         CurrentTopic = await CreateNewTopicAsync();
         var b = CurrentTopic != null && !ReferenceEquals(CurrentTopic, old);
-        if (b) TopicCreated?.Invoke(this, CurrentTopic);
+        if (b)
+        {
+            TopicCreated?.Invoke(this, CurrentTopic);
+            OnTopicCreate(CurrentTopic);
+        }
+
         return b;
     }
 
@@ -239,7 +244,6 @@ public abstract class BaseResponsiveChatConversation(BaseUserItemInfo sender, Ba
     internal override Task<ExtendedChatMessageAvailability> GetServiceAvailabilityInternalAsync(CancellationToken cancellationToken = default)
         => GetServiceAvailabilityAsync(cancellationToken);
 
-
     /// <summary>
     /// Occurs when a new topic is created in the conversation.
     /// </summary>
@@ -365,6 +369,8 @@ public abstract class BaseResponsiveChatConversation(BaseUserItemInfo sender, Ba
 
         var piece = recJson.TryGetObjectListValue("choices")?.FirstOrDefault()?.TryGetObjectValue("delta")?.TryGetStringValue("content");
         if (string.IsNullOrWhiteSpace(piece)) piece = recJson.TryGetStringValue("msg");
+        if (string.IsNullOrWhiteSpace(piece)) piece = recJson.TryGetStringValue("text");
+        if (string.IsNullOrWhiteSpace(piece)) piece = recJson.TryGetStringValue("delta");
         if (string.IsNullOrWhiteSpace(piece)) return;
         var eventName = record.EventName?.Trim().ToLowerInvariant();
         switch (eventName)
@@ -372,6 +378,8 @@ public abstract class BaseResponsiveChatConversation(BaseUserItemInfo sender, Ba
             case "add":
             case "finish":
             case "message":
+            case "response.output_text.delta":
+            case "response.text.delta":
                 context.AppendAnswer(piece);
                 break;
             case "clear":
@@ -379,6 +387,8 @@ public abstract class BaseResponsiveChatConversation(BaseUserItemInfo sender, Ba
                 break;
             case "override":
             case "output":
+            case "response.output_text.done":
+            case "response.text.done":
                 context.SetAnswer(piece);
                 break;
         }
@@ -538,6 +548,7 @@ public abstract class BaseResponsiveChatConversation(BaseUserItemInfo sender, Ba
                     {
                         context.UpdateState(ResponsiveChatMessageStates.Done);
                         context.SetAnswer(intent.Message);
+                        resp.Update(ExtendedChatMessageSendResultStates.Success, intent.Message);
                     }
 
                     monitor?.OnStateChange(context.State);
@@ -576,6 +587,7 @@ public abstract class BaseResponsiveChatConversation(BaseUserItemInfo sender, Ba
     private async Task<ExtendedChatMessage> GetResponseAsync(ResponsiveChatContext context, ResponsiveChatSendingLifecycle monitor, CancellationToken cancellationToken = default)
     {
         var m = context.Model;
+        if (context.IsSuccessful && !string.IsNullOrWhiteSpace(m.AnswerMessage)) return m.Answer;
         var q = context.QuestionMessage;
         context.UpdateState(ResponsiveChatMessageStates.Processing);
         monitor?.OnStateChange(context.State);

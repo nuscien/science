@@ -34,6 +34,26 @@ public class OrgAccountItemInfo : BaseUserItemInfo, IBasicPublisherInfo
     /// <summary>
     /// Initializes a new instance of the OrgAccountItemInfo class.
     /// </summary>
+    /// <param name="args">The initialization arguments.</param>
+    /// <param name="nickname">The nickname or display name.</param>
+    /// <param name="avatar">The avatar URI.</param>
+    public OrgAccountItemInfo(ResourceEntityArgs args, string nickname = null, Uri avatar = null)
+        : base(AccountEntityTypes.Organization, args, nickname, Genders.Asexual, avatar)
+    {
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the OrgAccountItemInfo class.
+    /// </summary>
+    /// <param name="args">The initialization arguments.</param>
+    public OrgAccountItemInfo(AccountEntityArgs args)
+        : base(AccountEntityTypes.Organization, args, Genders.Asexual)
+    {
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the OrgAccountItemInfo class.
+    /// </summary>
     /// <param name="id">The resource identifier.</param>
     /// <param name="nickname">The nickname or display name.</param>
     /// <param name="avatar">The avatar URI.</param>

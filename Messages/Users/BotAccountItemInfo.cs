@@ -35,6 +35,32 @@ public class BotAccountItemInfo : BaseUserItemInfo
     /// <summary>
     /// Initializes a new instance of the BotAccountItemInfo class.
     /// </summary>
+    /// <param name="args">The initialization arguments.</param>
+    /// <param name="nickname">The nickname or display name.</param>
+    /// <param name="gender">The gender.</param>
+    /// <param name="avatar">The avatar URI.</param>
+    /// <param name="publisher">The publisher info.</param>
+    public BotAccountItemInfo(ResourceEntityArgs args, string nickname, Genders gender, Uri avatar = null, IBasicPublisherInfo publisher = null)
+        : base(AccountEntityTypes.Bot, args, nickname, gender, avatar)
+    {
+        Publisher = publisher;
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the BotAccountItemInfo class.
+    /// </summary>
+    /// <param name="args">The initialization arguments.</param>
+    /// <param name="gender">The gender.</param>
+    /// <param name="publisher">The publisher info.</param>
+    public BotAccountItemInfo(AccountEntityArgs args, Genders gender, IBasicPublisherInfo publisher = null)
+        : base(AccountEntityTypes.Bot, args, gender)
+    {
+        Publisher = publisher;
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the BotAccountItemInfo class.
+    /// </summary>
     /// <param name="id">The resource identifier.</param>
     /// <param name="nickname">The nickname or display name.</param>
     /// <param name="gender">The gender.</param>
