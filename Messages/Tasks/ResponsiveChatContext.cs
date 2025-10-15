@@ -256,11 +256,12 @@ public sealed class ResponsiveChatContext
         EnableAnswer();
     }
 
-    internal void SetError(string message, Exception ex = null)
+    internal void SetError(string message, Exception ex = null, string notes = null)
     {
         notification.Message = message;
         Model.UpdateState(ResponsiveChatMessageStates.ResponseError, "Streaming error.");
         if (ex != null) notification.Info.SetValue("error", TextHelper.ToJson(ex));
+        notification.Info.SetValueIfNotEmpty("notes", notes);
         var history = Conversation?.History;
         if (string.IsNullOrWhiteSpace(message) || history == null || history.Contains(notification)) return;
         history.Add(notification);

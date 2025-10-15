@@ -225,7 +225,7 @@ public class ExtendedChatConversation : BaseObservableProperties
         {
             context.CanSetDetails = false;
             UpdateSavingStatus(ex, context, parameter, ExtendedChatMessageSendResultStates.Aborted, out resp);
-            History.Remove(msg);
+            //History.Remove(msg);
             parameter.Details = context.Details;
             parameter.Cancel();
             OnSendCanceled(context, resp);
@@ -236,7 +236,7 @@ public class ExtendedChatConversation : BaseObservableProperties
         {
             context.CanSetDetails = false;
             UpdateSavingStatus(ex, context, parameter, ExtendedChatMessageSendResultStates.OtherError, out resp);
-            History.Remove(msg);
+            //History.Remove(msg);
             parameter.Details = context.Details;
             parameter.End(false);
             OnSendFailed(context, resp);

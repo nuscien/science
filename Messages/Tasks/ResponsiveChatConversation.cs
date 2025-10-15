@@ -349,6 +349,14 @@ public abstract class BaseResponsiveChatConversation(BaseUserItemInfo sender, Ba
         => exception?.Message ?? "Error!";
 
     /// <summary>
+    /// Creates the message notes.
+    /// </summary>
+    /// <param name="exception">The exception.</param>
+    /// <returns>The message notes to set.</returns>
+    protected virtual string CreateMessageNotes(Exception exception)
+        => null;
+
+    /// <summary>
     /// Converts server-sent events to message.
     /// </summary>
     /// <param name="record">The record item of server-sent event.</param>
@@ -732,7 +740,7 @@ public abstract class BaseResponsiveChatConversation(BaseUserItemInfo sender, Ba
 
     private void SetError(ResponsiveChatMessageStates state, ResponsiveChatContext context, Exception ex)
     {
-        context.SetError(FormatMessage(ex), ex is ResponsiveChatMessageException rcmEx ? (rcmEx.InnerException ?? ex) : ex);
+        context.SetError(FormatMessage(ex), ex is ResponsiveChatMessageException rcmEx ? (rcmEx.InnerException ?? ex) : ex, CreateMessageNotes(ex));
         context.SetDataRecord();
         context.UpdateState(state, ex.Message);
     }
