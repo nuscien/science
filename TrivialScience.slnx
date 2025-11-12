@@ -1,0 +1,18 @@
+<Solution>
+  <Folder Name="/Solution Items/">
+    <File Path="azure-pipelines.yml" />
+    <File Path="CONTRIBUTING.md" />
+    <File Path="Directory.Packages.props" />
+    <File Path="LICENSE" />
+    <File Path="README.md" />
+    <File Path="SECURITY.md" />
+    <File Path="Tools/Build.props" />
+    <File Path="Tools/Common.props" />
+    <File Path="Tools/Packages.props" />
+    <File Path="Trivial.snk" />
+  </Folder>
+  <Project Path="Chemistry/Chemistry.csproj" />
+  <Project Path="Maths/Maths.csproj" />
+  <Project Path="Messages/Messages.csproj" />
+  <Project Path="UnitTest/UnitTest.csproj" />
+</Solution>
