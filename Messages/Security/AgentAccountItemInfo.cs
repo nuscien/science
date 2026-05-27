@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Runtime.Serialization;
@@ -12,15 +13,14 @@ using Trivial.Data;
 using Trivial.Reflection;
 using Trivial.Tasks;
 using Trivial.Text;
-using Trivial.Web;
 using Trivial.Users;
+using Trivial.Web;
 
 namespace Trivial.Security;
 
 /// <summary>
-/// The agent item information.
+/// The agent or proxy of another account entity.
 /// </summary>
-[JsonConverter(typeof(AgentAccountItemInfoConverter))]
 [Guid("1FA2B538-3658-4349-B3DE-70E778FC7787")]
 public class AgentAccountItemInfo : BaseUserItemInfo
 {
@@ -69,19 +69,13 @@ public class AgentAccountItemInfo : BaseUserItemInfo
     }
 
     /// <summary>
-    /// Initializes a new instance of the AgentAccountItemInfo class.
-    /// </summary>
-    /// <param name="json">The JSON object to parse.</param>
-    protected internal AgentAccountItemInfo(JsonObjectNode json)
-        : base(json, AccountEntityTypes.Agent)
-    {
-    }
-
-    /// <summary>
     /// Gets or sets the type of the subject of the agent.
     /// </summary>
     [JsonIgnore]
     [Description("The type of the subject of the agent.")]
+#if NETCOREAPP
+    [Column("subtype")]
+#endif
     public string SubjectType
     {
         get => GetCurrentProperty<string>();
@@ -93,6 +87,9 @@ public class AgentAccountItemInfo : BaseUserItemInfo
     /// </summary>
     [JsonIgnore]
     [Description("The identifier of the subject of the agent.")]
+#if NETCOREAPP
+    [Column("subject")]
+#endif
     public string SubjectId
     {
         get => GetCurrentProperty<string>();
@@ -105,10 +102,54 @@ public class AgentAccountItemInfo : BaseUserItemInfo
     [DataMember(Name = "scope")]
     [JsonPropertyName("scope")]
     [Description("The agent scope.")]
+#if NETCOREAPP
+    [NotMapped]
+#endif
     public List<string> Scope
     {
         get => GetCurrentProperty<List<string>>();
         private set => SetCurrentProperty(value);
+    }
+
+    /// <summary>
+    /// Gets or sets the scope in string separated by white space.
+    /// </summary>
+#if NETCOREAPP
+    [Column("scope")]
+#endif
+    public string ScopeString
+    {
+        get
+        {
+            var arr = Scope;
+            return arr is null ? string.Empty : string.Join(" ", arr);
+        }
+
+        set
+        {
+            var arr = Scope;
+            if (arr is null)
+            {
+                arr = new();
+                if (Scope is not null)
+                {
+                    arr = Scope;
+                    if (arr is null) arr = new();
+                }
+
+                Scope = arr;
+            }
+
+            if (string.IsNullOrWhiteSpace(value)) arr.Clear();
+            var list = value.Split(value.Contains(";") ? new[] { ';' } : new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+            arr.Clear();
+            foreach (var item in list)
+            {
+                var s = item.Trim();
+                if (s.Length < 1 || arr.Contains(s)) continue;
+                arr.Add(s);
+            }
+        }
     }
 
     /// <summary>
@@ -161,20 +202,6 @@ public class AgentAccountItemInfo : BaseUserItemInfo
     }
 
     /// <inheritdoc />
-    protected override void Fill(JsonObjectNode json)
-    {
-        base.Fill(json);
-        var subject = json.TryGetObjectValue("subject");
-        if (subject != null)
-        {
-            SubjectType = subject.TryGetStringTrimmedValue("type", true);
-            SubjectId = subject.TryGetStringTrimmedValue("id", true) ?? subject.Id;
-        }
-
-        Scope = (json.TryGetStringListValue("scope", true) ?? new()).Where(ele => !string.IsNullOrWhiteSpace(ele)).Distinct().ToList();
-    }
-
-    /// <inheritdoc />
     protected override void ToString(StringBuilder sb)
     {
         sb.AppendLine();
@@ -185,46 +212,4 @@ public class AgentAccountItemInfo : BaseUserItemInfo
         sb.Append(' ');
         sb.Append(SubjectId ?? "?");
     }
-
-    /// <summary>
-    /// Converts to JSON object.
-    /// </summary>
-    /// <returns>A JSON object.</returns>
-    public override JsonObjectNode ToJson()
-    {
-        var json = base.ToJson();
-        var subject = new JsonObjectNode();
-        subject.SetValueIfNotEmpty("type", SubjectType);
-        subject.SetValueIfNotEmpty("id", SubjectId);
-        json.SetValue("subject", subject);
-        var scope = Scope;
-        if (scope != null) json.SetValue("scope", scope.Where(ele => !string.IsNullOrWhiteSpace(ele)).Distinct());
-        return json;
-    }
-
-    /// <summary>
-    /// Converts the JSON raw back.
-    /// </summary>
-    /// <param name="value">The source value.</param>
-    /// <returns>The request instance.</returns>
-    public static implicit operator AgentAccountItemInfo(JsonObjectNode value)
-        => value is null ? null : new(value);
-
-    /// <summary>
-    /// Converts to JSON object.
-    /// </summary>
-    /// <param name="value">The JSON value.</param>
-    /// <returns>A JSON object.</returns>
-    public static explicit operator JsonObjectNode(AgentAccountItemInfo value)
-        => value?.ToJson();
-}
-
-/// <summary>
-/// JSON value node converter.
-/// </summary>
-internal sealed class AgentAccountItemInfoConverter : JsonObjectHostConverter<AgentAccountItemInfo>
-{
-    /// <inheritdoc />
-    protected override AgentAccountItemInfo Create(JsonObjectNode json)
-        => new(json);
 }

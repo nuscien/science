@@ -1,9 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
+using System.Net.Http.Headers;
 using System.Runtime.InteropServices;
 using System.Runtime.Serialization;
+using System.Security.Claims;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -12,16 +15,14 @@ using Trivial.Data;
 using Trivial.Reflection;
 using Trivial.Tasks;
 using Trivial.Text;
-using Trivial.Web;
 using Trivial.Users;
-using System.Security.Claims;
+using Trivial.Web;
 
 namespace Trivial.Devices;
 
 /// <summary>
-/// The device item information.
+/// The entity of device which can be verified through identity authentication.
 /// </summary>
-[JsonConverter(typeof(AuthDeviceItemInfoConverter))]
 [Guid("C01695B0-CA1C-4DED-8149-A149E55294DB")]
 public class AuthDeviceItemInfo : BaseUserItemInfo
 {
@@ -66,20 +67,15 @@ public class AuthDeviceItemInfo : BaseUserItemInfo
     }
 
     /// <summary>
-    /// Initializes a new instance of the AuthDeviceItemInfo class.
-    /// </summary>
-    /// <param name="json">The JSON object to parse.</param>
-    protected internal AuthDeviceItemInfo(JsonObjectNode json)
-        : base(json, AccountEntityTypes.Device)
-    {
-    }
-
-    /// <summary>
     /// Gets or sets the manufacturer of the device.
     /// </summary>
     [DataMember(Name = "manufacturer")]
     [JsonPropertyName("manufacturer")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     [Description("The manufacturer of the device.")]
+#if NETCOREAPP
+    [Column("manufacturer")]
+#endif
     public string Manufacturer
     {
         get => GetCurrentProperty<string>();
@@ -91,7 +87,11 @@ public class AuthDeviceItemInfo : BaseUserItemInfo
     /// </summary>
     [DataMember(Name = "model")]
     [JsonPropertyName("model")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     [Description("The product name or model code of the device.")]
+#if NETCOREAPP
+    [Column("model")]
+#endif
     public string ModelName
     {
         get => GetCurrentProperty<string>();
@@ -103,7 +103,11 @@ public class AuthDeviceItemInfo : BaseUserItemInfo
     /// </summary>
     [DataMember(Name = "form")]
     [JsonPropertyName("form")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     [Description("The device form.")]
+#if NETCOREAPP
+    [Column("form")]
+#endif
     public string DeviceForm
     {
         get => GetCurrentProperty<string>();
@@ -115,20 +119,15 @@ public class AuthDeviceItemInfo : BaseUserItemInfo
     /// </summary>
     [DataMember(Name = "thumbprint")]
     [JsonPropertyName("thumbprint")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     [Description("The thumbprint of the device.")]
+#if NETCOREAPP
+    [Column("thumbprint")]
+#endif
     public string Thumbprint
     {
         get => GetCurrentProperty<string>();
         set => SetCurrentProperty(value);
-    }
-
-    /// <inheritdoc />
-    protected override void Fill(JsonObjectNode json)
-    {
-        base.Fill(json);
-        Manufacturer = json.TryGetStringTrimmedValue("manufacturer", true);
-        ModelName = json.TryGetStringTrimmedValue("model", true);
-        DeviceForm = json.TryGetStringTrimmedValue("form", true);
     }
 
     /// <summary>
@@ -146,19 +145,6 @@ public class AuthDeviceItemInfo : BaseUserItemInfo
         if (!string.IsNullOrWhiteSpace(Thumbprint)) yield return ResourceEntityUtils.ToClaim(ClaimTypes.Thumbprint, Thumbprint, issuer);
     }
 
-    /// <summary>
-    /// Converts to JSON object.
-    /// </summary>
-    /// <returns>A JSON object.</returns>
-    public override JsonObjectNode ToJson()
-    {
-        var json = base.ToJson();
-        json.SetValue("manufacturer", Manufacturer);
-        json.SetValue("model", ModelName);
-        json.SetValue("form", DeviceForm);
-        return json;
-    }
-
     /// <inheritdoc />
     protected override void ToString(StringBuilder sb)
     {
@@ -170,30 +156,4 @@ public class AuthDeviceItemInfo : BaseUserItemInfo
         sb.Append(" & Form = ");
         sb.Append(DeviceForm);
     }
-
-    /// <summary>
-    /// Converts the JSON raw back.
-    /// </summary>
-    /// <param name="value">The source value.</param>
-    /// <returns>The request instance.</returns>
-    public static implicit operator AuthDeviceItemInfo(JsonObjectNode value)
-        => value is null ? null : new(value);
-
-    /// <summary>
-    /// Converts to JSON object.
-    /// </summary>
-    /// <param name="value">The JSON value.</param>
-    /// <returns>A JSON object.</returns>
-    public static explicit operator JsonObjectNode(AuthDeviceItemInfo value)
-        => value?.ToJson();
-}
-
-/// <summary>
-/// JSON value node converter.
-/// </summary>
-internal sealed class AuthDeviceItemInfoConverter : JsonObjectHostConverter<AuthDeviceItemInfo>
-{
-    /// <inheritdoc />
-    protected override AuthDeviceItemInfo Create(JsonObjectNode json)
-        => new(json);
 }

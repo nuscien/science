@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Runtime.Serialization;
@@ -11,15 +12,15 @@ using System.Threading.Tasks;
 using Trivial.Data;
 using Trivial.Reflection;
 using Trivial.Text;
-using Trivial.Web;
 using Trivial.Users;
+using Trivial.Web;
 
 namespace Trivial.Tasks;
 
 /// <summary>
-/// The service item information.
+/// The service account used by a back-end service, a local app or an automation,
+/// which requires to run as an identity and related roles to access resources under permission scope.
 /// </summary>
-[JsonConverter(typeof(ServiceAccountItemInfoConverter))]
 [Guid("63AAF308-C3E7-4A5C-B390-A8B05E78B703")]
 public class ServiceAccountItemInfo : BaseUserItemInfo
 {
@@ -46,31 +47,35 @@ public class ServiceAccountItemInfo : BaseUserItemInfo
     }
 
     /// <summary>
-    /// Initializes a new instance of the ServiceAccountItemInfo class.
-    /// </summary>
-    /// <param name="json">The JSON object to parse.</param>
-    protected internal ServiceAccountItemInfo(JsonObjectNode json)
-        : base(json, AccountEntityTypes.Service)
-    {
-    }
-
-    /// <summary>
     /// Gets or sets the basic information of publisher or developer.
     /// </summary>
     [DataMember(Name = "publisher")]
     [JsonPropertyName("publisher")]
     [Description("The basic information of publisher or developer.")]
-    public IBasicPublisherInfo Publisher
+    [JsonConverter(typeof(GenericPublisherInfoConverter))]
+#if NETCOREAPP
+    [NotMapped]
+#endif
+    public IBasicPublisherInfo Publisher // ToDo: DB column
     {
         get => GetCurrentProperty<IBasicPublisherInfo>();
         set => SetCurrentProperty(value);
     }
 
-    /// <inheritdoc />
-    protected override void Fill(JsonObjectNode json)
+    /// <summary>
+    /// Gets or sets the service name for application mapping.
+    /// </summary>
+    [DataMember(Name = "name")]
+    [JsonPropertyName("name")]
+    [JsonConverter(typeof(GenericPublisherInfoConverter))]
+    [Description("The service name for application mapping.")]
+#if NETCOREAPP
+    [NotMapped]
+#endif
+    public string ServiceName
     {
-        base.Fill(json);
-        Publisher = TextHelper.ToPublisherInfo(json, "publisher");
+        get => GetCurrentProperty<string>();
+        set => SetCurrentProperty(value);
     }
 
     /// <inheritdoc />
@@ -87,42 +92,4 @@ public class ServiceAccountItemInfo : BaseUserItemInfo
         sb.Append(pid);
         sb.Append(')');
     }
-
-    /// <summary>
-    /// Converts to JSON object.
-    /// </summary>
-    /// <returns>A JSON object.</returns>
-    public override JsonObjectNode ToJson()
-    {
-        var json = base.ToJson();
-        var publisher = JsonObjectNode.ConvertFrom(Publisher);
-        json.SetValue("publisher", publisher);
-        return json;
-    }
-
-    /// <summary>
-    /// Converts the JSON raw back.
-    /// </summary>
-    /// <param name="value">The source value.</param>
-    /// <returns>The request instance.</returns>
-    public static implicit operator ServiceAccountItemInfo(JsonObjectNode value)
-        => value is null ? null : new(value);
-
-    /// <summary>
-    /// Converts to JSON object.
-    /// </summary>
-    /// <param name="value">The JSON value.</param>
-    /// <returns>A JSON object.</returns>
-    public static explicit operator JsonObjectNode(ServiceAccountItemInfo value)
-        => value?.ToJson();
-}
-
-/// <summary>
-/// JSON value node converter.
-/// </summary>
-internal sealed class ServiceAccountItemInfoConverter : JsonObjectHostConverter<ServiceAccountItemInfo>
-{
-    /// <inheritdoc />
-    protected override ServiceAccountItemInfo Create(JsonObjectNode json)
-        => new(json);
 }

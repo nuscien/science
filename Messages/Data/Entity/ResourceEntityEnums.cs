@@ -1,0 +1,179 @@
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Linq;
+using System.Linq.Expressions;
+using System.Runtime.Serialization;
+using System.Text;
+using System.Text.Json;
+using System.Text.Json.Serialization;
+using System.Threading;
+using System.Threading.Tasks;
+
+using Trivial.Data;
+using Trivial.Reflection;
+using Trivial.Text;
+
+namespace Trivial.Data;
+
+/// <summary>
+/// The entity states.
+/// </summary>
+public enum ResourceEntityStates : byte
+{
+    /// <summary>
+    /// The entity does not exist or is removed.
+    /// </summary>
+    [Description("The entity does not exist or is removed.")]
+    Deleted = 0,
+
+    /// <summary>
+    /// The entity is in trash bin. It means it is being considered for deletion but has not yet.
+    /// </summary>
+    [Description("The entity is in trash bin. It means it is being considered for deletion but has not yet.")]
+    Recycle = 1,
+
+    /// <summary>
+    /// This is a placeholder. It means the entity is not ready but is planed to create at the right time.
+    /// </summary>
+    [Description("This is a placeholder. It means the entity is not ready but is planed to create at the right time.")]
+    Placehoder = 2,
+
+    /// <summary>
+    /// The entity is in a progress to create or is initializing.
+    /// </summary>
+    [Description("The entity is in a progress to create or is initializing.")]
+    Progress = 3,
+
+    /// <summary>
+    /// The entity is applying for approval and its fields are already.
+    /// </summary>
+    [Description("The entity is applying for approval and its fields are already.")]
+    Request = 4,
+
+    /// <summary>
+    /// The entity is a draft. Its fields are not fully completed.
+    /// </summary>
+    [Description("The entity is a draft. Its fields are not fully completed.")]
+    Draft = 5,
+
+    /// <summary>
+    /// The entity is in progress of publishing and may take some time. There are no further actions that require approval.
+    /// </summary>
+    [Description("The entity is in progress of publishing and may take some time. There are no further actions that require approval.")]
+    Publishing = 6,
+
+    /// <summary>
+    /// The entity is in service (is published).
+    /// </summary>
+    [Description("The entity is in service (is published).")]
+    Normal = 7
+}
+
+/// <summary>
+/// The entity states.
+/// </summary>
+public enum ResourceEntityOrders : byte
+{
+    /// <summary>
+    /// The default order.
+    /// </summary>
+    Default = 0,
+
+    /// <summary>
+    /// Order by last modification time descending (new-old).
+    /// </summary>
+    Latest = 1,
+
+    /// <summary>
+    /// Order by last modification time ascending (old-new).
+    /// </summary>
+    Time = 2,
+
+    /// <summary>
+    /// Order by name ascending (a-z).
+    /// </summary>
+    Name = 3,
+
+    /// <summary>
+    /// Order by name descending (z-a).
+    /// </summary>
+    Z2A = 4
+}
+
+/// <summary>
+/// The state of saving resource entity.
+/// </summary>
+public enum ResourceEntitySavingStates : byte
+{
+    /// <summary>
+    /// Available to save, or unknown state.
+    /// </summary>
+    Ready = 0,
+
+    /// <summary>
+    /// Offline initialization before saving.
+    /// </summary>
+    Local = 1,
+
+    /// <summary>
+    /// Working on saving.
+    /// </summary>
+    Saving = 2,
+
+    /// <summary>
+    /// Save failed.
+    /// </summary>
+    Failure = 3,
+
+    /// <summary>
+    /// Disable to save any more.
+    /// </summary>
+    Disabled = 6,
+
+    /// <summary>
+    /// Unknown state.
+    /// </summary>
+    Unknown = 7,
+}
+
+/// <summary>
+/// The reversed properties of resource entity.
+/// </summary>
+public enum ResourceEntitySpecialProperties : byte
+{
+    /// <summary>
+    /// None.
+    /// </summary>
+    None = 0,
+
+    /// <summary>
+    /// The identifier.
+    /// </summary>
+    Id = 1,
+
+    /// <summary>
+    /// The display name.
+    /// </summary>
+    DisplayName = 2,
+
+    /// <summary>
+    /// The resource type.
+    /// </summary>
+    ResourceType = 3,
+
+    /// <summary>
+    /// The supertype of the resource type.
+    /// </summary>
+    Supertype = 4,
+
+    /// <summary>
+    /// The JSON schema URI.
+    /// </summary>
+    Schema = 5,
+
+    /// <summary>
+    /// The state in string.
+    /// </summary>
+    State = 6,
+}

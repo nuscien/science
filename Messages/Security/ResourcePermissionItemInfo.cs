@@ -19,9 +19,8 @@ using System.ComponentModel.DataAnnotations.Schema;
 namespace Trivial.Security;
 
 /// <summary>
-/// The resource permission settings item information.
+/// The permission set of a specific account associated to a resource.
 /// </summary>
-[JsonConverter(typeof(ResourcePermissionItemInfoConverter))]
 public class ResourcePermissionItemInfo<TOwner> : RelatedResourceEntityInfo<TOwner, BaseAccountEntityInfo>
     where TOwner : BaseResourceEntityInfo
 {
@@ -94,20 +93,15 @@ public class ResourcePermissionItemInfo<TOwner> : RelatedResourceEntityInfo<TOwn
     }
 
     /// <summary>
-    /// Initializes a new instance of the ResourcePermissionItemInfo class.
-    /// </summary>
-    /// <param name="json">The JSON object to parse.</param>
-    protected internal ResourcePermissionItemInfo(JsonObjectNode json)
-        : base(json)
-    {
-    }
-
-    /// <summary>
     /// Gets or sets the scope of permission items.
     /// </summary>
     [DataMember(Name = "permission")]
+    [JsonInclude]
     [JsonPropertyName("permission")]
     [Description("The scope of permission items.")]
+#if NETCOREAPP
+    [Column("permission")]
+#endif
     public List<string> Permissions
     {
         get => GetCurrentProperty<List<string>>();
@@ -118,8 +112,12 @@ public class ResourcePermissionItemInfo<TOwner> : RelatedResourceEntityInfo<TOwn
     /// Gets or sets the description of this permission settings.
     /// </summary>
     [DataMember(Name = "desc")]
+    [JsonInclude]
     [JsonPropertyName("desc")]
     [Description("The description of this permission settings.")]
+#if NETCOREAPP
+    [Column("desc")]
+#endif
     public string Description
     {
         get => GetCurrentProperty<string>();
@@ -127,17 +125,9 @@ public class ResourcePermissionItemInfo<TOwner> : RelatedResourceEntityInfo<TOwn
     }
 
     /// <inheritdoc />
-    [JsonIgnore]
-#if NETCOREAPP
-    [NotMapped]
-#endif
     protected override string Supertype => "permission";
 
     /// <inheritdoc />
-    [JsonIgnore]
-#if NETCOREAPP
-    [NotMapped]
-#endif
     protected override string ResourceType => "acl";
 
     /// <summary>
@@ -160,76 +150,5 @@ public class ResourcePermissionItemInfo<TOwner> : RelatedResourceEntityInfo<TOwn
     {
         if (Permissions == null) return false;
         return Permissions.Remove(item);
-    }
-
-    /// <inheritdoc />
-    protected override void Fill(JsonObjectNode json)
-    {
-        base.Fill(json);
-        Permissions = json.TryGetStringListValue("permission", true) ?? new();
-        Description = json.TryGetStringValue("desc");
-    }
-
-    /// <summary>
-    /// Converts to JSON object.
-    /// </summary>
-    /// <returns>A JSON object.</returns>
-    public override JsonObjectNode ToJson()
-    {
-        var json = base.ToJson();
-        json.SetValue("permission", Permissions);
-        json.SetValueIfNotEmpty("desc", Description);
-        return json;
-    }
-
-    /// <summary>
-    /// Converts the JSON raw back.
-    /// </summary>
-    /// <param name="value">The source value.</param>
-    /// <returns>The request instance.</returns>
-    public static implicit operator ResourcePermissionItemInfo<TOwner>(JsonObjectNode value)
-        => value is null ? null : new(value);
-
-    /// <summary>
-    /// Converts to JSON object.
-    /// </summary>
-    /// <param name="value">The JSON value.</param>
-    /// <returns>A JSON object.</returns>
-    public static explicit operator JsonObjectNode(ResourcePermissionItemInfo<TOwner> value)
-        => value?.ToJson();
-}
-
-/// <summary>
-/// JSON value node converter.
-/// </summary>
-internal sealed class ResourcePermissionItemInfoConverter<TOwner> : JsonObjectHostConverter<ResourcePermissionItemInfo<TOwner>>
-    where TOwner : BaseResourceEntityInfo
-{
-    /// <inheritdoc />
-    protected override ResourcePermissionItemInfo<TOwner> Create(JsonObjectNode json)
-        => new(json);
-}
-
-/// <summary>
-/// JSON value node converter.
-/// </summary>
-internal sealed class ResourcePermissionItemInfoConverter : JsonConverterFactory
-{
-    /// <inheritdoc />
-    public override bool CanConvert(Type typeToConvert)
-    {
-        if (!typeToConvert.IsGenericType) return false;
-        var generic = typeToConvert.GetGenericTypeDefinition();
-        return generic == typeof(ResourcePermissionItemInfo<>);
-    }
-
-    /// <inheritdoc />
-    public override JsonConverter CreateConverter(Type typeToConvert, JsonSerializerOptions options)
-    {
-        if (!typeToConvert.IsGenericType) return null;
-        var type = typeToConvert.GetGenericArguments().FirstOrDefault();
-        if (type == null) return null;
-        type = typeof(ResourcePermissionItemInfoConverter<>).MakeGenericType(new[] { type });
-        return (JsonConverter)Activator.CreateInstance(type);
     }
 }
