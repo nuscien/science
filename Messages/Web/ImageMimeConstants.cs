@@ -58,6 +58,11 @@ public static partial class MimeConstants
         public const string Jpeg = "image/jpeg";
 
         /// <summary>
+        /// The MIME content type of Joint Photographic Experts Group.
+        /// </summary>
+        public const string JpegXl = "image/jxl";
+
+        /// <summary>
         /// The MIME content type of Adobe Photoshop Document.
         /// </summary>
         public const string Psd = "image/vnd.adobe.photoshop";
