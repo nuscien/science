@@ -97,13 +97,13 @@ public class ChemistryVerb : BaseCommandVerb
     {
         await RunAsync(null, cancellationToken);
         var s = Arguments.Verb?.TryGet(0);
-        var console = GetConsole();
+        var console = CurrentConsole;
         if (s == "period" || s == "p" || s == "周期" || (s == "Period" && Arguments.Verb.Count > 1))
         {
             s = Arguments.Verb.TryGet(1);
             if (string.IsNullOrEmpty(s))
             {
-                ChemistryCommandLine.WriteTable(GetConsole(), ChemicalElementStyle);
+                ChemistryCommandLine.WriteTable(console, ChemicalElementStyle);
             }
             else if (int.TryParse(s, out var period) && period > 0)
             {
@@ -296,7 +296,7 @@ public class ChemistryVerb : BaseCommandVerb
 
         if (s == "periodic" || s == "table" || s == "t" || s == "元素周期表" || s == "周期表")
         {
-            ChemistryCommandLine.WriteTable(GetConsole(), ChemicalElementStyle);
+            ChemistryCommandLine.WriteTable(console, ChemicalElementStyle);
             return;
         }
 
@@ -398,7 +398,7 @@ public class ChemistryVerb : BaseCommandVerb
                 }
 
                 if (i % 3 > 0) col.AddNewLine();
-                GetConsole().Write(col);
+                console.Write(col);
             }
             else
             {
@@ -456,7 +456,7 @@ public class ChemistryVerb : BaseCommandVerb
                 }
 
                 col.AddNewLine();
-                GetConsole().Write(col);
+                console.Write(col);
             }
             return;
         }
@@ -477,11 +477,11 @@ public class ChemistryVerb : BaseCommandVerb
         if (eles.Count < 4)
         {
             WriteInfo(eles[0]);
-            GetConsole().WriteLine();
+            console.WriteLine();
             WriteInfo(eles[1]);
             if (eles.Count > 2)
             {
-                GetConsole().WriteLine();
+                console.WriteLine();
                 WriteInfo(eles[2]);
             }
 
@@ -504,17 +504,17 @@ public class ChemistryVerb : BaseCommandVerb
     private void WriteInfo(ChemicalElement element, bool containIsotopes = false)
     {
         var col = ChemistryCommandLine.ToConsoleText(ChemicalElementStyle, element, containIsotopes);
-        GetConsole().Write(col);
+        CurrentConsole.Write(col);
     }
 
     private void WriteSimpleInfo(ChemicalElement element, bool writeEnglishName)
     {
         var col = ChemistryCommandLine.ToSimpleConsoleText(ChemicalElementStyle, element, writeEnglishName);
-        GetConsole().Write(col);
+        CurrentConsole.Write(col);
     }
 
     private void WriteError(string message)
-        => GetConsole().WriteLine(new List<ConsoleText>
+        => CurrentConsole.WriteLine(new List<ConsoleText>
         {
             {
                 ErrorTips ?? "Error!",
@@ -528,7 +528,7 @@ public class ChemistryVerb : BaseCommandVerb
 
     private void WriteHelp(string verb, string key = null)
     {
-        var console = GetConsole();
+        var console = CurrentConsole;
         verb = verb?.Trim();
         if (string.IsNullOrEmpty(verb)) verb = "~";
 #if NETFRAMEWORK
@@ -639,8 +639,8 @@ public class ChemistryVerb : BaseCommandVerb
 
     private void WriteTips(string verb, string cmd, string desc, string descBackup)
     {
-        GetConsole().WriteLine(VerbColorInHelp, $"{verb} {cmd}");
-        GetConsole().WriteLine($"  {desc ?? descBackup}");
+        CurrentConsole.WriteLine(VerbColorInHelp, $"{verb} {cmd}");
+        CurrentConsole.WriteLine($"  {desc ?? descBackup}");
     }
 
     private static Func<ChemicalElement, bool> GetFilter(string q)
