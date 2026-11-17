@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Numerics;
 using System.Runtime.Serialization;
 using System.Text;
 using System.Text.Json.Serialization;
@@ -17,7 +18,7 @@ public class CoordinateSphere : ICloneable
     private DoublePoint3D center;
 
     /// <summary>
-    /// Initializes a new instance of the CoordinateSphere class.
+    /// Initializes a new instance of the CoordinateSphereDecimal class.
     /// </summary>
     public CoordinateSphere()
     {
@@ -26,7 +27,7 @@ public class CoordinateSphere : ICloneable
     }
 
     /// <summary>
-    /// Initializes a new instance of the CoordinateSphere class.
+    /// Initializes a new instance of the CoordinateSphereDecimal class.
     /// </summary>
     /// <param name="x">The x of center point.</param>
     /// <param name="y">The y of center point.</param>
@@ -39,7 +40,7 @@ public class CoordinateSphere : ICloneable
     }
 
     /// <summary>
-    /// Initializes a new instance of the CoordinateSphere class.
+    /// Initializes a new instance of the CoordinateSphereDecimal class.
     /// </summary>
     /// <param name="center">The center point.</param>
     /// <param name="r">The radius.</param>
@@ -170,7 +171,7 @@ public class CoordinateSphereF : ICloneable
     }
 
     /// <summary>
-    /// Initializes a new instance of the CoordinateSphere class.
+    /// Initializes a new instance of the CoordinateSphereDecimal class.
     /// </summary>
     /// <param name="x">The x of center point.</param>
     /// <param name="y">The y of center point.</param>
@@ -183,7 +184,7 @@ public class CoordinateSphereF : ICloneable
     }
 
     /// <summary>
-    /// Initializes a new instance of the CoordinateSphere class.
+    /// Initializes a new instance of the CoordinateSphereDecimal class.
     /// </summary>
     /// <param name="center">The center point.</param>
     /// <param name="r">The radius.</param>
@@ -303,3 +304,150 @@ public class CoordinateSphereF : ICloneable
     object ICloneable.Clone()
         => Clone();
 }
+
+#if NET10_0_OR_GREATER
+/// <summary>
+/// The sphere in coordinate.
+/// </summary>
+[DataContract]
+public class CoordinateSphere<T> : ICloneable
+    where T : struct, IFloatingPoint<T>, IFloatingPointConstants<T>
+{
+    private Point3D<T> center;
+
+    /// <summary>
+    /// Initializes a new instance of the CoordinateSphere class.
+    /// </summary>
+    public CoordinateSphere()
+    {
+        center = new();
+        Radius = T.Zero;
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the CoordinateSphere class.
+    /// </summary>
+    /// <param name="x">The x of center point.</param>
+    /// <param name="y">The y of center point.</param>
+    /// <param name="z">The z of center point.</param>
+    /// <param name="r">The radius.</param>
+    public CoordinateSphere(T x, T y, T z, T r)
+    {
+        center = new(x, y, z);
+        Radius = T.IsNaN(r) ? T.Zero : r;
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the CoordinateSphere class.
+    /// </summary>
+    /// <param name="center">The center point.</param>
+    /// <param name="r">The radius.</param>
+    public CoordinateSphere(Point3D<T> center, T r)
+    {
+        this.center = center ?? new();
+        Radius = T.IsNaN(r) ? T.Zero : r;
+    }
+
+    /// <summary>
+    /// Gets or sets the radius.
+    /// </summary>
+    [JsonPropertyName("r")]
+    [DataMember(Name = "r")]
+    public T Radius { get; set; }
+
+    /// <summary>
+    /// Gets or sets the center point.
+    /// </summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.Always)]
+    public Point3D<T> Center
+    {
+        get => center;
+        set => center = value ?? new();
+    }
+
+    /// <summary>
+    /// Gets the x of start point.
+    /// </summary>
+    [JsonPropertyName("x")]
+    [DataMember(Name = "x")]
+    public T X
+    {
+        get => Center.X;
+        set => Center.X = value;
+    }
+
+    /// <summary>
+    /// Gets the x of start point.
+    /// </summary>
+    [JsonPropertyName("y")]
+    [DataMember(Name = "y")]
+    public T Y
+    {
+        get => Center.Y;
+        set => Center.Y = value;
+    }
+
+    /// <summary>
+    /// Gets the x of start point.
+    /// </summary>
+    [JsonPropertyName("z")]
+    [DataMember(Name = "z")]
+    public T Z
+    {
+        get => Center.Z;
+        set => Center.Z = value;
+    }
+
+    /// <summary>
+    /// Gets the area.
+    /// </summary>
+    public T Area()
+        => T.Pi * Radius * Radius * (T.One + T.One + T.One + T.One);
+
+    /// <summary>
+    /// Gets the perimeter.
+    /// </summary>
+    public T Volume()
+        => T.Pi * Radius * Radius * Radius * (T.One + T.One + T.One + T.One) / (T.One + T.One + T.One);
+
+    /// <summary>
+    /// Returns a string that represents the line.
+    /// </summary>
+    /// <returns>A string that represents the line.</returns>
+    public override string ToString()
+    {
+        try
+        {
+            return $"{X:0.########}, {Y:0.########}, {Z:0.########} (r {Radius:0.########})";
+        }
+        catch (ArgumentException)
+        {
+        }
+        catch (InvalidOperationException)
+        {
+        }
+        catch (FormatException)
+        {
+        }
+        catch (NullReferenceException)
+        {
+        }
+
+        return $"{X}, {Y}, {Z} (r {Radius})";
+    }
+
+    /// <summary>
+    /// Creates a new object that is a copy of the current instance.
+    /// </summary>
+    /// <returns>An instance copied from current one.</returns>
+    public CoordinateSphere<T> Clone()
+        => new(center, T.IsNaN(Radius) ? T.Zero : Radius);
+
+    /// <summary>
+    /// Creates a new object that is a copy of the current instance.
+    /// </summary>
+    /// <returns>An instance copied from current one.</returns>
+    object ICloneable.Clone()
+        => Clone();
+}
+#endif

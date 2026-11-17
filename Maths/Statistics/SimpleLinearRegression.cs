@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Numerics;
 using System.Text;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
@@ -10,7 +11,7 @@ namespace Trivial.Maths;
 /// <summary>
 /// The result of simple linear regression.
 /// </summary>
-public struct SimpleLinearRegressionResult : IEquatable<SimpleLinearRegressionResult>, IEquatable<SimpleLinearRegressionResultF>
+public readonly struct SimpleLinearRegressionResult : IEquatable<SimpleLinearRegressionResult>, IEquatable<SimpleLinearRegressionResultF>
 {
     /// <summary>
     /// Initializes a new instance of the SimpleLinearRegressionResult class.
@@ -176,10 +177,121 @@ public struct SimpleLinearRegressionResult : IEquatable<SimpleLinearRegressionRe
     }
 }
 
+#if NET10_0_OR_GREATER
 /// <summary>
 /// The result of simple linear regression.
 /// </summary>
-public class SimpleLinearRegressionResultF : IEquatable<SimpleLinearRegressionResultF>, IEquatable<SimpleLinearRegressionResult>
+public readonly struct SimpleLinearRegressionResult<T> : IEquatable<SimpleLinearRegressionResult<T>>
+    where T : IFloatingPointIeee754<T>
+{
+    /// <summary>
+    /// Initializes a new instance of the SimpleLinearRegressionResult class.
+    /// </summary>
+    public SimpleLinearRegressionResult()
+    {
+        Slope = T.Zero;
+        Intercept = T.Zero;
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the SimpleLinearRegressionResult class.
+    /// </summary>
+    /// <param name="intercept">The intercept.</param>
+    /// <param name="slope">The slope.</param>
+    [JsonConstructor]
+    public SimpleLinearRegressionResult(T intercept, T slope)
+    {
+        Intercept = intercept;
+        Slope = T.IsNaN(slope) ? T.Zero : slope;
+    }
+
+    /// <summary>
+    /// Gets the intercept (beta 0).
+    /// </summary>
+    [JsonPropertyName("intercept")]
+    public T Intercept { get; }
+
+    /// <summary>
+    /// Gets the slope (beta 1).
+    /// </summary>
+    [JsonPropertyName("slope")]
+    public T Slope { get; }
+
+    /// <summary>
+    /// Gets a value indicating whether the result is not valid.
+    /// </summary>
+    [JsonIgnore]
+    public bool IsInvalid => Slope == T.Zero || T.IsNaN(Intercept);
+
+    /// <summary>
+    /// Gets the value on X-axis.
+    /// </summary>
+    /// <param name="y">The value on Y-axis.</param>
+    /// <returns>The value on X-axis.</returns>
+    public T GetX(T y)
+        => Slope == T.Zero ? T.NaN : ((y - Intercept) / Slope);
+
+    /// <summary>
+    /// Gets the value on Y-axis.
+    /// </summary>
+    /// <param name="x">The value on X-axis.</param>
+    /// <returns>The value on Y-axis.</returns>
+    public T GetY(T x)
+        => Slope == T.Zero ? T.NaN : (Intercept + Slope * x);
+
+    /// <summary>
+    /// Serves as the default hash function.
+    /// </summary>
+    /// <returns>A hash code for the current object.</returns>
+    public override int GetHashCode()
+        => $"y = {Intercept} + {Slope} x".GetHashCode();
+
+    /// <summary>
+    /// Determines whether the specified object is equal to the current object.
+    /// </summary>
+    /// <param name="other">The object to compare with the current object.</param>
+    /// <returns>true if the specified object is equal to the current object; otherwise, false.</returns>
+    public bool Equals(SimpleLinearRegressionResult<T> other)
+        => Intercept == other.Intercept && Slope == other.Slope;
+
+    /// <summary>
+    /// Determines whether the specified object is equal to the current object.
+    /// </summary>
+    /// <param name="other">The object to compare with the current object.</param>
+    /// <returns>true if the specified object is equal to the current object; otherwise, false.</returns>
+    public override bool Equals(object other)
+    {
+        if (other is null) return false;
+        if (other is SimpleLinearRegressionResult<T> r) return Equals(r);
+        return false;
+    }
+
+    /// <summary>
+    /// Compares two multiple elements to indicate if they are same.
+    /// leftValue == rightValue
+    /// </summary>
+    /// <param name="leftValue">The left value to compare.</param>
+    /// <param name="rightValue">The right value to compare.</param>
+    /// <returns>true if they are same; otherwise, false.</returns>
+    public static bool operator ==(SimpleLinearRegressionResult<T> leftValue, SimpleLinearRegressionResult<T> rightValue)
+        => leftValue.Equals(rightValue);
+
+    /// <summary>
+    /// Compares two multiple elements to indicate if they are different.
+    /// leftValue != rightValue
+    /// </summary>
+    /// <param name="leftValue">The left value to compare.</param>
+    /// <param name="rightValue">The right value to compare.</param>
+    /// <returns>true if they are different; otherwise, false.</returns>
+    public static bool operator !=(SimpleLinearRegressionResult<T> leftValue, SimpleLinearRegressionResult<T> rightValue)
+        => !leftValue.Equals(rightValue);
+}
+#endif
+
+/// <summary>
+/// The result of simple linear regression.
+/// </summary>
+public readonly struct SimpleLinearRegressionResultF : IEquatable<SimpleLinearRegressionResultF>, IEquatable<SimpleLinearRegressionResult>
 {
     /// <summary>
     /// Initializes a new instance of the SimpleLinearRegressionResultF class.
